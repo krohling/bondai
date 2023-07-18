@@ -2,13 +2,15 @@ from .tool import Tool
 from bond.agent import Agent
 from .website_query import WebsiteQueryTool, DefaultParameters
 from .extract_hyperlinks_tool import ExtractHyperlinksTool
+from bond.tools.download_file import DownloadFileTool
 
 TOOL_NAME = 'website_query_agent'
 TOOL_DESCRIPTION = "This tool allows to ask a question about the text content of any website including summarization. Just specify the url of the website using the 'url' parameter and specify your question using the 'question' parameter."
 
 DEFAULT_TOOLS = [
     WebsiteQueryTool(),
-    ExtractHyperlinksTool()
+    ExtractHyperlinksTool(),
+    DownloadFileTool()
 ]
 
 class WebsiteQueryAgentTool(Tool):

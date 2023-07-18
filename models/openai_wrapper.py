@@ -32,19 +32,30 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
     with open('prompt.md', 'w') as f:
         f.write(prompt)
 
-    if len(functions) > 0:
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            functions=functions,
-            temperature=0,
-        )
-    else:
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            temperature=0,
-        )
+    attempts = 0
+    max_retries = 3
+    success = False
+    while not success:
+        try:
+            attempts += 1
+            if len(functions) > 0:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    functions=functions,
+                    temperature=0,
+                )
+            else:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    temperature=0,
+                )
+            
+            success = True
+        except Exception as e:
+            if attempts >= max_retries:
+                raise e
     
     message = response["choices"][0]["message"]
 

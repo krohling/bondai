@@ -20,10 +20,13 @@ def get_website_html(url):
 #                 pass
 #         return response.html.raw_html
 
-def get_website_text(url):
-        html = get_website_html(url)
+def get_html_text(html):
         soup = BeautifulSoup(html, "html.parser")
         return soup.get_text()
+
+def get_website_text(url):
+        html = get_website_html(url)
+        return get_html_text(html)
 
 def get_website_links(url):
         html = get_website_html(url)

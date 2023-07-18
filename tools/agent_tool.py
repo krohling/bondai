@@ -13,9 +13,11 @@ class AgentTool(Tool):
         agent_prompt = arguments['input']
         if isinstance(agent_prompt, list):
             output = ''
-            for i,p in agent_prompt:
+            for i,p in enumerate(agent_prompt):
                 result = self.agent.run(p)
-                output += f"Agent #{i+1} Response: {result}\n"
+                output += f"Agent #{i+1} Response: {result.output}\n"
+            
+            return output
         else:
             return self.agent.run(agent_prompt)
 

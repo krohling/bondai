@@ -4,7 +4,7 @@ from bond.models.openai_wrapper import get_completion
 from bond.tools.tool import Tool
 from bond.models.openai_wrapper import count_tokens
 
-TOOL_MAX_TOKEN_RESPONSE = 1000
+TOOL_MAX_TOKEN_RESPONSE = 2000
 FINAL_ANSWER_TOOL = Tool('final_answer', "Use the final_answer tool when you have all the information you need to provide the final answer.")
 
 class AgentStep:
