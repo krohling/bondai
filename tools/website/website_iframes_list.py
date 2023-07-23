@@ -1,7 +1,7 @@
-from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util.web import get_website_iframes
+from bondai.tools.tool import Tool
+from bondai.util.web import get_website_iframes
 
 TOOL_NAME = 'website_iframes_list'
 TOOL_DESCRIPTION = "This tool allows you to get a list of the iframes on a website. Just specify the url of the website using the 'url' parameter for the website. This can be helpful because sometimes the content of a website comes from iframes."

@@ -1,5 +1,5 @@
 from datetime import datetime
-from .steps_formatter import format_previous_steps
+from bondai.prompt.steps_formatter import format_previous_steps
 
 class DefaultPromptBuilder():
 
@@ -22,4 +22,7 @@ class DefaultPromptBuilder():
         if feedback:
             prompt = prompt.replace('{FEEDBACK}', feedback)
         
+        with open('prompt.md', 'w') as f:
+            f.write(prompt)
+
         return prompt

@@ -1,6 +1,6 @@
-from .tool import Tool
 from googleapiclient.discovery import build
 from pydantic import BaseModel
+from bondai.tools.tool import Tool
 
 MAX_RESULT_COUNT = 20
 DEFAULT_RESULT_COUNT = 5

@@ -1,10 +1,10 @@
 import base64
-from bond.tools.tool import Tool
 from googleapiclient.discovery import build
 from typing import List
 from pydantic import BaseModel
-from bond.util.web import get_html_text
-from bond.models.openai_wrapper import get_completion
+from bondai.tools.tool import Tool
+from bondai.util.web import get_html_text
+from bondai.models.openai_wrapper import get_completion
 
 TOOL_NAME = 'get_email_content'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about emails. Use the provided information to answer the user's QUESTION at the very end."

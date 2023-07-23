@@ -1,9 +1,8 @@
 import json
 import traceback
 from collections import namedtuple
-from bond.models.openai_wrapper import get_completion
-from bond.tools.tool import Tool
-from bond.models.openai_wrapper import count_tokens
+from bondai.models.openai_wrapper import get_completion, count_tokens
+from bondai.tools.tool import Tool
 
 TOOL_MAX_TOKEN_RESPONSE = 2000
 FINAL_ANSWER_TOOL = Tool('final_answer', "Use the final_answer tool when you have all the information you need to provide the final answer.")

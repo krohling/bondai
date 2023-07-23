@@ -1,5 +1,5 @@
 from .tool import Tool
-from bond.agent import Agent
+from bondai.agent import Agent
 
 TOOL_NAME = 'agent_tool'
 TOOL_DESCRIPTION = "This tool allows you to delegate tasks to other agents. This can be really helpful for taking a complex task and breaking it down into smaller, more manageable pieces. Just include a highly descriptive prompt in the 'input' parameter for this task. The more detailed your description the better the agent will be at the task. If you would like to create multiple agents just pass an array of prompts in the 'input' parameter."

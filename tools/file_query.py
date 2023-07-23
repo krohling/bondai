@@ -1,10 +1,10 @@
-from .tool import Tool
 import requests
 from bs4 import BeautifulSoup
+import pypdf
 from pydantic import BaseModel
-from bond.models.openai_wrapper import get_completion
-import PyPDF2
-from bond.util.semantic_search import semantic_search
+from bondai.tools.tool import Tool
+from bondai.models.openai_wrapper import get_completion
+from bondai.util.semantic_search import semantic_search
 
 TOOL_NAME = 'file_query'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a file. Use the provided information to answer the user's QUESTION at the very end."
@@ -18,10 +18,10 @@ def is_pdf(filename):
 
 def extract_text_from_pdf(file_path):
     with open(file_path, 'rb') as file:
-        pdf = PyPDF2.PdfFileReader(file)
+        pdf = pypdf.PdfReader(file)
         text = ''
-        for page_number in range(pdf.getNumPages()):
-            page = pdf.getPage(page_number)
+        for page_number in range(len(pdf.pages)):
+            page = pdf.pages[page_number]
             text += page.extract_text()
         return text
 
@@ -61,5 +61,5 @@ class FileQueryTool(Tool):
         prompt = build_prompt(question, text)
         response = get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
 
-        return response
+        return response.output
 

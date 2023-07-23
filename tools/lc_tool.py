@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from .tool import Tool
+from bondai.tools.tool import Tool
 
 class LCTool(Tool):
     def __init__(self, tool):

@@ -1,4 +1,4 @@
-from .steps_formatter import format_previous_steps
+from bondai.prompt.steps_formatter import format_previous_steps
 
 class MonitorPromptBuilder():
 

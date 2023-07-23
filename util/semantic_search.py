@@ -1,6 +1,6 @@
 import nltk
 import numpy as np
-from bond.models.openai_wrapper import create_embedding, count_tokens
+from bondai.models.openai_wrapper import create_embedding, count_tokens
 
 nltk.download("punkt")
 
@@ -55,7 +55,7 @@ def split_tokens(input, max_length):
 
 
 def semantic_search(query, text, max_tokens):
-    # if count_tokens(text) <= max_tokens: return text
+    if count_tokens(text) <= max_tokens: return text
 
     results = []
     sentences = split_text(text, MAX_EMBED_TOKENS)

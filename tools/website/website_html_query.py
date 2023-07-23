@@ -1,8 +1,8 @@
-from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util.web import get_website_html
-from bond.models.openai_wrapper import get_completion
+from bondai.tools.tool import Tool
+from bondai.util.web import get_website_html
+from bondai.models.openai_wrapper import get_completion
 
 TOOL_NAME = 'website_html_query'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about the HTML in a website. Use the provided HTML content to answer the user's QUESTION at the very end."

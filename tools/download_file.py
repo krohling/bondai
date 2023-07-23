@@ -1,8 +1,8 @@
 from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util.web import get_website_text
-from bond.models.openai_wrapper import get_completion
+from bondai.util.web import get_website_text
+from bondai.models.openai_wrapper import get_completion
 
 TOOL_NAME = 'download_file'
 TOOL_DESCRIPTION = "This tool allows to you to download a file. Just provide the url to the file in the 'url' parameter and the filename it should be saved to in the 'filename' parameter."

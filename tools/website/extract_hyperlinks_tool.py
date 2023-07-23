@@ -1,7 +1,7 @@
-from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util.web import get_website_links
+from bondai.tools.tool import Tool
+from bondai.util.web import get_website_links
 
 TOOL_NAME = 'website_extract_hyperlinks'
 TOOL_DESCRIPTION = "This tool allows will extract a list of hyperlinks from a website. Just specify the url of the website using the 'url' parameter."
