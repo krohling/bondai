@@ -1,8 +1,9 @@
 from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util import get_website_text
+from bond.util.web import get_website_text
 from bond.models.openai_wrapper import get_completion
+from bond.util.semantic_search import semantic_search
 
 TOOL_NAME = 'website_query'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a website. Use the provided information to answer the user's QUESTION at the very end."
@@ -38,6 +39,7 @@ class WebsiteQueryTool(Tool):
         except requests.Timeout:
             return "The request timed out."
 
+        text = semantic_search(question, text, 16000)
         prompt = build_prompt(question, text)
         response = get_completion(prompt, QUERY_SYSTEM_PROMPT, model=self.model)[0]
 

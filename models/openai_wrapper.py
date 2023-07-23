@@ -1,10 +1,25 @@
 import json
+import time
 import openai
 import tiktoken
 
 def count_tokens(prompt, model='gpt-4'):
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(prompt))
+
+def create_embedding(text, model="text-embedding-ada-002"):
+    max_tries = 3
+    tries = 0
+    while True:
+        try:
+            return openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+        except Exception as e:
+            if tries >= 3:
+                raise e
+            
+            print(e)
+            time.sleep(5)
+            tries += 1
 
 def get_completion(prompt, system_prompt='', previous_messages=[], functions=[], model='gpt-4'):
     messages = []
@@ -26,11 +41,9 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
         "content": prompt
     })
 
-    # print(count_tokens(prompt) + count_tokens(json.dumps(functions)))
-
     # write prompt to a file named 
-    with open('prompt.md', 'w') as f:
-        f.write(prompt)
+    # with open('prompt.md', 'w') as f:
+    #     f.write(prompt)
 
     attempts = 0
     max_retries = 3
@@ -54,6 +67,7 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
             
             success = True
         except Exception as e:
+            time.sleep(15)
             if attempts >= max_retries:
                 raise e
     

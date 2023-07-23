@@ -1,7 +1,7 @@
 from .tool import Tool
 import requests
 from pydantic import BaseModel
-from bond.util import get_website_text
+from bond.util.web import get_website_text
 from bond.models.openai_wrapper import get_completion
 
 TOOL_NAME = 'download_file'
@@ -12,6 +12,7 @@ REQUEST_HEADERS = {
 
 class DefaultParameters(BaseModel):
     url: str
+    filename: str
     thought: str
 
 class DownloadFileTool(Tool):

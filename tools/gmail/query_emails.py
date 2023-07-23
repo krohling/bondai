@@ -3,7 +3,7 @@ from bond.tools.tool import Tool
 from googleapiclient.discovery import build
 from typing import List
 from pydantic import BaseModel
-from bond.util import get_html_text
+from bond.util.web import get_html_text
 from bond.models.openai_wrapper import get_completion
 
 TOOL_NAME = 'get_email_content'

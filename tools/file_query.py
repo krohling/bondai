@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from pydantic import BaseModel
 from bond.models.openai_wrapper import get_completion
 import PyPDF2
+from bond.util.semantic_search import semantic_search
 
 TOOL_NAME = 'file_query'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a file. Use the provided information to answer the user's QUESTION at the very end."
@@ -56,6 +57,7 @@ class FileQueryTool(Tool):
         except requests.Timeout:
             return "The request timed out."
 
+        text = semantic_search(question, text, 16000)
         prompt = build_prompt(question, text)
         response = get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
 

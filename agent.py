@@ -1,4 +1,5 @@
 import json
+import traceback
 from collections import namedtuple
 from bond.models.openai_wrapper import get_completion
 from bond.tools.tool import Tool
@@ -61,6 +62,7 @@ class Agent:
                                 step.output = "This command ran successfully with no output."
                             print(step.output)
                         except Exception as e:
+                            traceback.print_exc()
                             print("An Error occured: " + str(e))
                             step.error = True
                             step.output = "An Error occured: " + str(e)
@@ -86,7 +88,10 @@ class Agent:
         while True:
             visible_steps = self.previous_steps[-self.max_step_memory:]
             step = self.run_once(task, visible_steps)
-            self.previous_steps.append(step)
+
+            if step.function or len(self.previous_steps) == 0 or self.previous_steps[-1].function:
+                self.previous_steps.append(step)
+            
             if step.final_answer:
                 return step
             elif self.monitor_agent:
