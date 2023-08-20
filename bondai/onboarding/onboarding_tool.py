@@ -16,13 +16,11 @@ class Parameters(BaseModel):
     user_exit: bool = False
     task_description: str
     task_budget: float
-    tool_ids: List[str]
     user_confirmation: bool = False
 
 class OnboardingTool(Tool):
-    def __init__(self, tool_options):
+    def __init__(self):
         super(OnboardingTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.tool_options = tool_options
     
     def run(self, arguments):
         user_exit = arguments.get('user_exit')
@@ -33,24 +31,16 @@ class OnboardingTool(Tool):
 
         task_description = arguments.get('task_description')
         task_budget = arguments.get('task_budget')
-        tool_ids = arguments.get('tool_ids')
         user_confirmation = arguments.get('user_confirmation')
 
         if not task_description:
             raise Exception('You must provide a task description.')
         if not task_budget:
             raise Exception('You must provide a task budget.')
-        if not tool_ids:
-            raise Exception('You must provide a list of tool ids.')
         if not user_confirmation:
             raise Exception('You must confirm the task description, task budget, and tool ids with the user before calling the final_answer tool.')
-
-        for tool_id in tool_ids:
-            if tool_id not in [tool.name for tool in self.tool_options]:
-                raise Exception(f'Invalid tool id: {tool_id}')
         
         return json.dumps({
             'task_description': task_description,
-            'task_budget': task_budget,
-            'tool_ids': tool_ids
+            'task_budget': task_budget
         })

@@ -1,28 +1,22 @@
 import os
 from termcolor import cprint
+from .langchain import build_langchain_tools, is_langchain_installed
 from bondai.tools import HumanTool
 from bondai.tools.agent import AgentTool
 from bondai.tools.alpaca import CreateOrderTool, GetAccountTool, ListPositionsTool
 from bondai.tools.file import FileQueryTool, FileReadTool, FileWriteTool
 from bondai.tools.gmail import ListEmailsTool, QueryEmailsTool
-from bondai.tools.search import GoogleSearchTool
+from bondai.tools.search import GoogleSearchTool, DuckDuckGoSearchTool
 from bondai.tools.website import (
     DownloadFileTool,
-    WebsiteExtractHyperlinksTool,
-    WebsiteHtmlQueryTool,
     WebsiteQueryTool,
 )
 
 def build_tool_options():
     tool_options = [
-        HumanTool(),
-        AgentTool(),
-        FileQueryTool(),
-        FileReadTool(),
-        FileWriteTool(), 
         DownloadFileTool(),
-        WebsiteExtractHyperlinksTool(),
-        WebsiteHtmlQueryTool(),
+        FileQueryTool(),
+        FileWriteTool(), 
         WebsiteQueryTool(),
     ]
 
@@ -36,7 +30,8 @@ def build_tool_options():
     if os.environ.get('GOOGLE_API_KEY') and os.environ.get('GOOGLE_CSE_ID'):
         tool_options.append(GoogleSearchTool())
     else:
-        cprint("Skipping GoogleSearch tool because GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables are not set.", "yellow")
+        tool_options.append(DuckDuckGoSearchTool())
+        cprint("Skipping Google Search tool because GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables are not set.", "yellow")
 
     if 'gmail-token.pickle' in os.listdir():
         tool_options.append(ListEmailsTool())
@@ -44,5 +39,12 @@ def build_tool_options():
     else:
         cprint("Skipping Gmail tools because gmail-token.pickle file is not present.", "yellow")
     
+    if is_langchain_installed():
+        cprint("Loading LangChain tools...", "yellow")
+        langchain_tools = build_langchain_tools()
+        for t in langchain_tools:
+            tool_options.append(t)
+        cprint("Done loading LangChain tools", "yellow")
+
     return tool_options
 

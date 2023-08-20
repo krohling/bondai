@@ -22,6 +22,36 @@ def format_print_string(s, length=100):
         return s
     return s[:length - 3] + "..."
 
+def load_alternative_function(llm, function, options):
+    args = {}
+    thought = ''
+    if 'arguments' in function:
+        try:
+            args = json.loads(function['arguments'])
+            if 'thought' in args:
+                thought = "Thought: " + args['thought'] + "\n"
+        except:
+            pass
+    
+    function_descriptions = '\n'.join([f"{tool['name']: {tool['description']}}" for tool in options])
+    prompt = f"""An AI agent is attempting to use a function that does not exist. Please determine if one of the options provided is a good alternative.
+Incorrect Function: {function['name']}
+{thought}
+
+VERY IMPORTANT:
+- If none of the options is a match simpley return "NO MATCH" as the output.
+
+Options:
+id: description
+{function_descriptions}
+"""
+    _, new_function = llm.get_completion(prompt, options)
+
+    result = next((f for f in options if f.name == new_function['name']), None)
+
+    return result
+
+
 class AgentStep:
 
     def __init__(self, prompt, message, function=None):
@@ -38,7 +68,7 @@ class BudgetExceededException(Exception):
 
 class Agent:
 
-    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, budget=None, quiet=False):
+    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, budget=None, quiet=False, additional_tools=[]):
         if not prompt_builder:
             self.prompt_builder = DefaultPromptBuilder(llm)
         else:
@@ -52,6 +82,7 @@ class Agent:
         self.final_answer_tool = final_answer_tool
         self.budget = budget
         self.quiet = quiet
+        self.additional_tools = additional_tools
     
     def run_once(self, task=''):
         tools = self.tools
@@ -92,6 +123,7 @@ class Agent:
                                 if key != 'thought':
                                     cprint(f"{key}: {format_print_string(str(value))}", 'white')
 
+
                     try:
                         step.output = tool.run(args)
                         step.final_answer = tool.name == self.final_answer_tool.name
@@ -117,10 +149,31 @@ class Agent:
                     step.error = True
                     step.output = 'An Error occured: The provided arguments were not valid JSON. Valid JSON must ALWAYS BE PROVIDED in the response.'
             else:
+                step.error = True
+                tool_added = False
+
                 if not self.quiet:
                     cprint(f"No tools found for: {function['name']}", 'red', attrs=["bold"])
-                step.error = True
-                step.output = f"An Error occured: The function '{function['name']}' does not exist."
+                
+                new_function = load_alternative_function(self.fallback_llm, function, self.additional_tools)
+                if new_function:
+                    if new_function.dangerous:
+                        cprint(f"The BondAI would like to load a new function: {new_function['name']}. This function is considered dangerous. Would you like to allow BondAI to load this function? (yes/no)\n\n", 'red', attrs=["bold"])
+                        answer = input()
+                        if answer == 'yes':
+                            self.tools.append(new_function)
+                            tool_added = True
+                    else:
+                        self.tools.append(new_function)
+                        tool_added = True
+
+                if tool_added:
+                    cprint(f"Alternate tool found: {new_function['name']}", 'yellow', attrs=["bold"])
+                    step.output = f"An Error occured: The function '{function['name']}' does not exist but an alterantive tool was found and will be loaded for future use: {new_function['name']}."
+                else:
+                    step.output = f"An Error occured: The function '{function['name']}' does not exist."
+                
+                
         else:
             step = AgentStep(prompt, message)
             step.output = "No function was provided."

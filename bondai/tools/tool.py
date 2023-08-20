@@ -8,7 +8,7 @@ class EmptyParameters(BaseModel):
     thought: str
 
 class Tool():
-     def __init__(self, name: str, description: str, parameters: BaseModel = EmptyParameters):
+     def __init__(self, name: str, description: str, parameters: BaseModel = EmptyParameters, dangerous=False):
           if name is None:
                raise Exception('name is required')
           if description is None:
@@ -19,6 +19,7 @@ class Tool():
           self.name = name
           self.description = description
           self.parameters = parameters
+          self.dangerous = dangerous
     
      def get_tool_function(self):
           return {
