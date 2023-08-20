@@ -7,7 +7,6 @@ appdirs==1.4.4
 async-timeout==4.0.3
 attrs==23.1.0
 beautifulsoup4==4.12.2
-bondai @ file:///Users/kevin/Desktop/projects/ai-agent/agent-volume/bondai
 bs4==0.0.1
 cachetools==5.3.1
 certifi==2023.7.22

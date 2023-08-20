@@ -21,7 +21,6 @@ def build_langchain_tools():
     from langchain.tools import ShellTool
     from langchain.tools.python.tool import PythonREPLTool
 
-
     shell_tool = ShellTool()
     shell_tool.description = "This is a very powerful tool that allows you to run any shell command on this Ubuntu machine. Note that this tool only accepts a single string argument at a time and does not accept a list of commands." + f" args {shell_tool.args}".replace(
         "{", "{{"

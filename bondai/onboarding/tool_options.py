@@ -1,6 +1,6 @@
 import os
 from termcolor import cprint
-from .langchain import build_langchain_tools, is_langchain_installed
+from .langchain_tools import build_langchain_tools, is_langchain_installed
 from bondai.tools import HumanTool
 from bondai.tools.agent import AgentTool
 from bondai.tools.alpaca import CreateOrderTool, GetAccountTool, ListPositionsTool
