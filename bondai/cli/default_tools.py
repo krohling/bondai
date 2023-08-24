@@ -3,7 +3,7 @@ from termcolor import cprint
 from .langchain_tools import build_langchain_tools, is_langchain_installed
 from bondai.tools import HumanTool
 from bondai.tools.agent import AgentTool
-from bondai.tools.alpaca import CreateOrderTool, GetAccountTool, ListPositionsTool
+from bondai.tools.alpaca_markets import CreateOrderTool, GetAccountTool, ListPositionsTool
 from bondai.tools.file import FileQueryTool, FileReadTool, FileWriteTool
 from bondai.tools.gmail import ListEmailsTool, QueryEmailsTool
 from bondai.tools.search import GoogleSearchTool, DuckDuckGoSearchTool
@@ -12,7 +12,7 @@ from bondai.tools.website import (
     WebsiteQueryTool,
 )
 
-def build_tool_options():
+def get_tools():
     tool_options = [
         DownloadFileTool(),
         FileQueryTool(),
@@ -20,7 +20,7 @@ def build_tool_options():
         WebsiteQueryTool(),
     ]
 
-    if os.environ.get('ALPACA_API_KEY') and os.environ.get('ALPACA_SECRET_KEY'):
+    if os.environ.get('ALPACA_MARKETS_API_KEY') and os.environ.get('ALPACA_MARKETS_SECRET_KEY'):
         tool_options.append(CreateOrderTool())
         tool_options.append(GetAccountTool())
         tool_options.append(ListPositionsTool())
