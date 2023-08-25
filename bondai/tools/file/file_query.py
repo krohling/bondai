@@ -1,7 +1,7 @@
 import pypdf
 from pydantic import BaseModel
 from bondai.tools import Tool
-from bondai.util import semantic_search
+from bondai.util import semantic_search, is_html, get_html_text
 from bondai.models.openai import (
     OpenAILLM, 
     OpenAIEmbeddingModel, 
@@ -61,6 +61,9 @@ class FileQueryTool(Tool):
         else:
             with open(filename, 'r') as f:
                 text = f.read()
+
+        if is_html(text):
+            text = get_html_text(text)
 
         text = semantic_search(self.embedding_model, question, text, 16000)
         prompt = build_prompt(question, text)

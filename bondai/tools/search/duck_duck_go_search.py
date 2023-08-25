@@ -17,12 +17,11 @@ class Parameters(BaseModel):
 def search_duckduckgo(query, count=10, page=1):
     ddg_client = Client()
     response = ddg_client.search(query, count=count, page=page)
-    results =  '\n'.join([f"[{r.title}]: ({r.url})" for r in response])
 
-    if len(results) > count:
-        results = results[:count]
+    if len(response) > count:
+        response = response[:count]
     
-    return results
+    return '\n'.join([f"[{r.title}]: ({r.url})" for r in response])
 
 class DuckDuckGoSearchTool(Tool):
     def __init__(self):
@@ -39,8 +38,8 @@ class DuckDuckGoSearchTool(Tool):
         if count > MAX_RESULT_COUNT:
             count = MAX_RESULT_COUNT
 
+        
         output = search_duckduckgo(query, count, page)
-        print(output)
         return output
 
     

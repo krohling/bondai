@@ -29,7 +29,7 @@ class Tool():
           }
 
      def run(self, arguments):
-          if self.parameters == InputParameters and 'input' in arguments:
+          if 'input' in arguments:
                return arguments['input']
                
     

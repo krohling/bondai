@@ -1,8 +1,8 @@
 import json
+from pydantic import BaseModel
 import traceback
 from termcolor import colored, cprint
-from bondai.tools.tool import Tool, InputParameters
-from bondai.tools.response_query import ResponseQueryTool
+from bondai.tools import Tool, ResponseQueryTool, AgentTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.models.openai import (
     OpenAILLM, 
@@ -11,8 +11,11 @@ from bondai.models.openai import (
     get_total_cost
 )
 
+class FinalAnswerParameters(BaseModel):
+    input: str
+
 TOOL_MAX_TOKEN_RESPONSE = 2000
-DEFAULT_FINAL_ANSWER_TOOL = Tool('final_answer', "Use the final_answer tool when you have all the information you need to provide the final answer.", InputParameters)
+DEFAULT_FINAL_ANSWER_TOOL = Tool('final_answer', "Use the final_answer tool when you have all the information you need to provide the final answer.", FinalAnswerParameters)
 
 def format_print_string(s, length=100):
     # Remove newlines
@@ -61,18 +64,20 @@ class AgentStep:
         self.output = None
         self.error = False
         self.final_answer = False
-        self.monitor_feedback = None
 
 class BudgetExceededException(Exception):
     pass
 
 class Agent:
 
-    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, budget=None, quiet=False, additional_tools=[]):
+    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, budget=None, quiet=False, enable_sub_agent=False):
         if not prompt_builder:
             self.prompt_builder = DefaultPromptBuilder(llm)
         else:
             self.prompt_builder = prompt_builder
+        
+        if enable_sub_agent:
+            tools.append(AgentTool(tools=tools, llm=llm))
         
         self.previous_steps = []
         self.response_query_tool = ResponseQueryTool()
@@ -82,7 +87,6 @@ class Agent:
         self.final_answer_tool = final_answer_tool
         self.budget = budget
         self.quiet = quiet
-        self.additional_tools = additional_tools
     
     def run_once(self, task=''):
         tools = self.tools
@@ -113,7 +117,7 @@ class Agent:
                         args = json.loads(function['arguments'])
                     
                     if not self.quiet:
-                        cprint(f"\n\nUsing the {tool.name} tool", 'white', attrs=["bold"])
+                        cprint(f"\n\nUsing the {tool.name} tool", 'yellow', attrs=["bold"])
                         if len(args) > 0:
                             if 'thought' in args:
                                 print(colored("Thought:", 'white', attrs=["bold"]), colored(args['thought'], 'white'))
@@ -150,29 +154,10 @@ class Agent:
                     step.output = 'An Error occured: The provided arguments were not valid JSON. Valid JSON must ALWAYS BE PROVIDED in the response.'
             else:
                 step.error = True
-                tool_added = False
+                step.output = f"An Error occured: The function '{function['name']}' does not exist."
 
                 if not self.quiet:
                     cprint(f"No tools found for: {function['name']}", 'red', attrs=["bold"])
-                
-                new_function = load_alternative_function(self.fallback_llm, function, self.additional_tools)
-                if new_function:
-                    if new_function.dangerous:
-                        cprint(f"The BondAI would like to load a new function: {new_function['name']}. This function is considered dangerous. Would you like to allow BondAI to load this function? (yes/no)\n\n", 'red', attrs=["bold"])
-                        answer = input()
-                        if answer == 'yes':
-                            self.tools.append(new_function)
-                            tool_added = True
-                    else:
-                        self.tools.append(new_function)
-                        tool_added = True
-
-                if tool_added:
-                    cprint(f"Alternate tool found: {new_function['name']}", 'yellow', attrs=["bold"])
-                    step.output = f"An Error occured: The function '{function['name']}' does not exist but an alterantive tool was found and will be loaded for future use: {new_function['name']}."
-                else:
-                    step.output = f"An Error occured: The function '{function['name']}' does not exist."
-                
                 
         else:
             step = AgentStep(prompt, message)
@@ -194,7 +179,7 @@ class Agent:
             
             total_cost = get_total_cost()
             if not self.quiet:
-                print(colored("Total Cost:", 'green', attrs=["bold"]), colored(str(round(total_cost, 2)), 'white'))
+                print(colored("Total Cost:", 'green', attrs=["bold"]), colored('$' + str(round(total_cost, 2)), 'white'))
 
             if step.final_answer:
                 return step

@@ -1,4 +1,3 @@
-from bondai import Agent
 from bondai.tools import Tool, InputParameters
 from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613
 
@@ -8,6 +7,7 @@ TOOL_DESCRIPTION = "This tool allows you to delegate tasks to other agents. This
 class AgentTool(Tool):
     def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613)):
         super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
+        from bondai import Agent
         self.agent = Agent(prompt_builder, tools=tools, llm=llm)
     
     def run(self, arguments):
