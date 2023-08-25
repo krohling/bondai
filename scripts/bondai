@@ -14,7 +14,8 @@ if not os.environ.get('OPENAI_API_KEY'):
     if user_input == 'exit':
         exit(1)
     else:
-        os.environ['OPENAI_API_KEY'] = user_input
+        import openai
+        openai.api_key = user_input
 
 
 
