@@ -20,7 +20,6 @@ parse_envs() {
 parse_envs "$@"
 
 mkdir -p ${HOST_VOLUME_DIR}
-# docker run -it --rm "${ENVS[@]}" bondai:latest bondai "${ARGS[@]}"
 
 
 docker run -it --rm \
