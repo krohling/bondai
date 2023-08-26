@@ -16,7 +16,6 @@ cssselect==1.2.0
 duckpy==3.2.0
 fake-useragent==1.2.1
 frozenlist==1.4.0
-GDAL==3.6.4
 google-api-core==2.11.1
 google-api-python-client==2.97.0
 google-auth==2.22.0

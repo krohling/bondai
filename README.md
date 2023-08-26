@@ -10,15 +10,19 @@
 
 ## What is BondAI?
 
-**BondAI** is a truly open-source framework tailored for integrating and customizing Conversational AI Agents. Built on *OpenAI's [function calling support](https://openai.com/blog/function-calling-and-other-api-updates), **BondAI** handles many of the implementation complexities including memory management, error handling, integrated semantic search, a powerful set of out of the box tools, as well as the ability to easily create new, custom tools. Additionally, **BondAI** includes a **CLI tool**, enabling anyone with an OpenAI API Key to run a powerful command line agent with a pre-configured set of tools.
+**BondAI** is a truly open-source framework tailored for integrating and customizing Conversational AI Agents. Built on *OpenAI's [function calling support](https://openai.com/blog/function-calling-and-other-api-updates), **BondAI** handles many of the implementation complexities involved in creating a Conversational Agent, including memory management, error handling, integrated semantic search, a powerful set of out of the box tools, as well as the ability to easily create new, custom tools. Additionally, **BondAI** includes a **CLI** interface, enabling anyone with an OpenAI API Key to run a powerful command line agent with a pre-configured set of tools.
 
-*Interested in an agent running on an OSS model (ie Llama 2)? Check out **Plans For Finetuning Llama 2** below!
+*Interested in an agent running on an OSS model (i.e. Llama 2)? Check out **Plans For Finetuning Llama 2** below!
+
+<p align="center">
+<img src="assets/promo.gif" alt="Description or Alt text" style="border-radius: 10px; width: 75%;"  alt="logo">
+</p>
 
 ## Why build BondAI?
 
-I truly believe that AI agents are the future! After a bit of experimentation I was blown away by their ability to problem solve and execute on complex tasks with very little guidance. However, I was also frustrated by much of the existing tooling. I found existing agents unable to complete useful tasks and framework APIs felt unnecessarily complex, making it difficult to optimize the important parts of my agent implementations.
+I truly believe that AI agents are the future! After a bit of experimentation I was blown away by their ability to problem solve and execute on complex tasks with very little guidance. However, I was also frustrated by much of the existing tooling. I found existing agents unable to complete simple tasks and framework APIs felt unnecessarily complex, making it difficult to optimize the important parts of my agent implementations.
 
-I hope you like **BondAI** and [I'd love feedback](mailto:kevin@kevinrohling.com) on whether you think I've managed to solve some of these problems :)
+I hope you like **BondAI** and [I'd love feedback](mailto:kevin@kevinrohling.com) on whether you think I've managed to solve some of these problems and how it could be better :)
 
 ## Installation
 
@@ -116,7 +120,7 @@ Agent(tools=[
 >>bondai
 Welcome to BondAI!
 I have been trained to help you with a variety of tasks.
-To get started, just tell me what task you would like me to help you with.
+To get started, just tell me what task you would like me to help you with. The more descriptive you are, the better I can help you.
 If you would like to exit, just type 'exit'.
 
 What can I help you with today?
@@ -136,6 +140,7 @@ The following arguments can be passed on the command line to change how the **Bo
 - **--enable-dangerous** - Allows potentially dangerous Tools to be loaded (i.e. ShellTool and PythonREPLTool)
 - **--enable-prompt-logging log_dir** - Turns on prompt logging which will write all prompt inputs into the specified directory. If no directory is provided **BondAI** will defaul to *logs* within the current directory.
 - **--load-tools my_tools.py** - If this option is specified no tools will be loaded by default. Instead **BondAI** will load the specified Python file and look for a function named **get_tools()**. This function should return a list of Tools.
+- **--quiet** - Suppress agent output. Unless specified the agent will print detailed information about each step it's taking.
 
 ```bash
 bondai --enable-dangerous --enable-prompt-logging logs --load-tools my_tools.py
@@ -144,12 +149,12 @@ bondai --enable-dangerous --enable-prompt-logging logs --load-tools my_tools.py
 
 
 #### Default CLI Tools
-By default the **bondai** CLI command will automatically load the following tools:
+By default the **BondAI** CLI command will automatically load the following tools:
 - **DuckDuckGoSearchTool** - Allows the model to use DuckDuckGo to search the web.
 - **WebsiteQueryTool** - Allows the model to query content of websites. By default this is delegated to gpt-3.5-16k but if the content is too large for the model's context it will automatically use embeddings and semantic search.
 - **FileQueryTool** - Allows the model to query the content of files. By default this is delegated to gpt-3.5-16k but if the content is too large for the model's context it will automatically use embeddings and semantic search.
 - **DownloadFileTool** - Allows the model to download files locally from the web. This is useful for many research tasks.
-- **FileWriteTool** - Allows the model to write content to files. Thsi is useful for saving work or exporting the results of a research or generation task to a file.
+- **FileWriteTool** - Allows the model to write content to files. This is useful for saving work or exporting the results of a research or generation task to a file.
 
 #### CLI Environment Variables
 
@@ -158,13 +163,13 @@ An OpenAI API Key is required.
 export OPENAI_API_KEY=XXXXXXX
 ```
 
-If the GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables are provided the **bondai** CLI will load the *GoogleSearchTool* instead of the *DuckDuckGoSearchTool*.
+If the GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables are provided the **BondAI** CLI will load the *GoogleSearchTool* instead of the *DuckDuckGoSearchTool*.
 ```bash
 export GOOGLE_API_KEY=XXXXXXX
 export GOOGLE_CSE_ID=XXXXXXX
 ```
 
-If the ALPACA_MARKETS_API_KEY and ALPACA_MARKETS_SECRET_KEY environment variables are provided the **bondai** CLI will load the *CreateOrderTool*, *GetAccountTool*, and *ListPositionsTool*.
+If the ALPACA_MARKETS_API_KEY and ALPACA_MARKETS_SECRET_KEY environment variables are provided the **BondAI** CLI will load the *CreateOrderTool*, *GetAccountTool*, and *ListPositionsTool*.
 
 ```bash
 export ALPACA_MARKETS_API_KEY=XXXXXXX
@@ -173,16 +178,26 @@ export ALPACA_MARKETS_SECRET_KEY=XXXXXXX
 
 #### Gmail Integration
 
-[Check here](https://www.geeksforgeeks.org/how-to-read-emails-from-gmail-using-gmail-api-in-python/) for information on generating a **gmail-token.pickle** file with credentials for accessing your gmail account. If this file is present in the root directory where the **bondai** CLI is running it will load the *ListEmailsTool* and *QueryEmailsTool* tools automatically.
+[Check here](https://www.geeksforgeeks.org/how-to-read-emails-from-gmail-using-gmail-api-in-python/) for information on generating a **gmail-token.pickle** file with credentials for accessing your gmail account. If this file is present in the root directory where the **BondAI** CLI is running it will load the *ListEmailsTool* and *QueryEmailsTool* tools automatically.
 
 #### Langchain Tools
-When the **bondai** CLI starts it will check to see if LangChain is installed. If it is it will automatically load the following LangChain tools:
+When the **BondAI** CLI starts it will check to see if LangChain is installed. If it is it will automatically load the following LangChain tools:
 
 - **ShellTool** - This allows the model to generate and run arbitrary bash commands.
 - **PythonREPLTool** - This allows the model to generate and run arbitrary Python commands.
 
 **Warning: Both of these tools are considered dangerous and require that the --enable_dangerous argument is specified when running starting the CLI. Is is strongly recommended that these are run within a containerized environment.**
 
+
+## Docker Container
+
+It is highly recommended that you run **BondAI** from within a container if you are going to use tools with file system access. Use the following steps below to build and run the **BondAI** container. A directory named 'agent-volume' will be created which will be used as the working directory for execution of the CLI tool on the container.
+
+```bash
+cd docker
+./build-container.sh
+./run-container.sh OPENAI_API_KEY=XXXXX ENV1=XXXX ENV2=XXXX --arg1 --arg2
+```
 
 
 ## APIs
