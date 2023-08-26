@@ -26,11 +26,3 @@ The default branch is called master.
 It contains the latest features, which would be ready for deployment.
 It is not possible to push to it directly.
 Instead, for every feature, a branch should be created, which will then be merged back into main with a pull request.
-
-At some point, a new version can be released.
-To do so, the version number should be entered in the *VERSION* file.
-A release with corresponding release notes can then be generated on GitHub.
-This also automatically triggers a deployment to docker hub.
-
-Semantic versioning is used for releases.
-If the version number contains a `b` (e.g. `1.0.0b1`), a `nightly` image will be released, otherwise the image will be tagged as `latest`. 
