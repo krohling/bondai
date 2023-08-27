@@ -51,7 +51,7 @@ class ResponseQueryTool(Tool):
             text = self.responses[response_id]
             text = semantic_search(self.embedding_model, question, text, 16000)
             prompt = build_prompt(question, text)
-            response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT, model=self.model)[0]
+            response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT, model=self.llm)[0]
             return response
         else:
             return f"{response_id} is not a valid response_id"
