@@ -14,10 +14,6 @@
 
 *Interested in an agent running on an OSS model (i.e. Llama 2)? Check out **Plans For Finetuning Llama 2** below!
 
-<p align="center">
-<img src="assets/promo.gif" alt="Description or Alt text" style="border-radius: 10px; width: 75%;"  alt="logo">
-</p>
-
 ## Why build BondAI?
 
 I truly believe that AI agents are the future! After a bit of experimentation I was blown away by their ability to problem solve and execute on complex tasks with very little guidance. However, I was also frustrated by much of the existing tooling. I found existing agents unable to complete simple tasks and framework APIs felt unnecessarily complex, making it difficult to optimize the important parts of my agent implementations.
