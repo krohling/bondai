@@ -20,6 +20,7 @@ class Tool():
           self.description = description
           self.parameters = parameters
           self.dangerous = dangerous
+          self.exit_agent = False
     
      def get_tool_function(self):
           return {

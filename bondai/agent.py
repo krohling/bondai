@@ -63,7 +63,7 @@ class AgentStep:
         self.function = function
         self.output = None
         self.error = False
-        self.final_answer = False
+        self.exit = False
 
 class BudgetExceededException(Exception):
     pass
@@ -130,7 +130,7 @@ class Agent:
 
                     try:
                         step.output = tool.run(args)
-                        step.final_answer = tool.name == self.final_answer_tool.name
+                        step.exit = tool.exit_agent or tool.name == self.final_answer_tool.name
                         
                         if step.output:
                             if self.llm.count_tokens(step.output) > TOOL_MAX_TOKEN_RESPONSE:
@@ -181,7 +181,7 @@ class Agent:
             if not self.quiet:
                 print(colored("Total Cost:", 'green', attrs=["bold"]), colored('$' + str(round(total_cost, 2)), 'white'))
 
-            if step.final_answer:
+            if step.exit:
                 return step
 
             if self.budget and total_cost >= self.budget:
