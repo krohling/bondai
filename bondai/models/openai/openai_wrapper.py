@@ -1,8 +1,11 @@
+import os
 import json
 import time
 import openai
 import tiktoken
 from .openai_models import MODELS, MODEL_TYPE_LLM
+
+TEMPERATURE = 0.1
 
 embedding_tokens = 0
 embedding_costs = 0.0
@@ -10,6 +13,18 @@ gpt_tokens = 0
 gpt_costs = 0.0
 
 logger = None
+azure_engine = None
+
+def configure_connection():
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    if OPENAI_API_KEY:
+        openai.api_key = OPENAI_API_KEY
+    else:
+        global azure_engine
+        openai.api_key = os.environ.get('AZURE_API_KEY')
+        openai.api_base = os.environ.get('AZURE_API_BASE')
+        openai.api_version = os.environ.get('AZURE_API_VERSION')
+        azure_engine = os.environ.get('AZURE_DEPLOYMENT_NAME')
 
 def enable_logging(model_logger):
     global logger
@@ -119,19 +134,21 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
     while not success:
         try:
             attempts += 1
+            params = { 
+                'messages': messages,
+                'temperature': TEMPERATURE
+            }
+
             if len(functions) > 0:
-                response = openai.ChatCompletion.create(
-                    model=model,
-                    messages=messages,
-                    functions=functions,
-                    temperature=0.1,
-                )
+                params['functions'] = functions
+            if azure_engine:
+                params['engine'] = azure_engine
             else:
-                response = openai.ChatCompletion.create(
-                    model=model,
-                    messages=messages,
-                    temperature=0.1,
-                )
+                params['model'] = model
+
+            response = openai.ChatCompletion.create(
+                **params
+            )
             
             success = True
         except Exception as e:

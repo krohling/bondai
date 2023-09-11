@@ -39,10 +39,20 @@ In Step #{count} you made a mistake and did not specify a function to use. It is
 
 def format_previous_steps(model, previous_steps, max_tokens=None):
     str_work = ''
-    for i, s in enumerate(previous_steps):
-        str_step = format_step(s, i+1)
+    retained_steps = []
+
+    for i,s in enumerate(reversed(previous_steps)):
+        step_num = len(previous_steps)-i
+        str_step = format_step(s, step_num)
         if not max_tokens or model.count_tokens(str_work + str_step) <= max_tokens:
             str_work += str_step
+            retained_steps.append([step_num,s])
         else:
             break
+
+    str_work = ''
+    for s in reversed(retained_steps):
+        str_step = format_step(s[1], s[0])
+        str_work += str_step
+
     return str_work

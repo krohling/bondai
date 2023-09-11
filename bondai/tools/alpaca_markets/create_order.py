@@ -15,8 +15,8 @@ The 'order_type' parameter is optional. It will default to a 'market' order by y
 The 'limit_price' parameter is only required if you specify a 'limit' order.
 The 'time_in_force' parameter is optional. It will default to 'day' but you can also specify 'gtc', 'opg', 'cls', 'ioc', or 'fok'."""
 
-ALPACA_API_KEY = os.environ.get('ALPACA_API_KEY')
-ALPACA_SECRET_KEY = os.environ.get('ALPACA_SECRET_KEY')
+ALPACA_MARKETS_API_KEY = os.environ.get('ALPACA_MARKETS_API_KEY')
+ALPACA_MARKETS_SECRET_KEY = os.environ.get('ALPACA_MARKETS_SECRET_KEY')
 
 class Parameters(BaseModel):
     side: str
@@ -28,7 +28,7 @@ class Parameters(BaseModel):
     thought: str
 
 class CreateOrderTool(Tool):
-    def __init__(self, alpaca_api_key=ALPACA_API_KEY, alpaca_secret_key=ALPACA_SECRET_KEY):
+    def __init__(self, alpaca_api_key=ALPACA_MARKETS_API_KEY, alpaca_secret_key=ALPACA_MARKETS_SECRET_KEY):
         super(CreateOrderTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
     
