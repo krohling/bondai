@@ -6,11 +6,8 @@ import json
 from termcolor import cprint, colored
 from bondai import Agent, BudgetExceededException
 from bondai.models.openai import enable_logging
-from bondai.util import ModelLogger
 from bondai.tools import HumanTool
 from bondai.cli import get_tools, OnboardingTool
-
-# enable_logging(ModelLogger())
 
 if not os.environ.get('OPENAI_API_KEY'):
     cprint(f"Please set the OPENAI_API_KEY environment variable.", 'red')
@@ -55,8 +52,9 @@ IMPORTANT information:
 
 
 REMEMBER: ALWAYS greet the user with a friendly message. Here is an example greeting you can use to get started:
+```
 {WELCOME_TEXT}
-
+```
 
 This is the list of all tools that you have access to:
 {tool_descriptions}

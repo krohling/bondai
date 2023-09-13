@@ -2,11 +2,14 @@
 
 import argparse
 import os
+import json
 from termcolor import cprint, colored
 from bondai import Agent, BudgetExceededException
-from bondai.models.openai import enable_logging
-from bondai.util import ModelLogger
-from bondai.cli import get_tools
+from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613, enable_logging
+from bondai.tools import HumanTool
+from bondai.prompt import DefaultPromptBuilder
+from bondai.util import ModelLogger, load_local_resource
+from bondai.cli import get_tools, OnboardingTool
 
 if not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
@@ -78,39 +81,42 @@ if args.enable_dangerous:
 else:
     tools = [tool for tool in tools if not tool.dangerous]
 
+tool_descriptions = ''.join([f"{tool.name}: {tool.description}\n" for tool in tools])
 
+onboarding_prompt_template = load_local_resource(__file__, 'onboarding_prompt_template.md')
+onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_descriptions)
 
-WELCOME_TEXT = """
-Welcome to BondAI!
-I have been trained to help you with a variety of tasks.
-To get started, just tell me what task you would like me to help you with. The more descriptive you are, the better I can help you.
-If you would like to exit, just type 'exit'.
+def get_task_definition():
+    llm=OpenAILLM(MODEL_GPT4_0613)
+    human_tool = HumanTool()
+    human_tool.description = (
+        "This tool allows you to communicate with the user and ask them questions."
+        "To use this tool just put your question in the 'input' parameter."
+        "Remember to always be friendly and polite!"
+    )
 
-What can I help you with today?
+    onboarding_result = Agent(
+        llm = llm,
+        prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
+        tools=[
+            human_tool,
+            OnboardingTool()
+        ], 
+        quiet=True).run()
 
-"""
-
-def get_task_definition(first_run):
-    if first_run:
-        cprint(WELCOME_TEXT, 'white')
-    task_description = input()
-    print("\n")
-    if task_description == 'exit':
-        return {'user_exit': True}
-    else:
-        return {'task_description': task_description}
-    
+    return json.loads(onboarding_result.output)
 
 def run_task(task_config):
     task_description = task_config['task_description']
     task_budget = task_config.get('task_budget')
     tool_descriptions = ', '.join([f"{tool.name}" for tool in tools])
 
-    print(colored("Getting started on your task.", 'yellow'))
-    print(colored("\nTools I'll be using:\n", 'yellow'), colored(tool_descriptions, 'white'))
-    print(colored("\nDescription of the task:\n", 'yellow'), colored(task_description, 'white'))
+    print(colored("\n\nGetting started on your task.", 'yellow', attrs=["bold"]))
+    print(colored("Tools I'll be using:", 'white', attrs=["bold"]), colored(tool_descriptions, 'white'))
+    print(colored("Description of the task:\n", 'white', attrs=["bold"]), colored(task_description, 'white'))
     if task_budget:
-        print(colored("Budget:", 'yellow'), colored(f"${task_budget}", 'white'))
+        task_budget = int(task_budget)
+        print(colored("Budget:", 'white', attrs=["bold"]), colored(f"${task_budget}", 'white'))
     
     
     agent = Agent(tools=tools, budget=task_budget, quiet=args.quiet, enable_sub_agent=True)
@@ -123,10 +129,8 @@ def run_task(task_config):
 
 
 def main():
-    first_run = True
     while True:
-        task_config = get_task_definition(first_run)
-        first_run = False
+        task_config = get_task_definition()
         if task_config.get('user_exit'):
             break
         run_task(task_config)

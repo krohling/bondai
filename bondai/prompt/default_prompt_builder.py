@@ -1,19 +1,10 @@
-import os
-import pkg_resources
 from datetime import datetime
 from bondai.prompt import PromptBuilder
 from bondai.prompt.steps_formatter import format_previous_steps
+from bondai.util import load_local_resource
 
 DEFAULT_PROMPT_TEMPLATE_FILENAME='default_prompt_template.md'
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-prompt_template_path = os.path.join(current_dir, DEFAULT_PROMPT_TEMPLATE_FILENAME)
-
-if os.path.exists(prompt_template_path):
-    with open(prompt_template_path, 'r') as file:
-        DEFAULT_PROMPT_TEMPLATE = file.read()
-else:
-    DEFAULT_PROMPT_TEMPLATE = pkg_resources.resource_string(__name__, f"prompt/{DEFAULT_PROMPT_TEMPLATE_FILENAME}").decode()
+DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, DEFAULT_PROMPT_TEMPLATE_FILENAME)
 
 class DefaultPromptBuilder(PromptBuilder):
 
