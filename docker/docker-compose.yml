@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  bondai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /agent-volume
+    stdin_open: true
+    tty: true
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../agent-volume:/agent-volume
