@@ -130,7 +130,7 @@ class Agent:
 
                     try:
                         step.output = tool.run(args)
-                        step.exit = tool.exit_agent or tool.name == self.final_answer_tool.name
+                        step.exit = tool.exit_agent or (self.final_answer_tool and tool.name == self.final_answer_tool.name)
                         
                         if step.output:
                             if self.llm.count_tokens(step.output) > TOOL_MAX_TOKEN_RESPONSE:
@@ -169,7 +169,8 @@ class Agent:
         self.previous_steps = []
 
     def run(self, task=''):
-        self.tools = self.tools + [self.final_answer_tool]
+        if self.final_answer_tool:
+            self.tools = self.tools + [self.final_answer_tool]
 
         while True:
             step = self.run_once(task)

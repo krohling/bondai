@@ -23,7 +23,7 @@ def get_tools():
         tool_options.append(GetAccountTool())
         tool_options.append(ListPositionsTool())
     else:
-        cprint("Skipping Alpaca Markets tools because ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables are not set.", "yellow")
+        cprint("Skipping Alpaca Markets tools because ALPACA_MARKETS_API_KEY and ALPACA_MARKETS_SECRET_KEY environment variables are not set.", "yellow")
 
     if os.environ.get('GOOGLE_API_KEY') and os.environ.get('GOOGLE_CSE_ID'):
         tool_options.append(GoogleSearchTool())

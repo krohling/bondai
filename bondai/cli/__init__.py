@@ -1,7 +1,5 @@
-from .default_tools import get_tools
-from .onboarding_tool import OnboardingTool
+from .cli import run_cli
 
 __all__ = [
-    'get_tools',
-    'OnboardingTool'
+    'run_cli'
 ]
