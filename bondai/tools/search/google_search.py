@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 from pydantic import BaseModel
 from bondai.tools.tool import Tool
 
-MAX_RESULT_COUNT = 20
+MAX_RESULT_COUNT = 10
 DEFAULT_RESULT_COUNT = 5
 TOOL_NAME = 'google_search'
 TOOL_DESCRIPTION = "This tool allows you to search Google. Specify your search string in the 'query' parameter and it will return a list that includes the title and url of matched websites."
