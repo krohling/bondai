@@ -1,5 +1,16 @@
+OPENAI_CONNECTION_TYPE_AZURE = 'azure'
+OPENAI_CONNECTION_TYPE_OPENAI = 'openai'
+
 MODEL_TYPE_LLM = 'MODEL_TYPE_LLM'
 MODEL_TYPE_EMBEDDING = 'MODEL_TYPE_EMBEDDING'
+
+MODEL_FAMILY_GPT35 = 'MODEL_FAMILY_GPT_35'
+MODEL_FAMILY_GPT4 = 'MODEL_FAMILY_GPT_4'
+
+MODEL_FAMILIES = [
+    MODEL_FAMILY_GPT35,
+    MODEL_FAMILY_GPT4,
+]
 
 MODEL_GPT4 = 'gpt-4'
 MODEL_GPT4_0613 = 'gpt-4-0613'
@@ -24,42 +35,49 @@ MODEL_NAMES = [
 MODELS = {
     MODEL_GPT4: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT4,
         'max_tokens': 8192,
         'input_price_per_token': 0.00003,
         'output_price_per_token': 0.00006,
     },
     MODEL_GPT4_0613: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT4,
         'max_tokens': 8192,
         'input_price_per_token': 0.00003,
         'output_price_per_token': 0.00006,
     },
     MODEL_GPT4_32K: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT4,
         'max_tokens': 32768,
         'input_price_per_token': 0.00006,
         'output_price_per_token': 0.00012,
     },
     MODEL_GPT35_TURBO: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT35,
         'max_tokens': 4096 ,
         'input_price_per_token': 0.0000015,
         'output_price_per_token': 0.000002,
     },
     MODEL_GPT35_TURBO_16K: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT35,
         'max_tokens': 16384 ,
         'input_price_per_token': 0.000003,
         'output_price_per_token': 0.000004,
     },
     MODEL_GPT35_TURBO_0613: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT35,
         'max_tokens': 4096 ,
         'input_price_per_token': 0.0000015,
         'output_price_per_token': 0.000002,
     },
     MODEL_GPT35_TURBO_16K_0613: {
         'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT35,
         'max_tokens': 16384 ,
         'input_price_per_token': 0.000003,
         'output_price_per_token': 0.000004,

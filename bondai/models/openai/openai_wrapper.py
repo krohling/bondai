@@ -13,18 +13,6 @@ gpt_tokens = 0
 gpt_costs = 0.0
 
 logger = None
-azure_engine = None
-
-def configure_connection():
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-    if OPENAI_API_KEY:
-        openai.api_key = OPENAI_API_KEY
-    else:
-        global azure_engine
-        openai.api_key = os.environ.get('AZURE_API_KEY')
-        openai.api_base = os.environ.get('AZURE_API_BASE')
-        openai.api_version = os.environ.get('AZURE_API_VERSION')
-        azure_engine = os.environ.get('AZURE_DEPLOYMENT_NAME')
 
 def enable_logging(model_logger):
     global logger
@@ -96,7 +84,7 @@ def create_embedding(text, model="text-embedding-ada-002"):
             time.sleep(5)
             tries += 1
 
-def get_completion(prompt, system_prompt='', previous_messages=[], functions=[], model='gpt-4'):
+def get_completion(prompt, system_prompt='', previous_messages=[], functions=[], model='gpt-4', connection_params={}):
     global logger
     prompt_log = ''
     messages = []
@@ -141,13 +129,12 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
 
             if len(functions) > 0:
                 params['functions'] = functions
-            if azure_engine:
-                params['engine'] = azure_engine
-            else:
+            if 'engine' not in connection_params:
                 params['model'] = model
 
             response = openai.ChatCompletion.create(
-                **params
+                **params,
+                **connection_params
             )
             
             success = True
@@ -169,7 +156,9 @@ def get_completion(prompt, system_prompt='', previous_messages=[], functions=[],
                 })
             except json.decoder.JSONDecodeError:
                 pass
-        return message["content"], function
+        
+        content = message["content"] if 'content' in message else ''
+        return content, function
     else:
         if logger:
             logger.log(prompt_log, message["content"])

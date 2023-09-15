@@ -5,14 +5,20 @@ import os
 import json
 from termcolor import cprint, colored
 from bondai import Agent, BudgetExceededException
-from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613, enable_logging
+from bondai.models.openai import (
+    OpenAILLM, 
+    MODEL_GPT4_0613, 
+    enable_logging,
+    OPENAI_CONNECTION_TYPE,
+    OPENAI_CONNECTION_TYPE_OPENAI,
+)
 from bondai.tools import HumanTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.util import ModelLogger, load_local_resource
 from .default_tools import get_tools
 from .onboarding_tool import OnboardingTool
 
-if not os.environ.get('OPENAI_API_KEY'):
+if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
     user_input = input()
     if user_input == 'exit':
@@ -113,7 +119,7 @@ def run_task(task_config):
     tool_descriptions = ', '.join([f"{tool.name}" for tool in tools])
 
     print(colored("\n\nGetting started on your task.", 'yellow', attrs=["bold"]))
-    print(colored("Tools I'll be using:", 'white', attrs=["bold"]), colored(tool_descriptions, 'white'))
+    print(colored("Available tools:", 'white', attrs=["bold"]), colored(tool_descriptions, 'white'))
     print(colored("Description of the task:\n", 'white', attrs=["bold"]), colored(task_description, 'white'))
     if task_budget:
         task_budget = int(task_budget)
