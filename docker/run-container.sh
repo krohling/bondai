@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# ./run-container.sh OPENAI_API_KEY=#######
+
 HOST_VOLUME_DIR="$(pwd)/agent-volume"
 CONTAINER_VOLUME_DIR="/agent-volume"
 
