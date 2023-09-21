@@ -3,6 +3,9 @@
 </p>
 
 <p align="center">
+    <a href="https://discord.gg/WZEdaZUn" target="_blank">
+			<img src="https://img.shields.io/static/v1?label=Join&message=%20discord!&color=mediumslateblue">
+		</a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
     <img src="https://img.shields.io/pypi/v/bondai" alt="PyPI">
 </p>
