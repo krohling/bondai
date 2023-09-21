@@ -8,4 +8,4 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip3 install --no-cache bondai langchain
 
-CMD ["bondai"]
+CMD ["bondai", "--enable-dangerous"]
