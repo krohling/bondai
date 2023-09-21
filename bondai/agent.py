@@ -70,7 +70,7 @@ class BudgetExceededException(Exception):
 
 class Agent:
 
-    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, budget=None, quiet=False, enable_sub_agent=False):
+    def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, quiet=False, enable_sub_agent=False):
         if not prompt_builder:
             self.prompt_builder = DefaultPromptBuilder(llm)
         else:
@@ -80,12 +80,12 @@ class Agent:
             tools.append(AgentTool(tools=tools, llm=llm))
         
         self.previous_steps = []
+        self.previous_messages = []
         self.response_query_tool = ResponseQueryTool()
         self.tools = tools
         self.llm = llm
         self.fallback_llm = fallback_llm
         self.final_answer_tool = final_answer_tool
-        self.budget = budget
         self.quiet = quiet
     
     def run_once(self, task=''):
@@ -96,10 +96,34 @@ class Agent:
         prompt = self.prompt_builder.build_prompt(task, tools, self.previous_steps)
         functions = list(map(lambda t: t.get_tool_function(), tools))
 
-        message, function = self.llm.get_completion(prompt, '', [], functions)
+        use_streaming = self.llm.supports_streaming() and any([t.supports_streaming for t in self.tools])
+        if use_streaming:
+            def function_stream_callback(function_name, arguments_buffer):
+                streaming_tools = [t for t in self.tools if t.name == function_name and t.supports_streaming]
+                if len(streaming_tools) > 0:
+                    tool = streaming_tools[0]
+                    tool.handle_stream_update(arguments_buffer)
+            
+            message, function = self.llm.get_streaming_completion(
+                prompt, 
+                previous_messages=self.previous_messages, 
+                functions=functions, 
+                function_stream_callback=function_stream_callback
+            )
+        else:
+            message, function = self.llm.get_completion(
+                prompt, 
+                previous_messages=self.previous_messages, 
+                functions=functions
+            )
 
         if not function:
-            message, function = self.fallback_llm.get_completion(message, system_prompt='Select the correct function and parameters to use based on the prompt', previous_messages=[], functions=functions)
+            message, function = self.fallback_llm.get_completion(
+                message, 
+                system_prompt='Select the correct function and parameters to use based on the prompt', 
+                previous_messages=[], 
+                functions=functions
+            )
 
         if not function and not self.quiet:
             cprint(f"No function was selected.", 'red')
@@ -112,9 +136,7 @@ class Agent:
                 tool = tools[0]
                 
                 try:
-                    args = {}
-                    if 'arguments' in function:
-                        args = json.loads(function['arguments'])
+                    args = function['arguments'] if 'arguments' in function else {}
                     
                     if not self.quiet:
                         cprint(f"\n\nUsing the {tool.name} tool", 'yellow', attrs=["bold"])
@@ -142,7 +164,7 @@ class Agent:
                         if not self.quiet:
                             print(colored("Output:", 'white', attrs=["bold"]), colored(format_print_string(step.output), 'white'))
                     except Exception as e:
-                        # traceback.print_exc()
+                        traceback.print_exc()
                         if not self.quiet:
                             cprint(f"An Error occured: {e}", 'red', attrs=["bold"])
                         step.error = True
@@ -168,7 +190,7 @@ class Agent:
     def reset_memory(self):
         self.previous_steps = []
 
-    def run(self, task=''):
+    def run(self, task='', task_budget=None):
         if self.final_answer_tool:
             self.tools = self.tools + [self.final_answer_tool]
 
@@ -183,9 +205,12 @@ class Agent:
                 print(colored("Total Cost:", 'green', attrs=["bold"]), colored('$' + str(round(total_cost, 2)), 'white'))
 
             if step.exit:
+                self.previous_messages.append({
+                    'prompt': task,
+                    'response': step.output
+                })
                 return step
 
-            if self.budget and total_cost >= self.budget:
+            if task_budget and total_cost >= task_budget:
                 raise BudgetExceededException("The budget for this task has been reached without successfully finishing.")
-
-
+    

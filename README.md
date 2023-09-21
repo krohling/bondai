@@ -207,10 +207,9 @@ The Agent module provides a flexible interface for agents to interact with diffe
 - *llm* (default=MODEL_GPT4_0613): The primary model used by the Agent.
 - *fallback_llm* (default=MODEL_GPT35_TURBO_0613): Secondary model the Agent falls back on when an appropriate response was not received by the primary model.
 - *final_answer_tool* (default=DEFAULT_FINAL_ANSWER_TOOL): Tool that provides the final answer/response back to the user.
-- *budget* (default=None): The Agent will keep track of the cost for all API calls made to OpenAI. If this budget is exceeded the Agent will raise a BudgetExceededException.
 - *quiet* (default=False): If true, the Agent will suppress most print messages.
 
-**run(task=''):** Continuously runs the agent until a final answer is received or the budget is exceeded.
+**run(task='', task_budget=None):** Continuously runs the agent until the task is completed or the budget is exceeded. The Agent will keep track of the cost for all API calls made to OpenAI. If this budget is exceeded the Agent will raise a BudgetExceededException.
 **run_once(task=''):** Executes a single step of the agent's process. Returns an instance of AgentStep.
 **reset_memory():** Clears the agent's memory of previous steps.
 

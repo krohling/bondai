@@ -12,10 +12,11 @@ class AgentTool(Tool):
         if agent:
             self.agent = agent
         else:
-            self.agent = Agent(prompt_builder, tools=tools, llm=llm)
+            self.agent = Agent(prompt_builder=prompt_builder, tools=tools, llm=llm)
     
     def run(self, arguments):
         agent_prompt = arguments['input']
+        
         if isinstance(agent_prompt, list):
             output = ''
             for i,p in enumerate(agent_prompt):
@@ -24,4 +25,6 @@ class AgentTool(Tool):
             
             return output
         else:
-            return self.agent.run(agent_prompt).output
+            result = self.agent.run(agent_prompt).output
+            self.agent.reset_memory()
+            return result

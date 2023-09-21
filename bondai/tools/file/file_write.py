@@ -2,11 +2,16 @@ from pydantic import BaseModel
 from bondai.tools import Tool
 
 TOOL_NAME = 'file_write'
-TOOL_DESCRIPTION = "This tool will overwrite the contents of a file with the text you specify. Just specify the filename of the file using the 'filename' parameter and the text you would like to write to the file with the 'text' parameter."
+TOOL_DESCRIPTION = (
+    "This tool will save the data you provide in the 'text' parameter of this tool to a file."
+    "You MUST specify the filename of the file you want to save using the 'filename' parameter."
+    "You can optionally specify the 'append' parameter to append the 'text' to the file instead of overwriting it."
+)
 
 class Parameters(BaseModel):
     filename: str
     text: str
+    append: bool = False
     thought: str
 
 class FileWriteTool(Tool):
@@ -22,7 +27,8 @@ class FileWriteTool(Tool):
         if text is None:
             raise Exception('text is required')
 
-        with open(filename, 'w') as f:
+        mode = 'a' if arguments.get('append') else 'w'
+        with open(filename, mode) as f:
             f.write(text)
             return f"File {filename} written successfully"
 

@@ -11,7 +11,7 @@ from bondai.models.openai import (
 
 TOOL_NAME = 'file_query'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a file. Use the provided information to answer the user's QUESTION at the very end."
-TOOL_DESCRIPTION = "This tool allows you to ask a question about the text content of any file including summarization. Just specify the filename of the file using the 'filename' parameter and specify your question using the 'question' parameter."
+TOOL_DESCRIPTION = "This tool allows you to ask a question about the text content of any file including summarization. This tool works for text files, html files and PDFs. Just specify the filename of the file using the 'filename' parameter and specify your question using the 'question' parameter."
 
 def is_pdf(filename):
     with open(filename, 'rb') as file:
@@ -65,7 +65,10 @@ class FileQueryTool(Tool):
         if is_html(text):
             text = get_html_text(text)
 
-        text = semantic_search(self.embedding_model, question, text, 16000)
+        system_prompt_tokens = self.llm.count_tokens(QUERY_SYSTEM_PROMPT)
+        prompt_template_tokens = self.llm.count_tokens(build_prompt('', question))
+        max_tokens = self.llm.get_max_tokens() - system_prompt_tokens - prompt_template_tokens - 50
+        text = semantic_search(self.embedding_model, question, text, max_tokens)
         prompt = build_prompt(question, text)
         response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
 

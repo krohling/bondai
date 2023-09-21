@@ -12,7 +12,7 @@ from bondai.models.openai import (
     OPENAI_CONNECTION_TYPE,
     OPENAI_CONNECTION_TYPE_OPENAI,
 )
-from bondai.tools import HumanTool
+from bondai.tools import Tool, HumanTool, AgentTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.util import ModelLogger, load_local_resource
 from .default_tools import get_tools
@@ -93,51 +93,43 @@ tool_descriptions = ''.join([f"{tool.name}: {tool.description}\n" for tool in to
 onboarding_prompt_template = load_local_resource(__file__, 'onboarding_prompt_template.md')
 onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_descriptions)
 
-def get_task_definition():
-    llm=OpenAILLM(MODEL_GPT4_0613)
-    human_tool = HumanTool()
-    human_tool.description = (
-        "This tool allows you to communicate with the user and ask them questions."
-        "To use this tool just put your question in the 'input' parameter."
-        "Remember to always be friendly and polite!"
-    )
+llm=OpenAILLM(MODEL_GPT4_0613)
+human_tool = HumanTool()
+human_tool.description = (
+    "This tool allows you to communicate with the user and ask them questions."
+    "To use this tool just put your question in the 'input' parameter."
+    "Remember to always be friendly and polite!"
+)
 
-    onboarding_result = Agent(
-        llm = llm,
-        prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
-        tools=[
-            human_tool,
-            OnboardingTool()
-        ], 
-        quiet=True).run()
+task_agent = Agent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
+task_agent_tool = AgentTool(task_agent)
+task_agent_tool.description = (
+    "This tool allows you to use the BondAI Agent to solve the user's task."
+    "To use this tool you must include your thoughtful, highly detailed task description in the 'input' parameter."
+    "Your task description MUST be highly detailed and include ALL information useful for solving the user's task."
+    "The Agent will then attempt to complete the task."
+)
 
-    return json.loads(onboarding_result.output)
+exit_tool = Tool('exit_tool', (
+    "This tool allows you to exit the BondAI CLI."
+    'You MUST call this tool if the user wants to exit the application.'
+    'Do not use this tool unless the user says they want to exit the application.'
+))
 
-def run_task(task_config):
-    task_description = task_config['task_description']
-    task_budget = task_config.get('task_budget')
-    tool_descriptions = ', '.join([f"{tool.name}" for tool in tools])
-
-    print(colored("\n\nGetting started on your task.", 'yellow', attrs=["bold"]))
-    print(colored("Available tools:", 'white', attrs=["bold"]), colored(tool_descriptions, 'white'))
-    print(colored("Description of the task:\n", 'white', attrs=["bold"]), colored(task_description, 'white'))
-    if task_budget:
-        task_budget = int(task_budget)
-        print(colored("Budget:", 'white', attrs=["bold"]), colored(f"${task_budget}", 'white'))
-    
-    
-    agent = Agent(tools=tools, budget=task_budget, quiet=args.quiet, enable_sub_agent=True)
-    try:
-        result = agent.run(task_description)
-        print(colored("\n\nYour task has been completed.", 'yellow'))
-        cprint(f"{result.output}\n", 'white')
-    except BudgetExceededException as e:
-        cprint(f"\n\nThe budget for this task has been exceeded and will stop.\n", 'red')
+cli_agent = Agent(
+    llm = llm,
+    prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
+    final_answer_tool=exit_tool,
+    tools=[
+        human_tool,
+        task_agent_tool
+    ], 
+    quiet=True
+)
 
 
 def run_cli():
-    while True:
-        task_config = get_task_definition()
-        if task_config.get('user_exit'):
-            break
-        run_task(task_config)
+    try:
+        cli_agent.run()
+    except BudgetExceededException as e:
+        cprint(f"\n\nThe budget for this task has been exceeded and will stop.\n", 'red')

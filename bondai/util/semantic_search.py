@@ -1,9 +1,13 @@
 import nltk
+import time
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 nltk.download("punkt", quiet=True)
 
+EMBED_BATCH_SIZE = 16
 MAX_EMBED_TOKENS = 250
+MAX_EMBED_WORKERS = 5
 SENTENCE_CONCAT_COUNT = 4
 
 def cosine_similarity(vec1, vec2):
@@ -59,20 +63,27 @@ def semantic_search(embedding_model, query, text, max_tokens):
     results = []
     sentences = split_text(embedding_model, text, MAX_EMBED_TOKENS)
     query_embedding = embedding_model.create_embedding(query)
-
-    for i,s in enumerate(sentences):
-        try:
-            s_embedding = embedding_model.create_embedding(s)
-            similarity = cosine_similarity(query_embedding, s_embedding)
-
-            results.append({
-                "sentence": s,
-                "similarity": similarity,
-                "order": i
-            })
-        except Exception as e:
-            print(e)
     
+    # Split the sentences into batches of up to 16 sentences
+    sentence_batches = [sentences[i:i+EMBED_BATCH_SIZE] for i in range(0, len(sentences), EMBED_BATCH_SIZE)]
+
+    # Parallelize the calls to create_embedding using ThreadPoolExecutor
+    with ThreadPoolExecutor(MAX_EMBED_WORKERS) as executor:
+        future_to_batch = {executor.submit(embedding_model.create_embedding, batch): batch for batch in sentence_batches}
+        for future in as_completed(future_to_batch):
+            batch = future_to_batch[future]
+            try:
+                batch_embeddings = future.result()
+                for s, s_embedding in zip(batch, batch_embeddings):
+                    similarity = cosine_similarity(query_embedding, s_embedding)
+                    results.append({
+                        "sentence": s,
+                        "similarity": similarity,
+                        "order": sentences.index(s)
+                    })
+            except Exception as e:
+                print(e)
+
     results.sort(key=lambda x: x['similarity'], reverse=True)
 
     filtered = []
