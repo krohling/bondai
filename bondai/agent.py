@@ -68,6 +68,9 @@ class AgentStep:
 class BudgetExceededException(Exception):
     pass
 
+class MaxStepsExceededException(Exception):
+    pass
+
 class Agent:
 
     def __init__(self, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613), fallback_llm=OpenAILLM(MODEL_GPT35_TURBO_0613), final_answer_tool=DEFAULT_FINAL_ANSWER_TOOL, quiet=False, enable_sub_agent=False):
@@ -190,11 +193,13 @@ class Agent:
     def reset_memory(self):
         self.previous_steps = []
 
-    def run(self, task='', task_budget=None):
+    def run(self, task='', task_budget=None, max_steps=None):
         if self.final_answer_tool:
             self.tools = self.tools + [self.final_answer_tool]
 
+        step_counter = 0
         while True:
+            step_counter += 1
             step = self.run_once(task)
 
             if step.function or len(self.previous_steps) == 0 or self.previous_steps[-1].function:
@@ -213,4 +218,6 @@ class Agent:
 
             if task_budget and total_cost >= task_budget:
                 raise BudgetExceededException("The budget for this task has been reached without successfully finishing.")
+            if max_steps and step_counter >= max_steps:
+                raise MaxStepsExceededException("The maximum number of steps has been reached without successfully finishing.")
     
