@@ -1,4 +1,5 @@
 *.DS_Store
+response_query_storage
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

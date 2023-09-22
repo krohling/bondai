@@ -5,6 +5,7 @@ from bondai.tools.alpaca_markets import CreateOrderTool, GetAccountTool, ListPos
 from bondai.tools.file import FileQueryTool, FileWriteTool
 from bondai.tools.gmail import ListEmailsTool, QueryEmailsTool
 from bondai.tools.search import GoogleSearchTool, DuckDuckGoSearchTool
+from bondai.tools.database import DatabaseQueryTool
 from bondai.tools.website import (
     DownloadFileTool,
     WebsiteQueryTool,
@@ -30,6 +31,11 @@ def get_tools():
     else:
         tool_options.append(DuckDuckGoSearchTool())
         cprint("Skipping Google Search tool because GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables are not set.", "yellow")
+
+    if os.environ.get('PG_URI') or os.environ.get('PG_HOST'):
+        tool_options.append(DatabaseQueryTool())
+    else:
+        cprint("Skipping Database tools because PG_URI and PG_HOST environment variables are not set. One of these must be set to enable Database connectivity.", "yellow")
 
     if 'gmail-token.pickle' in os.listdir():
         tool_options.append(ListEmailsTool())

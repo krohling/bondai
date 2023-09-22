@@ -164,7 +164,7 @@ class Agent:
                         if not self.quiet:
                             print(colored("Output:", 'white', attrs=["bold"]), colored(format_print_string(step.output), 'white'))
                     except Exception as e:
-                        traceback.print_exc()
+                        # traceback.print_exc()
                         if not self.quiet:
                             cprint(f"An Error occured: {e}", 'red', attrs=["bold"])
                         step.error = True
