@@ -16,7 +16,6 @@ from bondai.tools import Tool, HumanTool, AgentTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.util import ModelLogger, load_local_resource
 from .default_tools import get_tools
-from .onboarding_tool import OnboardingTool
 
 if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
