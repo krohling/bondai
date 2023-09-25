@@ -5,6 +5,10 @@ import os
 import json
 from termcolor import cprint, colored
 from bondai import Agent, BudgetExceededException
+from bondai.tools import Tool, HumanTool, AgentTool
+from bondai.prompt import DefaultPromptBuilder
+from bondai.util import ModelLogger, load_local_resource
+from bondai.api import BondAIAPIServer, ConversationTool
 from bondai.models.openai import (
     OpenAILLM, 
     MODEL_GPT4_0613, 
@@ -12,10 +16,9 @@ from bondai.models.openai import (
     OPENAI_CONNECTION_TYPE,
     OPENAI_CONNECTION_TYPE_OPENAI,
 )
-from bondai.tools import Tool, HumanTool, AgentTool
-from bondai.prompt import DefaultPromptBuilder
-from bondai.util import ModelLogger, load_local_resource
+
 from .default_tools import get_tools
+from .cli_agent_wrapper import CLIAgentWrapper
 
 if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
@@ -32,6 +35,12 @@ if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.ge
 cprint(f"Loading BondAI...", 'white')
 
 parser = argparse.ArgumentParser(description="BondAI CLI tool options")
+
+parser.add_argument('--server', 
+                    nargs='?', 
+                    const='5000', 
+                    metavar='server_port',
+                    help='Starts the BondAI web server. If no port is specified, defaults to 5000.')
 
 parser.add_argument('--enable-dangerous', 
                     action='store_true', 
@@ -93,12 +102,6 @@ onboarding_prompt_template = load_local_resource(__file__, 'onboarding_prompt_te
 onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_descriptions)
 
 llm=OpenAILLM(MODEL_GPT4_0613)
-human_tool = HumanTool()
-human_tool.description = (
-    "This tool allows you to communicate with the user and ask them questions."
-    "To use this tool just put your question in the 'input' parameter."
-    "Remember to always be friendly and polite!"
-)
 
 task_agent = Agent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
 task_agent_tool = AgentTool(task_agent)
@@ -111,26 +114,48 @@ task_agent_tool.description = (
     "The user will not be able to see the Agent's work unless you show them the results using the human_tool."
 )
 
+human_tool = HumanTool()
+human_tool.description = (
+    "This tool allows you to communicate with the user and ask them questions."
+    "To use this tool just put your question in the 'input' parameter."
+    "Remember to always be friendly and polite!"
+)
+
 exit_tool = Tool('exit_tool', (
     "This tool allows you to exit the BondAI CLI."
     'You MUST call this tool if the user wants to exit the application.'
     'Do not use this tool unless the user says they want to exit the application.'
 ))
 
-cli_agent = Agent(
-    llm = llm,
-    prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
-    final_answer_tool=exit_tool,
-    tools=[
-        human_tool,
-        task_agent_tool
-    ], 
-    quiet=True
-)
-
 
 def run_cli():
     try:
-        cli_agent.run()
+        if args.server:
+            port = int(args.server)
+            api_agent = Agent(
+                llm = llm,
+                prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
+                tools=[task_agent_tool],
+                final_answer_tool=None,
+            )
+            agent_wrapper = CLIAgentWrapper(api_agent, task_agent, tools)
+            server = BondAIAPIServer(agent_wrapper=agent_wrapper, port=port)
+
+            conversational_tool = ConversationTool(server.socketio)
+            api_agent.add_tool(conversational_tool)
+
+            server.run()
+        else:
+            cli_agent = Agent(
+                llm = llm,
+                prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
+                final_answer_tool=exit_tool,
+                tools=[
+                    human_tool,
+                    task_agent_tool
+                ], 
+                quiet=True
+            )
+            cli_agent.run()
     except BudgetExceededException as e:
         cprint(f"\n\nThe budget for this task has been exceeded and will stop.\n", 'red')
