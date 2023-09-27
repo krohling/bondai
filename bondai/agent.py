@@ -25,35 +25,6 @@ def format_print_string(s, length=100):
         return s
     return s[:length - 3] + "..."
 
-def load_alternative_function(llm, function, options):
-    args = {}
-    thought = ''
-    if 'arguments' in function:
-        try:
-            args = json.loads(function['arguments'])
-            if 'thought' in args:
-                thought = "Thought: " + args['thought'] + "\n"
-        except:
-            pass
-    
-    function_descriptions = '\n'.join([f"{tool['name']: {tool['description']}}" for tool in options])
-    prompt = f"""An AI agent is attempting to use a function that does not exist. Please determine if one of the options provided is a good alternative.
-Incorrect Function: {function['name']}
-{thought}
-
-VERY IMPORTANT:
-- If none of the options is a match simpley return "NO MATCH" as the output.
-
-Options:
-id: description
-{function_descriptions}
-"""
-    _, new_function = llm.get_completion(prompt, options)
-
-    result = next((f for f in options if f.name == new_function['name']), None)
-
-    return result
-
 
 class AgentStep:
 
