@@ -6,7 +6,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="bondai",
-    version="0.2.15",
+    version="0.2.16",
     description="An AI-powered console assistant with a versatile API for seamless integration into applications.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
