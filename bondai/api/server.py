@@ -10,7 +10,7 @@ class BondAIAPIError(Exception):
     pass
 
 class BondAIAPIServer:
-    def __init__(self, agent=None, tools=None, agent_wrapper=None, port=5000):
+    def __init__(self, agent=None, tools=None, agent_wrapper=None, port=2663):
         if agent_wrapper:
             self.agent_wrapper = agent_wrapper
         elif agent and tools:

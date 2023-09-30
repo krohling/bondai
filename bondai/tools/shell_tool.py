@@ -5,9 +5,9 @@ from queue import Queue
 from pydantic import BaseModel
 from bondai.tools import Tool
 
-TOOL_NAME = 'terminal_command'
+TOOL_NAME = 'shell_tool'
 TOOL_DESCRIPTION = (
-    "This tool allows you to execute terminal commands. "
+    "This tool allows you to execute shell commands. "
     "Specify your command in the 'command' parameter and it will return the result. "
     "Note that this tool only accepts a single string argument ('command') at a time and does not accept a list of commands."
 )
@@ -16,9 +16,9 @@ class Parameters(BaseModel):
     command: str
     thought: str
 
-class TerminalTool(Tool):
+class ShellTool(Tool):
     def __init__(self):
-        super(TerminalTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
+        super(ShellTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
 
     def run(self, arguments):
         cmd = arguments.get('command')

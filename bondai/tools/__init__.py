@@ -3,7 +3,7 @@ from .human_tool import HumanTool
 from .agent_tool import AgentTool
 from .dalle_tool import DalleTool
 from .python_repl_tool import PythonREPLTool
-from .terminal_tool import TerminalTool
+from .shell_tool import ShellTool
 from .langchain_tool import LangChainTool
 from .response_query import ResponseQueryTool
 
@@ -12,7 +12,7 @@ __all__ = [
     "AgentTool",
     "DalleTool",
     "PythonREPLTool",
-    "TerminalTool",
+    "ShellTool",
     "EmptyParameters",
     "InputParameters",
     "HumanTool",

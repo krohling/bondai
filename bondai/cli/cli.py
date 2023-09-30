@@ -38,7 +38,7 @@ parser = argparse.ArgumentParser(description="BondAI CLI tool options")
 
 parser.add_argument('--server', 
                     nargs='?', 
-                    const='5000', 
+                    const='2663', 
                     metavar='server_port',
                     help='Starts the BondAI web server. If no port is specified, defaults to 5000.')
 

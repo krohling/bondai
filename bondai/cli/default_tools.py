@@ -1,7 +1,7 @@
 import os
 from termcolor import cprint
 from .langchain_tools import build_langchain_tools, is_langchain_installed
-from bondai.tools import DalleTool, PythonREPLTool, TerminalTool
+from bondai.tools import DalleTool, PythonREPLTool, ShellTool
 from bondai.tools.alpaca_markets import CreateOrderTool, GetAccountTool, ListPositionsTool
 from bondai.tools.file import FileQueryTool, FileWriteTool
 from bondai.tools.gmail import ListEmailsTool, QueryEmailsTool
@@ -21,7 +21,7 @@ def get_tools():
         WebsiteQueryTool(),
         DalleTool(),
         PythonREPLTool(),
-        TerminalTool(),
+        ShellTool(),
     ]
 
     if os.environ.get('ALPACA_MARKETS_API_KEY') and os.environ.get('ALPACA_MARKETS_SECRET_KEY'):
@@ -52,13 +52,6 @@ def get_tools():
         tool_options.append(QueryEmailsTool())
     else:
         cprint("Skipping Gmail tools because gmail-token.pickle file is not present.", "yellow")
-    
-    # if is_langchain_installed():
-    #     cprint("Loading LangChain tools...", "yellow")
-    #     langchain_tools = build_langchain_tools()
-    #     for t in langchain_tools:
-    #         tool_options.append(t)
-    #     cprint("Done loading LangChain tools", "yellow")
 
     return tool_options
 
