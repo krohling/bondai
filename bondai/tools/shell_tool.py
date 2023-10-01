@@ -22,13 +22,8 @@ class ShellTool(Tool):
 
     def run(self, arguments):
         cmd = arguments.get('command')
-
         if cmd is None:
-            return 'Error: command is required'
-
-        # Check for harmful patterns
-        if self.is_harmful(cmd):
-            return 'Error: Harmful command or pattern detected'
+            raise Exception("'command' parameter is required")
 
         stdout, stderr = self.execute_command(cmd)
         
@@ -45,7 +40,6 @@ class ShellTool(Tool):
         if not response:
             response = "Command executed successfully. No output."
 
-        print(response)
         return response
 
     def execute_command(self, cmd):
@@ -69,19 +63,3 @@ class ShellTool(Tool):
         stdout, stderr = q.get()  # Get the result from the queue
 
         return stdout.decode('utf-8'), stderr.decode('utf-8')
-
-    def is_harmful(self, cmd):
-        # Simple checks for potentially harmful patterns. This should be more exhaustive!
-        harmful_patterns = [
-            'sudo',
-            'dd if=',
-            'mkfs.',
-            '> /dev/',
-            'shutdown',
-            'reboot',
-            'passwd'
-        ]
-        for pattern in harmful_patterns:
-            if pattern in cmd:
-                return True
-        return False

@@ -16,20 +16,21 @@ class Parameters(BaseModel):
     thought: str
 
 class PythonREPLTool(Tool):
-    def __init__(self):
+    def __init__(self, execution_timeout=30):
         super(PythonREPLTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
+        self.execution_timeout = execution_timeout
     
     def run(self, arguments):
         code = arguments.get('code')
 
         if code is None:
-            return 'Error: code is required'
-
-        # Check for harmful patterns
-        if self.is_harmful(code):
-            return 'Error: Harmful patterns detected in code'
+            raise Exception("'code' parameter is required")
 
         result, stdout, stderr = self.execute_code(code)
+
+        print("result:", result)
+        print("stdout:", stdout)
+        print("stderr:", stderr)
         
         response = ""
         
@@ -48,24 +49,31 @@ class PythonREPLTool(Tool):
 
         if not response:
             response = "Code executed successfully. No output or result variables."
-
-        print(response)
+        
         return response
     
     def execute_code(self, code):
         # Capture stdout and stderr
+        thread_exception = None
         stdout_io = io.StringIO()
         stderr_io = io.StringIO()
 
         # Use threading to enforce timeout
         def target(local_vars, code):
-            with redirect_stdout(stdout_io), redirect_stderr(stderr_io):
-                exec(code, {}, local_vars)
+            nonlocal thread_exception
+            try:
+                with redirect_stdout(stdout_io), redirect_stderr(stderr_io):
+                    exec(code, {}, local_vars)
+            except Exception as e:
+                thread_exception = e
         
         local_vars = {}
         thread = threading.Thread(target=target, args=(local_vars, code))
         thread.start()
-        thread.join(timeout=5)  # 5 seconds timeout
+        thread.join(timeout=self.execution_timeout)
+
+        if thread_exception:
+            raise thread_exception
         
         if thread.is_alive():
             thread.join()  # Ensure it's stopped
@@ -75,36 +83,4 @@ class PythonREPLTool(Tool):
         stderr = stderr_io.getvalue()
 
         return local_vars, stdout, stderr
-
-    def is_harmful(self, code):
-        # Simple checks for potentially harmful patterns. This should be more exhaustive!
-        harmful_patterns = [
-            'import os',
-            'import sys',
-            'open(',
-            '__import__(',
-            'exec(',
-            'eval('
-        ]
-        for pattern in harmful_patterns:
-            if pattern in code:
-                return True
-        return False
-
-# Modular extension to allow imports (example)
-class AdvancedPythonREPLTool(PythonREPLTool):
-    def __init__(self):
-        super(AdvancedPythonREPLTool, self).__init__()
-
-    def allowed_imports(self):
-        # Example allowed imports; this list can be expanded as needed
-        return ['math', 'datetime']
-    
-    def is_harmful(self, code):
-        # Check if the code tries to import a non-allowed module
-        if 'import' in code:
-            for module in self.allowed_imports():
-                if f"import {module}" in code:
-                    code = code.replace(f"import {module}", "")
-        return super().is_harmful(code)
 
