@@ -188,15 +188,37 @@ When the **BondAI** CLI starts it will check to see if LangChain is installed. I
 **Warning: Both of these tools are considered dangerous and require that the --enable_dangerous argument is specified when running starting the CLI. Is is strongly recommended that these are run within a containerized environment.**
 
 
-## Docker Container
+## Docker
 
-It is highly recommended that you run **BondAI** from within a container if you are going to use tools with file system access. Use the following steps below to build and run the **BondAI** container. A directory named 'agent-volume' will be created which will be used as the working directory for execution of the CLI tool on the container.
+It is highly recommended that you run **BondAI** from within a container if you are going to use tools with file system access. There's two options for running Docker. From the command line (Docker CLI); or via a Docker Compose file (docker-compose.yml). 
+
+> If you use Windows, download Docker Desktop for a UI based experience, which gives you quick access to the log viewer and the terminal for the bondai container.
+https://www.docker.com/products/docker-desktop/
+
+### Docker CLI
+
+From the command line follow the steps below to build and run the **BondAI** container. A directory named 'agent-volume' will be created which will be used as the working directory for execution of the CLI tool on the container.
 
 ```bash
 cd docker
 ./build-container.sh
 ./run-container.sh OPENAI_API_KEY=XXXXX ENV1=XXXX ENV2=XXXX --arg1 --arg2
 ```
+
+### Docker Compose 
+
+The docker-compose.yml file which is located in the `./docker` directory, makes use of a .env file and a pre-configured **volume** which is mapped to an `./agent-volume` directory
+
+There's also two options with Docker Compose. From the command line with this command:
+
+```bash
+cd ./docker
+docker compose up
+```
+
+Or if you use vsCode, install the official Docker Extension, then right click on the `./docker/docker-compose.yml` file and select `Compose Up`
+
+> Don't forget to open sample.env, add your Environment Keys and save as `.env`
 
 
 ## APIs
