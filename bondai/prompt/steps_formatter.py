@@ -3,16 +3,15 @@ import json
 def format_step(step, count):
     str_work = ''
     if step.function:
-        function_input = ''
-        if isinstance(step.function['arguments'], str):
-            try:
-                args = json.loads(step.function['arguments'])
-            except Exception:
-                pass
-        elif isinstance(step.function['arguments'], dict):
-            args = step.function['arguments']
-        else:
-            args = {}
+        args = {}
+        if step.function and 'arguments' in step.function:
+            if isinstance(step.function['arguments'], str):
+                try:
+                    args = json.loads(step.function['arguments'])
+                except Exception:
+                    pass
+            elif isinstance(step.function['arguments'], dict):
+                args = step.function['arguments']
         
         function_input = ''
         for k in args.keys():

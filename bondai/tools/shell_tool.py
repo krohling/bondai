@@ -5,6 +5,7 @@ from queue import Queue
 from pydantic import BaseModel
 from bondai.tools import Tool
 
+DEFAULT_EXECUTION_TIMEOUT = 60
 TOOL_NAME = 'shell_tool'
 TOOL_DESCRIPTION = (
     "This tool allows you to execute shell commands. "
@@ -17,8 +18,9 @@ class Parameters(BaseModel):
     thought: str
 
 class ShellTool(Tool):
-    def __init__(self):
+    def __init__(self, execution_timeout=DEFAULT_EXECUTION_TIMEOUT):
         super(ShellTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
+        self.execution_timeout = execution_timeout
 
     def run(self, arguments):
         cmd = arguments.get('command')
@@ -44,20 +46,29 @@ class ShellTool(Tool):
 
     def execute_command(self, cmd):
         # Use threading to enforce timeout
+        thread_exception = None
+
         def target(queue):
-            process = subprocess.Popen(
-                shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
-            queue.put((stdout, stderr))
+            nonlocal thread_exception
+            try:
+                process = subprocess.Popen(
+                    shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                stdout, stderr = process.communicate()
+                queue.put((stdout, stderr))
+            except Exception as e:
+                thread_exception = e
 
         q = Queue()
         thread = threading.Thread(target=target, args=(q,))
         thread.start()
-        thread.join(timeout=10)  # 10 seconds timeout
+        thread.join(timeout=self.execution_timeout)
+
+        if thread_exception:
+            raise thread_exception
             
         if thread.is_alive():
-            thread.join()  # Ensure it's stopped
+            thread.join(timeout=10)
             raise Exception("Command execution timed out")
 
         stdout, stderr = q.get()  # Get the result from the queue

@@ -1,10 +1,10 @@
 import threading
 import io
-import sys
 from contextlib import redirect_stdout, redirect_stderr
 from pydantic import BaseModel
 from bondai.tools import Tool
 
+DEFAULT_EXECUTION_TIMEOUT = 60
 TOOL_NAME = 'python_repl'
 TOOL_DESCRIPTION = (
     "This tool allows you to execute Python code. "
@@ -16,7 +16,7 @@ class Parameters(BaseModel):
     thought: str
 
 class PythonREPLTool(Tool):
-    def __init__(self, execution_timeout=30):
+    def __init__(self, execution_timeout=DEFAULT_EXECUTION_TIMEOUT):
         super(PythonREPLTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
         self.execution_timeout = execution_timeout
     
@@ -27,10 +27,6 @@ class PythonREPLTool(Tool):
             raise Exception("'code' parameter is required")
 
         result, stdout, stderr = self.execute_code(code)
-
-        print("result:", result)
-        print("stdout:", stdout)
-        print("stderr:", stderr)
         
         response = ""
         
@@ -76,7 +72,7 @@ class PythonREPLTool(Tool):
             raise thread_exception
         
         if thread.is_alive():
-            thread.join()  # Ensure it's stopped
+            thread.join(timeout=10)
             raise Exception("Code execution timed out")
 
         stdout = stdout_io.getvalue()

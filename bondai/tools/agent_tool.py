@@ -1,17 +1,23 @@
-from bondai.tools import Tool, InputParameters
+from pydantic import BaseModel
+from bondai.tools import Tool
 from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613
 
 TOOL_NAME = 'agent_tool'
 TOOL_DESCRIPTION = (
     "This tool allows you to delegate tasks to other agents. "
     "This can be really helpful for taking a complex task and breaking it down into smaller, more manageable pieces. "
-    "Just include a highly descriptive prompt in the 'input' parameter for this task. "
+    "Just include a highly descriptive prompt in the 'task_description' parameter for this task. "
     "The more detailed your description the better the agent will be at the task. "
+    "The 'task_description' parameter is required and MUST be provided."
 )
+
+class Parameters(BaseModel):
+    task_description: str
+    thought: str
 
 class AgentTool(Tool):
     def __init__(self, agent=None, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613)):
-        super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
+        super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         
         from bondai import Agent
         if agent:
@@ -20,16 +26,10 @@ class AgentTool(Tool):
             self.agent = Agent(prompt_builder=prompt_builder, tools=tools, llm=llm)
     
     def run(self, arguments):
-        agent_prompt = arguments['input']
+        task_description = arguments.get('task_description')
+        if task_description is None:
+            raise Exception("'task_description' is required.")
         
-        if isinstance(agent_prompt, list):
-            output = ''
-            for i,p in enumerate(agent_prompt):
-                result = self.agent.run(p)
-                output += f"Agent #{i+1} Response: {result.output}\n"
-            
-            return output
-        else:
-            result = self.agent.run(agent_prompt).output
-            self.agent.reset_memory()
-            return result
+        result = self.agent.run(task_description).output
+        self.agent.reset_memory()
+        return result
