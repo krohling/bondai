@@ -25,13 +25,6 @@ PG_USERNAME = os.environ.get('PG_USERNAME')
 PG_PASSWORD = os.environ.get('PG_PASSWORD')
 PG_DBNAME = os.environ.get('PG_DBNAME')
 
-# PG_URI = ''
-# PG_HOST = 'conifer-chat-db-prod.cmgu1yo5bmnj.us-west-2.rds.amazonaws.com'
-# PG_PORT = int(os.environ.get('PG_HOST', '5432'))
-# PG_USERNAME = 'conifer_chat_api_user'
-# PG_PASSWORD = '7totx?97c$PJsLX9'
-# PG_DBNAME = 'conifer_chat'
-
 MAX_QUERY_RETRIES = 3
 
 QUERY_PROMPT_TEMPLATE = """
