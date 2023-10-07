@@ -26,4 +26,4 @@ jobs:
     - name: Build and deploy
       run: |
         python setup.py sdist bdist_wheel
-        twine upload dist/* --token ${{ secrets.PYPI_TOKEN }}
+        twine upload dist/* -u __token__ -p ${{ secrets.PYPI_TOKEN }}
