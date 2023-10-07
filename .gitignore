@@ -1,6 +1,9 @@
 *.DS_Store
 response_query_storage
 
+website/build
+website/node_modules
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

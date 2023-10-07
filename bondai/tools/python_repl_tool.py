@@ -1,7 +1,7 @@
-import threading
 import io
 from contextlib import redirect_stdout, redirect_stderr
 from pydantic import BaseModel
+from multiprocessing import Process, Pipe
 from bondai.tools import Tool
 
 DEFAULT_EXECUTION_TIMEOUT = 60
@@ -14,6 +14,25 @@ TOOL_DESCRIPTION = (
 class Parameters(BaseModel):
     code: str
     thought: str
+
+def execute_target(conn, code):
+    local_vars = {}
+    stdout_str, stderr_str = "", ""
+    
+    try:
+        with io.StringIO() as stdout_io, io.StringIO() as stderr_io, redirect_stdout(stdout_io), redirect_stderr(stderr_io):
+            exec(code, {}, local_vars)
+            stdout_str = stdout_io.getvalue()
+            stderr_str = stderr_io.getvalue()
+
+        # Remove non-picklable objects from local_vars if any
+        for key in list(local_vars.keys()):
+            if not isinstance(local_vars[key], (int, float, str, list, dict, tuple)):
+                del local_vars[key]
+                
+        conn.send([local_vars, stdout_str, stderr_str])
+    except Exception as e:
+        conn.send([str(e), stdout_str, stderr_str])
 
 class PythonREPLTool(Tool):
     def __init__(self, execution_timeout=DEFAULT_EXECUTION_TIMEOUT):
@@ -49,34 +68,28 @@ class PythonREPLTool(Tool):
         return response
     
     def execute_code(self, code):
-        # Capture stdout and stderr
-        thread_exception = None
-        stdout_io = io.StringIO()
-        stderr_io = io.StringIO()
+        # Create a pipe for communication
+        parent_conn, child_conn = Pipe()
 
-        # Use threading to enforce timeout
-        def target(local_vars, code):
-            nonlocal thread_exception
-            try:
-                with redirect_stdout(stdout_io), redirect_stderr(stderr_io):
-                    exec(code, {}, local_vars)
-            except Exception as e:
-                thread_exception = e
-        
-        local_vars = {}
-        thread = threading.Thread(target=target, args=(local_vars, code))
-        thread.start()
-        thread.join(timeout=self.execution_timeout)
+        process = Process(target=execute_target, args=(child_conn, code))
+        process.start()
+        process.join(timeout=self.execution_timeout)
 
-        if thread_exception:
-            raise thread_exception
-        
-        if thread.is_alive():
-            thread.join(timeout=10)
+        if process.is_alive():
+            process.terminate()
+            process.join(10)
             raise Exception("Code execution timed out")
 
-        stdout = stdout_io.getvalue()
-        stderr = stderr_io.getvalue()
+        result, stdout, stderr = parent_conn.recv()
+        if isinstance(result, str):
+            raise Exception(result)
 
-        return local_vars, stdout, stderr
+        return result, stdout, stderr
+
+
+
+
+
+
+
 

@@ -3,7 +3,7 @@ import requests
 from socketio import Client
 
 class BondAIAPIClient:
-    def __init__(self, base_url='http://127.0.0.1:5000'):
+    def __init__(self, base_url='http://127.0.0.1:2663'):
         self.base_url = base_url
         self.ws_client = None
         self._events = {
