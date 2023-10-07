@@ -38,7 +38,8 @@ jobs:
     - name: Invalidate CloudFront distribution
       uses: chetan/invalidate-cloudfront-action@v1.3
       env:
-        DISTRIBUTION_ID: E1JJN112WBIR8P
+        DISTRIBUTION: E1JJN112WBIR8P
         PATHS: '/*'
+        AWS_REGION: 'us-west-2'
         AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_DEPLOY_AWS_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_DEPLOY_AWS_SECRET_ACCESS_KEY }}
