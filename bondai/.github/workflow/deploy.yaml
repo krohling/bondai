@@ -1,0 +1,29 @@
+name: Deploy to PyPI
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine setuptools_scm
+
+    - name: Build and deploy
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/* --token ${{ secrets.PYPI_TOKEN }}

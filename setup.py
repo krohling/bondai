@@ -6,7 +6,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="bondai",
-    version="0.2.23",
+    use_scm_version=True,
     description="An AI-powered console assistant with a versatile API for seamless integration into applications.",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
@@ -17,6 +17,7 @@ setup(
     scripts=['scripts/bondai'],
     install_requires=requirements,
     include_package_data=True,
+    setup_requires=['setuptools_scm'],  # Add this line
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
