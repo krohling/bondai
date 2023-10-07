@@ -42,5 +42,7 @@ jobs:
       with:
         context: ./docker
         push: true
-        tags: krohling/bondai:${{ github.ref_name }}
+        tags: |
+          krohling/bondai:${{ github.ref_name }}
+          krohling/bondai:latest
 
