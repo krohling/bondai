@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  backend:
+    build:
+      context: ../
+      dockerfile: ./docker-extra/Dockerfile
+    working_dir: /agent-volume
+    stdin_open: true
+    tty: true
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../agent-volume:/agent-volume
+    command: ["bondai", "--server", "2663", "--enable-prompt-logging"]
