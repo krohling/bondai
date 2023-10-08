@@ -80,7 +80,7 @@ tqdm==4.66.1
 typing_extensions==4.7.1
 tzdata==2023.3
 uritemplate==4.1.1
-urllib3==1.26.16
+urllib3>=1.26.17
 w3lib==2.1.2
 websocket-client==1.6.3
 websockets==10.4

@@ -1,0 +1,45 @@
+name: Deploy BondAI Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '19.7'
+
+    - name: Install Docusaurus dependencies
+      run: |
+        cd website
+        npm install
+        npm run build
+
+    - name: Deploy to S3
+      uses: jakejarvis/s3-sync-action@master
+      with:
+        args: --acl public-read --follow-symlinks --delete
+      env:
+        AWS_S3_BUCKET: bondai-docs
+        AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_DEPLOY_AWS_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_DEPLOY_AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-west-2'
+        SOURCE_DIR: 'website/build'
+
+    - name: Invalidate CloudFront distribution
+      uses: chetan/invalidate-cloudfront-action@v1.3
+      env:
+        DISTRIBUTION: E1JJN112WBIR8P
+        PATHS: '/*'
+        AWS_REGION: 'us-west-2'
+        AWS_ACCESS_KEY_ID: ${{ secrets.DOCS_DEPLOY_AWS_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.DOCS_DEPLOY_AWS_SECRET_ACCESS_KEY }}

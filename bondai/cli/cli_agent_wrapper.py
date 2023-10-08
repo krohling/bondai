@@ -9,7 +9,7 @@ class CLIAgentWrapper(AgentWrapper):
     def get_agent(self):
         agent_tools = [t.get_tool_function() for t in self.agent.tools]
         return {
-            'state': self.agent.state,
+            'state': self.conversational_agent.state,
             'previous_steps': self.get_previous_steps(),
             'previous_messages': self.conversational_agent.previous_messages,
             'tools': agent_tools,
