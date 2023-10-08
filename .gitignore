@@ -1,5 +1,6 @@
 *.DS_Store
 response_query_storage
+docker-extra
 
 website/build
 website/node_modules
