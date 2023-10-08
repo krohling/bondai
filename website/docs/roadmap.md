@@ -12,6 +12,7 @@ BondAI's forward looking goal is to integrate the latest research in building po
 
 - BondAI User Interface *(In Progress)*
 - Agent Benchmarks
+- Finetuned Llama 2
 - ToolMaker - A tool that makes tools ([see paper](https://arxiv.org/abs/2305.17126))
 - Tool Repository ([see Voyager paper](https://arxiv.org/abs/2305.16291))
 - Multi-Agent Systems Support (MAS) (see [AutoGen paper](https://browse.arxiv.org/pdf/2308.08155.pdf))

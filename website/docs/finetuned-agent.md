@@ -10,5 +10,4 @@ If you would like to participate and help this cause, simply enable prompt loggi
 
 Our goal is to get to a dataset of 50K prompts. Let's see what we can do!
 
-<p>
-<b style="color:red">Note: PLEASE make sure that any logs you share are free of personally identifying or sensitive data as they will be shared publically and used to train future models.</b></p>
+**Note: PLEASE make sure that any logs you share are free of personally identifying or sensitive data as they will be shared publically and used to train future models.**
