@@ -38,6 +38,12 @@ class BondAIAPIServer:
         self.api.add_resource(ToolsListResource, '/tools', resource_class_args=(self.agent_wrapper,))
 
     def _setup_agent_events(self):
+        @self.agent_wrapper.agent.on('started')
+        def handle_agent_started():
+            data = { 'event': 'agent_started' }
+            payload = json.dumps(data)
+            self.socketio.send(payload)
+
         @self.agent_wrapper.agent.on('completed')
         def handle_agent_completed():
             data = { 'event': 'agent_completed' }
