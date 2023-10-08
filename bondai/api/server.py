@@ -43,6 +43,13 @@ class BondAIAPIServer:
            print("New WebSocket connection")
            logging.debug("New WebSocket connection")
 
+        @self.socketio.on('user_message')
+        def handle_user_message(data):
+           logging.debug("Received user_message: %s", data)
+           payload = json.dumps(data)
+           self.socketio.send(payload)
+           # Handle the message and possibly reply back
+
         @self.agent_wrapper.agent.on('started')
         def handle_agent_started():
             data = { 'event': 'agent_started' }
