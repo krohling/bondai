@@ -41,7 +41,7 @@ Agent(tools=[
 ]).run(task)
 ```
 
-## Example Output
+## Agent Logs
 
 ```
 Using the google_search tool
