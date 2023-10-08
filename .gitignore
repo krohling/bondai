@@ -1,6 +1,13 @@
 *.DS_Store
 response_query_storage
 
+ui/.next
+ui/node_modules
+ui/agent-volume
+ui/data-volume
+ui/app/backups
+ui/tools
+
 website/build
 website/node_modules
 
