@@ -4,8 +4,7 @@ import { io, Socket } from 'socket.io-client';
 
 const SimpleChat = () => {
   const [messages, setMessages] = useState<string[]>(['Ready..']);
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  // let socket: Socket;
+  const [ws, setWs] = useState<Socket<any, any> | null>(null);
 
   useEffect(() => {
     const socket = io('ws://localhost:2663', {
