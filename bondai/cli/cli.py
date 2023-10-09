@@ -156,6 +156,9 @@ def run_cli():
                 ], 
                 quiet=True
             )
-            cli_agent.run()
+            try:
+                cli_agent.run()
+            except KeyboardInterrupt:
+                cprint("Exiting...", "yellow")
     except BudgetExceededException as e:
         cprint(f"\n\nThe budget for this task has been exceeded and will stop.\n", 'red')

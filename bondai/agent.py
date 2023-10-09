@@ -265,4 +265,42 @@ class Agent:
         if self._thread:
             self._thread.join()
         self._stop_thread = False
+    
+    def save_state(self):
+        """Saves the state of the agent."""
+        if self.state == AGENT_STATE_RUNNING:
+            raise Exception('Cannot save state while agent is running.')
+        state = {
+            'previous_steps': self.previous_steps,
+            'previous_messages': self.previous_messages,
+            'tools': {}
+        }
+
+        for tool in self.tools:
+            state['tools'][tool.name] = tool.save_state()
+        
+        if self.response_query_tool:
+            state['response_query_tool'] = self.response_query_tool.save_state()
+
+        if self.final_answer_tool:
+            state['final_answer_tool'] = self.final_answer_tool.save_state()
+        
+        return state
+    
+    def load_state(self, state):
+        """Loads the state of the agent."""
+        if self.state == AGENT_STATE_RUNNING:
+            raise Exception('Cannot load state while agent is running.')
+        self.previous_steps = state['previous_steps']
+        self.previous_messages = state['previous_messages']
+
+        for tool in self.tools:
+            if tool.name in state['tools']:
+                tool.load_state(state['tools'][tool.name])
+        
+        if self.response_query_tool and 'response_query_tool' in state:
+            self.response_query_tool.load_state(state['response_query_tool'])
+
+        if self.final_answer_tool and 'final_answer_tool' in state:
+            self.final_answer_tool.load_state(state['final_answer_tool'])
 

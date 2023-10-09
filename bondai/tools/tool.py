@@ -38,4 +38,14 @@ class Tool():
           # This function is called when the agent is streaming data to the tool.
           # The arguments_buffer is a string buffer containing the latest argument data that has been received.
           pass
+
+     def save_state():
+          # This function is called when the agent is saving state.
+          # The state should be returned as a dictionary.
+          return {}
+     
+     def load_state(state):
+          # This function is called when the agent is loading state.
+          # The state is passed in as a dictionary.
+          pass
     
