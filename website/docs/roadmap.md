@@ -12,7 +12,7 @@ BondAI's forward looking goal is to integrate the latest research in building po
 
 - BondAI User Interface *(In Progress)*
 - Agent Benchmarks
-- Finetuned Llama 2
+- Save/Restore agent state
 - ToolMaker - A tool that makes tools ([see paper](https://arxiv.org/abs/2305.17126))
 - Tool Repository ([see Voyager paper](https://arxiv.org/abs/2305.16291))
 - Reasoning on Graphs ([see paper](https://arxiv.org/abs/2310.01061))
@@ -20,3 +20,4 @@ BondAI's forward looking goal is to integrate the latest research in building po
 - Cognitive Architectures: Reflexion ([see paper](https://arxiv.org/abs/2303.11366))
 - Cognitive Architectures: Tree of Thoughts ([see paper](https://arxiv.org/abs/2305.10601))
 - Cognitive Architectures: Graph of Thoughts ([see paper](https://arxiv.org/abs/2308.09687))
+- Finetuned Llama 2
