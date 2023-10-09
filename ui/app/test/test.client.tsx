@@ -4,11 +4,10 @@ import { io, Socket } from 'socket.io-client';
 
 const SimpleChat = () => {
   const [messages, setMessages] = useState<string[]>(['Ready..']);
-  //const [ws, setWs] = useState<WebSocket | null>(null);
-  let socket: Socket;
+  const [ws, setWs] = useState<Socket<any, any> | null>(null);
 
   useEffect(() => {
-    socket = io('ws://localhost:2663', {
+    const socket = io('ws://localhost:2663', {
       transports: [ 'websocket' ],
       upgrade: false
     });
@@ -61,6 +60,16 @@ const SimpleChat = () => {
       console.log('Received:', msg);
     });
 
+    setWs(socket);
+
+    fetch('http://localhost:2663/agent/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ })
+    })
+
     return () => {
       socket.disconnect();
     };
@@ -68,9 +77,12 @@ const SimpleChat = () => {
   }, []);
 
   const sendMessageToAgent = (message: string) => {
-    console.log('sendMessageToAgent: sending..', socket);
-    if (socket) {
-      socket.emit('user_message', message );
+    console.log('sendMessageToAgent: sending..', ws);
+    if (ws) {
+      ws.emit('message', {
+        'event': 'user_message',
+        'data': { message }
+      } );
     }
   };
 

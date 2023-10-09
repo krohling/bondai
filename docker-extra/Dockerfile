@@ -16,8 +16,6 @@ ARG CACHEBUST=1
 
 RUN echo "Cache bust value: ${CACHEBUST}" && pip3 install --no-cache .
 
-RUN mkdir /logs && touch /logs/bondai.log && chmod 666 /logs/bondai.log
-
 WORKDIR /agent-volume
 
-CMD ["tail", "-f", "/logs/bondai.log"]
+CMD ["tail", "-f", "/dev/null"]

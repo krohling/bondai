@@ -3,6 +3,9 @@
 # Use the official Node.js 20 image from Docker Hub
 FROM node:20-alpine
 
+# RUN apk update && \
+#     apk add --no-cache python3 py3-pip make g++ 
+
 # Set environment variables
 ENV NODE_ENV=development
 

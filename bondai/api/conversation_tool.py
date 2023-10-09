@@ -21,7 +21,9 @@ class ConversationTool(Tool):
         # Set up the event listener once during initialization
         @self.socketio.on('message')
         def handle_message(message):
-            message = json.loads(message)
+            if isinstance(message, str):
+                message = json.loads(message)
+            
             if message.get('event') == 'user_message':
                 self.user_message = message['data']['message']
                 self.message_arrived_event.set()
