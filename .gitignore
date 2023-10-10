@@ -1,6 +1,7 @@
 *.DS_Store
 response_query_storage
 
+misc
 website/build
 website/node_modules
 

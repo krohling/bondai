@@ -12,9 +12,14 @@ setup(
     long_description_content_type="text/markdown",
     author="Kevin Rohling",
     author_email="kevin@kevinrohling.com",
-    url="https://github.com/krohling/bondai",
+    url="https://bondai.dev",
     packages=find_packages(),  # This will include all packages under the bondai directory
-    scripts=['scripts/bondai'],
+    # scripts=['scripts/bondai'],
+    entry_points={
+        'console_scripts': [
+            'bondai=bondai.main:main',
+        ],
+    },
     install_requires=requirements,
     include_package_data=True,
     setup_requires=['setuptools_scm'],  # Add this line
