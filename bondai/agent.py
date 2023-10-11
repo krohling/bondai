@@ -36,6 +36,7 @@ class AgentStep:
         self.prompt = prompt
         self.message = message
         self.function = function
+        self.total_cost = None
         self.output = None
         self.error = False
         self.exit = False
@@ -166,6 +167,7 @@ class Agent:
 
                     try:
                         step.output = tool.run(args)
+                        step.total_cost = get_total_cost()
                         step.exit = tool.exit_agent or (self.final_answer_tool and tool.name == self.final_answer_tool.name)
                         
                         if step.output:
