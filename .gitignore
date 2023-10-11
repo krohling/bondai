@@ -12,6 +12,7 @@ ui/app/_backup
 ui/app/test/
 docker/agent-volume/
 .vscode
+
 website/build
 node_modules/
 

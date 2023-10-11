@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: ;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 5% 64.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: ;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+
+    --ring: 240 3.7% 15.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #18191a #212324; /* thumb and track color */
+}
+/* Chrome, Edge, and Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+ background: #242527; /* track color */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #18191a; /* thumb color */
+  border-radius: 9999px;
+  border: 2px solid #212324; /* add a border around the thumb */
+}
+
+.hide-scrollbar {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Internet Explorer 11 */
+  -ms-overflow-style: none;
+  /* Chrome, Edge, and Safari */
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.bg-bondai {
+  background: linear-gradient(90deg, #0d0e0f, #232529, #18191b);
+  background-size: 400% 400%;
+  -webkit-animation: AnimationName 25s ease infinite;
+  -moz-animation: AnimationName 25s ease infinite;
+  animation: AnimationName 25s ease infinite;
+}
+@-webkit-keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+@keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+
+.card-gradient {
+  background: var(--light-grad-pink-blue, radial-gradient(ellipse at 40% 0%, #bf398910 0, transparent 75%), radial-gradient(ellipse at 60% 0%, #096bde10 0, transparent 75%));
+}
