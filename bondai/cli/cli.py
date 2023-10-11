@@ -144,7 +144,11 @@ def run_cli():
             conversational_tool = ConversationTool(server.socketio)
             api_agent.add_tool(conversational_tool)
 
-            server.run()
+            try:
+                server.run()
+            except KeyboardInterrupt:
+                cprint(f"\n\nStopping BondAI server...\n", 'red')
+                pass
         else:
             cli_agent = Agent(
                 llm = llm,
@@ -156,6 +160,11 @@ def run_cli():
                 ], 
                 quiet=True
             )
-            cli_agent.run()
+            try:
+                cli_agent.run()
+            except KeyboardInterrupt:
+                cprint(f"\n\nStopping BondAI CLI...\n", 'red')
+                pass
+        
     except BudgetExceededException as e:
         cprint(f"\n\nThe budget for this task has been exceeded and will stop.\n", 'red')

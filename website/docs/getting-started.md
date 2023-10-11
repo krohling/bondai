@@ -53,7 +53,7 @@ docker run -it --rm \
            -v ./agent-volume:/agent-volume \
            -w /agent-volume \
            OPENAI_API_KEY=sk-XXXXXXXXXX \
-           bondai:latest bondai
+           krohling/bondai:latest bondai
 ```
 
 ## 🔥 Start Coding with BondAI
