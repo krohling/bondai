@@ -13,6 +13,14 @@ module.exports = {
       }
     },
     extend: {
+      maxHeight: {
+       '1/2': '50%',
+       '3/4': '75%',
+       '500px': '500px'
+      },
+      animations: {
+        'spin-fast': 'spin 0.5s linear infinite',
+      },
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans]
       },
@@ -91,6 +99,12 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out'
       }
     }
+  },
+  variants: {
+    extend: {
+      opacity: ['disabled'],
+      textColor: ['placeholder'],
+    },
   },
   plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')]
 }

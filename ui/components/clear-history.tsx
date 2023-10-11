@@ -39,7 +39,7 @@ export function ClearHistory({ clearChats }: ClearHistoryProps) {
             router.push('/')
           }} 
           disabled={isPending} 
-          className="border border-white/20 text-white text-xs hover:bg-white hover:text-black">
+          className="border dark:border-white/20 dark:text-white text-xs dark:hover:bg-white hover:text-black">
           {isPending && <IconSpinner className="mr-2" />}
           Clear history
         </Button>

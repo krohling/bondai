@@ -7,6 +7,10 @@ ui/agent-volume
 ui/data-volume
 ui/app/backups
 ui/tools
+ui/app/_backup
+ui/app/test/
+docker/agent-volume/
+.vscode
 
 website/build
 website/node_modules
@@ -174,4 +178,3 @@ cython_debug/
 #.idea/
 
 notes.txt
-docker/agent-volume/

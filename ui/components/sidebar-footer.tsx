@@ -44,7 +44,7 @@ export function SidebarFooter({
           e.preventDefault()
           router.refresh()
           router.push('/')
-        }} variant="ghost" className="border border-white/20 text-white hover:bg-white text-xs hover:text-black">
+        }} variant="ghost" className="border dark:border-white/20 dark:text-white dark:hover:bg-white text-xs hover:text-black">
         New Chat
       </Button>
       <ClearHistory clearChats={handleClearChats} />

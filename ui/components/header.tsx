@@ -43,7 +43,7 @@ export function Header() {
         )}
         <div className="flex items-center">
           <Link href="/">
-            <img src="/bondai-logo.png" alt="Bondai Logo" className="h-[25px] w-auto ml-2" />
+            <img src="/bondai-logo.png" alt="Bondai Logo" className="h-[25px] w-auto ml-2 invert dark:invert-0" />
           </Link>
         </div>
       </div>
@@ -55,7 +55,7 @@ export function Header() {
           className={cn(buttonVariants({ variant: 'outline' }))}
         >
           <IconGitHub />
-          <span className="ml-2 md:flex">GitHub</span>
+          <span className="ml-2 md:flex dark:text-white">GitHub</span>
         </a>
         <a
           href="https://discord.gg/hXY4r5FFb"
