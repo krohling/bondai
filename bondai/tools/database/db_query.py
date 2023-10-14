@@ -18,7 +18,8 @@ TOOL_DESCRIPTION = (
     "Your question will automatically be turned into SQL and the response will contain the resulting data."
 )
 
-PG_URI = os.environ.get('PG_URI')
+PG_URI_ENV_VAR = 'PG_URI'
+
 PG_HOST = os.environ.get('PG_HOST')
 PG_PORT = int(os.environ.get('PG_HOST', '5432'))
 PG_USERNAME = os.environ.get('PG_USERNAME')
@@ -55,7 +56,7 @@ Please respond with a friendly text response to the user's question.
 
 class DatabaseQueryTool(Tool):
     def __init__(self, 
-                 pg_uri=PG_URI, 
+                 pg_uri=os.environ.get(PG_URI_ENV_VAR), 
                  pg_host=PG_HOST, 
                  pg_port=PG_PORT, 
                  pg_username=PG_USERNAME, 
