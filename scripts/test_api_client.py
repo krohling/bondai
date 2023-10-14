@@ -20,6 +20,15 @@ def handle_agent_message(message):
 def handle_agent_started():
     print('Agent has started.')
 
+@client.on("agent_step_started")
+def handle_agent_step_started():
+    print("Agent step started.")
+
+@client.on("agent_step_tool_selected")
+def handle_agent_step_started(message):
+    print("Agent step tool selected.")
+    print(message)
+
 @client.on("agent_step_completed")
 def handle_agent_step_completed(message):
     print("Agent step completed.")

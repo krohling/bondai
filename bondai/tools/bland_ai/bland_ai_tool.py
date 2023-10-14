@@ -16,10 +16,9 @@ TOOL_DESCRIPTION = (
     "- request_data (Optional, default={}): A dictionary that provides information for the AI during the call. Useful for giving the AI specific facts like the caller’s name, etc.\n"
 )
 
-
-BLAND_AI_API_KEY = os.environ.get('BLAND_AI_API_KEY')
-BLAND_AI_VOICE_ID = int(os.environ.get('BLAND_AI_VOICE_ID', '0'))
-BLAND_AI_CALL_TIMEOUT = int(os.environ.get('BLAND_AI_VOICE_ID', '300'))
+BLAND_AI_API_KEY_ENV_VAR = 'BLAND_AI_API_KEY'
+BLAND_AI_VOICE_ID_ENV_VAR = 'BLAND_AI_VOICE_ID'
+BLAND_AI_CALL_TIMEOUT_ENV_VAR = 'BLAND_AI_CALL_TIMEOUT'
 API_ENDPOINT = 'https://api.bland.ai/'
 
 # Interval for checking call status (in seconds)
@@ -31,9 +30,6 @@ class CallParameters(BaseModel):
     task: str
     request_data: dict = {}
     thought: str
-
-
-
 
 def validate_phone_number(phone):
     # International numbers (starting with '+')
@@ -54,9 +50,15 @@ def validate_phone_number(phone):
 
 
 class BlandAITool(Tool):
-    def __init__(self, bland_ai_api_key=BLAND_AI_API_KEY):
+    def __init__(self, 
+                bland_ai_api_key=os.environ.get(BLAND_AI_API_KEY_ENV_VAR),
+                bland_ai_voice_id=int(os.environ.get(BLAND_AI_VOICE_ID_ENV_VAR, '0')),
+                bland_ai_call_timeout=int(os.environ.get(BLAND_AI_CALL_TIMEOUT_ENV_VAR, '300'))
+        ):
         super(BlandAITool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, CallParameters)
         self.bland_ai_api_key=bland_ai_api_key
+        self.bland_ai_voice_id=bland_ai_voice_id
+        self.bland_ai_call_timeout=bland_ai_call_timeout
 
     def run(self, arguments):
         if arguments.get('phone_number') is None:
@@ -77,9 +79,9 @@ class BlandAITool(Tool):
         while True:
             # Check for timeout
             elapsed_time = time.time() - start_time
-            if elapsed_time > BLAND_AI_CALL_TIMEOUT:
+            if elapsed_time > self.bland_ai_call_timeout:
                 self.end_call(call_id)
-                raise TimeoutError(f"Call exceeded the maximum allowed time of {BLAND_AI_CALL_TIMEOUT} seconds.")
+                raise TimeoutError(f"Call exceeded the maximum allowed time of {self.bland_ai_call_timeout} seconds.")
             
 
             completed, transcripts = self.check_call_status(call_id)

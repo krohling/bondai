@@ -9,6 +9,8 @@ class BondAIAPIClient:
         self._events = {
             'agent_message': [],
             'agent_started': [],
+            'agent_step_started': [],
+            'agent_step_tool_selected': [],
             'agent_step_completed': [],
             'agent_completed': [],
         }
@@ -40,6 +42,10 @@ class BondAIAPIClient:
             message = json.loads(message)
             if message.get('event') == 'agent_message':
                 self._trigger_event('agent_message', message['data']['message'])
+            elif message.get('event') == 'agent_step_started':
+                self._trigger_event('agent_step_started')
+            elif message.get('event') == 'agent_step_tool_selected':
+                self._trigger_event('agent_step_tool_selected', message['data']['step'])
             elif message.get('event') == 'agent_step_completed':
                 self._trigger_event('agent_step_completed', message['data']['step'])
             elif message.get('event') == 'agent_started':
