@@ -218,6 +218,7 @@ class Agent:
         
         self.state = AGENT_STATE_RUNNING
         try:
+            print("*****Agent Started*****")
             self._trigger_event('started')
             if self.final_answer_tool:
                 self.tools = self.tools + [self.final_answer_tool]
@@ -227,6 +228,7 @@ class Agent:
                 if self._stop_thread:
                     break
                 step_counter += 1
+                print("*****Agent Step Started*****")
                 self._trigger_event('step_started')
                 step = self.run_once(task)
 
