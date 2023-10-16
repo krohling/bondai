@@ -1,12 +1,12 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
-# Start Agent
+# Stop Agent
 
-`POST /agent/<agent_id>/start`
+`POST /agent/<agent_id>/stop`
 
-This API will start the Agent's execution against the specified task.
+This API will stop the Agent's execution. Work on the current task will cease.
 
 **Request Body:**
 

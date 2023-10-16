@@ -2,21 +2,21 @@ import os
 from pydantic import BaseModel
 from bondai.tools import Tool
 from .response_formatter import format_order_response
+from .env_vars import ALPACA_MARKETS_API_KEY_ENV_VAR, ALPACA_MARKETS_SECRET_KEY_ENV_VAR
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.common.exceptions import APIError
 
 TOOL_NAME = 'create_order'
-TOOL_DESCRIPTION = """This tool allows you to create an Order to buy or sell a stock. 
-When using this tool, you must specify either 'buy' or 'sell' for the 'side' parameter. 
-You must also specify the 'symbol' parameter which is the stock symbol of the stock you want to buy or sell. 
-You must also specify the 'quantity' parameter which is the number of shares you want to buy or sell. 
-The 'order_type' parameter is optional. It will default to a 'market' order by you can also specify a 'limit' order.
-The 'limit_price' parameter is only required if you specify a 'limit' order.
-The 'time_in_force' parameter is optional. It will default to 'day' but you can also specify 'gtc', 'opg', 'cls', 'ioc', or 'fok'."""
-
-ALPACA_MARKETS_API_KEY = os.environ.get('ALPACA_MARKETS_API_KEY')
-ALPACA_MARKETS_SECRET_KEY = os.environ.get('ALPACA_MARKETS_SECRET_KEY')
+TOOL_DESCRIPTION = (
+    "This tool allows you to create an Order to buy or sell a stock. "
+    "When using this tool, you must specify either 'buy' or 'sell' for the 'side' parameter. "
+    "You must also specify the 'symbol' parameter which is the stock symbol of the stock you want to buy or sell. "
+    "You must also specify the 'quantity' parameter which is the number of shares you want to buy or sell. "
+    "The 'order_type' parameter is optional. It will default to a 'market' order by you can also specify a 'limit' order. "
+    "The 'limit_price' parameter is only required if you specify a 'limit' order. "
+    "The 'time_in_force' parameter is optional. It will default to 'day' but you can also specify 'gtc', 'opg', 'cls', 'ioc', or 'fok'."
+)
 
 class Parameters(BaseModel):
     side: str
@@ -28,7 +28,10 @@ class Parameters(BaseModel):
     thought: str
 
 class CreateOrderTool(Tool):
-    def __init__(self, alpaca_api_key=ALPACA_MARKETS_API_KEY, alpaca_secret_key=ALPACA_MARKETS_SECRET_KEY):
+    def __init__(self, 
+                 alpaca_api_key=os.environ.get(ALPACA_MARKETS_API_KEY_ENV_VAR), 
+                 alpaca_secret_key=os.environ.get(ALPACA_MARKETS_SECRET_KEY_ENV_VAR)
+        ):
         super(CreateOrderTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
     

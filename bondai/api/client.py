@@ -7,10 +7,14 @@ class BondAIAPIClient:
         self.base_url = base_url
         self.ws_client = None
         self._events = {
-            'agent_message': [],
-            'agent_started': [],
-            'agent_step_completed': [],
-            'agent_completed': [],
+            'conversational_agent_started': [],
+            'conversational_agent_message': [],
+            'conversational_agent_completed': [],
+            'task_agent_started': [],
+            'task_agent_step_started': [],
+            'task_agent_step_tool_selected': [],
+            'task_agent_step_completed': [],
+            'task_agent_completed': [],
         }
     
     def on(self, event_name):
@@ -24,10 +28,10 @@ class BondAIAPIClient:
         
         return decorator
 
-    def _trigger_event(self, event_name, *args, **kwargs):
+    def _trigger_event(self, event_name, agent_id, *args, **kwargs):
         """Trigger the specified event."""
         for callback in self._events.get(event_name, []):
-            callback(*args, **kwargs)
+            callback(agent_id, *args, **kwargs)
     
     def connect_ws(self):
         if self.ws_client:
@@ -38,14 +42,26 @@ class BondAIAPIClient:
         @self.ws_client.on('message')
         def on_message(message):
             message = json.loads(message)
-            if message.get('event') == 'agent_message':
-                self._trigger_event('agent_message', message['data']['message'])
-            elif message.get('event') == 'agent_step_completed':
-                self._trigger_event('agent_step_completed', message['data']['step'])
-            elif message.get('event') == 'agent_started':
-                self._trigger_event('agent_started')
-            elif message.get('event') == 'agent_completed':
-                self._trigger_event('agent_completed')
+            print(message)
+            event = message.get('event')
+            agent_id = message['data']['agent_id']
+
+            if event == 'conversational_agent_started':
+                self._trigger_event(event, agent_id)
+            elif event == 'conversational_agent_message':
+                self._trigger_event(event, agent_id, message['data']['message'])
+            elif event == 'conversational_agent_completed':
+                self._trigger_event(event, agent_id)
+            elif event == 'task_agent_started':
+                self._trigger_event(event, agent_id)
+            elif event == 'task_agent_completed':
+                self._trigger_event(event, agent_id)
+            elif event == 'task_agent_step_started':
+                self._trigger_event(event, agent_id)
+            elif event == 'task_agent_step_tool_selected':
+                self._trigger_event(event, agent_id, message['data']['step'])
+            elif event == 'task_agent_step_completed':
+                self._trigger_event(event, agent_id, message['data']['step'])
 
     def disconnect_ws(self):
         if self.ws_client:
@@ -62,8 +78,11 @@ class BondAIAPIClient:
         message_bytes = json.dumps(message).encode('utf-8')
         self.ws_client.send(message_bytes)
     
-    def send_user_message(self, message):
-        self.send_ws_message("user_message", {"message": message})
+    def send_user_message(self, agent_id, message):
+        self.send_ws_message("user_message", {
+            "agent_id": agent_id,
+            "message": message
+        })
 
     def _request(self, method, endpoint, data=None):
         url = f"{self.base_url}{endpoint}"
@@ -82,10 +101,29 @@ class BondAIAPIClient:
         except requests.RequestException as e:
             raise Exception(f"HTTP Request Error: {e}")
 
-    def get_agent(self):
-        return self._request('GET', '/agent')
-
-    def start_agent(self, task=None, task_budget=None, max_steps=None):
+    def create_agent(self):
+        return self._request('POST', '/agents')
+    
+    def list_agents(self):
+        return self._request('GET', '/agents')
+    
+    def get_agent(self, agent_id):
+        return self._request('GET', f'/agents/{agent_id}')
+    
+    def get_agent_tool_options(self, agent_id):
+        return self._request('GET', f'/agents/{agent_id}/tool_options')
+    
+    def get_agent_tools(self, agent_id):
+        return self._request('GET', f'/agents/{agent_id}/tools')
+    
+    def add_agent_tool(self, agent_id, tool_name):
+        data = {'tool_name': tool_name}
+        return self._request('POST', f'/agents/{agent_id}/tools', data)
+    
+    def remove_agent_tool(self, agent_id, tool_name):
+        return self._request('DELETE', f'/agents/{agent_id}/tools/{tool_name}')
+    
+    def start_agent(self, agent_id, task=None, task_budget=None, max_steps=None):
         data = {}
         if task:
             data['task'] = task
@@ -93,14 +131,13 @@ class BondAIAPIClient:
             data['task_budget'] = task_budget
         if max_steps:
             data['max_steps'] = max_steps
-        return self._request('POST', '/agent/start', data)
-
-    def add_agent_tool(self, tool_name):
-        data = {'tool_name': tool_name}
-        return self._request('POST', '/agent/tools', data)
-
-    def remove_agent_tool(self, tool_name):
-        return self._request('DELETE', f'/agent/tools/{tool_name}')
-
-    def get_tools(self):
-        return self._request('GET', '/tools')
+        return self._request('POST', f'/agents/{agent_id}/start', data)
+    
+    def stop_agent(self, agent_id):
+        return self._request('POST', f'/agents/{agent_id}/stop')
+    
+    def get_settings(self):
+        return self._request('GET', '/settings')
+    
+    def set_settings(self, settings):
+        return self._request('POST', '/settings', settings)

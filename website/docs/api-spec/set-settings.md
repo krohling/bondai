@@ -1,0 +1,122 @@
+---
+sidebar_position: 9
+---
+
+# Set Settings
+
+`POST /settings`
+
+This API sets all provided OpenAI, Azure, and Tool settings. You may optionally provide only the parameter that you wish to set.
+
+**Request Body:**
+
+```json
+{
+    "openai":[
+        {
+            "key":"OPENAI_API_KEY",
+            "value":""
+        }
+   ],
+   "azure":[
+        {
+            "key":"AZURE_OPENAI_EMBEDDINGS_API_KEY",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_EMBEDDINGS_API_BASE",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_EMBEDDINGS_API_VERSION",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT35_API_KEY",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT35_API_BASE",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT35_API_VERSION",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT35_DEPLOYMENT",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT4_API_KEY",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT4_API_BASE",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT4_API_VERSION",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_GPT4_DEPLOYMENT",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_DALLE_API_KEY",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_DALLE_API_BASE",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_DALLE_API_VERSION",
+            "value":""
+        },
+        {
+            "key":"AZURE_OPENAI_DALLE_DEPLOYMENT",
+            "value":""
+        }
+   ],
+   "tools":[
+        {
+            "key":"GOOGLE_API_KEY",
+            "value":""
+        },
+        {
+            "key":"GOOGLE_CSE_ID",
+            "value":""
+        },
+        {
+            "key":"ALPACA_MARKETS_API_KEY",
+            "value":""
+        },
+        {
+            "key":"ALPACA_MARKETS_SECRET_KEY",
+            "value":""
+        },
+        {
+            "key":"BLAND_AI_API_KEY",
+            "value":""
+        },
+        {
+            "key":"BLAND_AI_VOICE_ID",
+            "value":""
+        },
+        {
+            "key":"BLAND_AI_CALL_TIMEOUT",
+            "value":""
+        },
+        {
+            "key":"PG_URI",
+            "value":""
+        }
+    ]
+}
+```

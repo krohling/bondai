@@ -71,6 +71,8 @@ class Agent:
         self._stop_thread = False
         self._events = {
             'started': [],
+            'step_started': [],
+            'step_tool_selected': [],
             'step_completed': [],
             'completed': [],
         }
@@ -147,6 +149,7 @@ class Agent:
         if function:
             step = AgentStep(prompt, message, function)
             tools = [t for t in self.tools if t.name == function['name']]
+            self._trigger_event('step_tool_selected', step)
             if len(tools) > 0:
                 tool = tools[0]
                 
@@ -224,6 +227,7 @@ class Agent:
                 if self._stop_thread:
                     break
                 step_counter += 1
+                self._trigger_event('step_started')
                 step = self.run_once(task)
 
                 if step.function or len(self.previous_steps) == 0 or self.previous_steps[-1].function:
