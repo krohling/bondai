@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Start Agent
 
-`POST /agent/<agent_id>/start`
+`POST /agent/start`
 
 This API will start the Agent's execution against the specified task.
 

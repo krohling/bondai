@@ -1,6 +1,7 @@
 *.DS_Store
 response_query_storage
 
+misc
 ui/.next
 ui/node_modules
 ui/agent-volume
@@ -11,7 +12,6 @@ ui/app/_backup
 ui/app/test/
 docker/agent-volume/
 .vscode
-
 website/build
 website/node_modules
 

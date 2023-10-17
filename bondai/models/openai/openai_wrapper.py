@@ -130,7 +130,8 @@ def get_completion(
         system_prompt=system_prompt, 
         previous_messages=previous_messages, 
         functions=functions,
-        response_content=content
+        response_content=content,
+        response_function=function
     )
 
     return content, function
@@ -204,7 +205,8 @@ def get_streaming_completion(
         system_prompt=system_prompt, 
         previous_messages=previous_messages, 
         functions=functions,
-        response_content=content
+        response_content=content,
+        response_function=function
     )
 
     return content, function

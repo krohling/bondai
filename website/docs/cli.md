@@ -34,7 +34,6 @@ When you start BondAI the Task Assistant Agent will ask you about the task you w
 
 Loading BondAI...
 Skipping Gmail tools because gmail-token.pickle file is not present.
-Dangerous Tools are enabled.
 
 Hello! How can I assist you today?
 

@@ -51,7 +51,7 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
-      image: 'img/bondai-social-card.jpg',
+      image: 'img/bondai-social-card.png',
       navbar: {
         title: 'BondAI',
         logo: {

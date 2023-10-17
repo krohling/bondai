@@ -1,3 +1,12 @@
+---
+sidebar_position: 4
+---
+
+# API Client
+
+This example demonstrates how to use the BondAIAPIClient to communicate with the [BondAI API](../api-spec/getting-started).
+
+```python
 from bondai import AGENT_STATE_STOPPED
 from bondai.api import BondAIAPIClient
 
@@ -33,3 +42,4 @@ try:
         pass
 except KeyboardInterrupt:
     print("Exiting...")
+```
