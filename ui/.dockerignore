@@ -1,0 +1,7 @@
+node_modules
+data/*
+agent-volume
+data-volume
+*.http
+backups
+*.zip
