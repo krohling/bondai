@@ -3,8 +3,8 @@ version: '3.7'
 services:
   bondai:
     build:
-      context: ../
-      dockerfile: ./docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     working_dir: /agent-volume
     stdin_open: true
     tty: true
@@ -14,4 +14,3 @@ services:
       - "8000:8000"
     volumes:
       - ../agent-volume:/agent-volume
-    command: ["tail", "-f", "/dev/null"]

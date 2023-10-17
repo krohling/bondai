@@ -3,15 +3,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_restful import Api, Resource
 from flask_socketio import SocketIO
-import os
-import logging
 
 from bondai import AGENT_STATE_RUNNING
 
 class BondAIAPIError(Exception):
     pass
-
-logging.basicConfig(level=logging.DEBUG)
 
 class BondAIAPIServer:
     def __init__(self, agent=None, tools=None, agent_wrapper=None, port=2663):
@@ -25,7 +21,7 @@ class BondAIAPIServer:
         self.port = port
         self.app = Flask(__name__)
         self.api = Api(self.app)
-        self.socketio = SocketIO(self.app, cors_allowed_origins="*")
+        self.socketio = SocketIO(self.app)
         CORS(self.app)  # Enable CORS for the Flask app
 
         self._setup_resources()
@@ -43,7 +39,7 @@ class BondAIAPIServer:
             data = { 'event': 'agent_started' }
             payload = json.dumps(data)
             self.socketio.send(payload)
-
+        
         @self.agent_wrapper.agent.on('completed')
         def handle_agent_completed():
             data = { 'event': 'agent_completed' }
@@ -64,10 +60,7 @@ class BondAIAPIServer:
             self.socketio.send(payload)
 
     def run(self):
-        allow_unsafe = False
-        if os.environ.get('FLASK_ENV') == 'development':
-            allow_unsafe = True
-        self.socketio.run(self.app, host='0.0.0.0', port=self.port, allow_unsafe_werkzeug=allow_unsafe)
+        self.socketio.run(self.app, port=self.port)
 
     def shutdown(self):
         # Use this function to gracefully shutdown any resources if needed
