@@ -10,6 +10,15 @@ from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613
 from .agent_wrapper import AgentWrapper
 from .conversation_tool import ConversationTool
 from .routes import setup_routes
+import os
+import logging
+
+from bondai import AGENT_STATE_RUNNING
+
+class BondAIAPIError(Exception):
+    pass
+
+logging.basicConfig(level=logging.DEBUG)
 
 class BondAIAPIServer:
     def __init__(self, tools, port=2663):
