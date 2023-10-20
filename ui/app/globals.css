@@ -76,3 +76,60 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #18191a #212324; /* thumb and track color */
+}
+/* Chrome, Edge, and Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+ background: #242527; /* track color */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #18191a; /* thumb color */
+  border-radius: 9999px;
+  border: 2px solid #212324; /* add a border around the thumb */
+}
+
+.hide-scrollbar {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Internet Explorer 11 */
+  -ms-overflow-style: none;
+  /* Chrome, Edge, and Safari */
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.bg-bondai {
+  background: linear-gradient(90deg, #0d0e0f, #232529, #18191b);
+  background-size: 400% 400%;
+  -webkit-animation: AnimationName 25s ease infinite;
+  -moz-animation: AnimationName 25s ease infinite;
+  animation: AnimationName 25s ease infinite;
+}
+@-webkit-keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+@keyframes AnimationName {
+    0%{background-position:0% 83%}
+    50%{background-position:100% 18%}
+    100%{background-position:0% 83%}
+}
+
+.card-gradient {
+  background: var(--light-grad-pink-blue, radial-gradient(ellipse at 40% 0%, #bf398910 0, transparent 75%), radial-gradient(ellipse at 60% 0%, #096bde10 0, transparent 75%));
+}

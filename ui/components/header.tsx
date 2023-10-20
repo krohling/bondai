@@ -37,8 +37,7 @@ export function Header() {
           </Sidebar>
         ) : (
           <Link href="/" target="_blank" rel="nofollow">
-            <IconNextChat className="w-6 h-6 mr-2 dark:hidden" inverted />
-            <IconNextChat className="hidden w-6 h-6 mr-2 dark:block" />
+            <img src="/bondai-logo.png" alt="Bondai Logo" className="h-[25px] w-auto ml-2 invert dark:invert-0" />
           </Link>
         )}
         <div className="flex items-center">
@@ -55,7 +54,7 @@ export function Header() {
           className={cn(buttonVariants({ variant: 'outline' }))}
         >
           <IconGitHub />
-          <span className="ml-2 md:flex">GitHub</span>
+          <span className="ml-2 md:flex dark:text-white">GitHub</span>
         </a>
         <a
           href="https://discord.gg/hXY4r5FFb"

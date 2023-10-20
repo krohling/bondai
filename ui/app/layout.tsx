@@ -38,6 +38,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <head />
         <body
           className={cn(
+            'dark:bg-bondai',
             'font-sans antialiased',
             fontSans.variable,
             fontMono.variable

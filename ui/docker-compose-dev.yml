@@ -17,8 +17,8 @@ services:
     tty: true
     networks:
     - default
-    hostname: frontend
-    container_name: frontend
+    hostname: frontend-dev
+    container_name: frontend-dev
 
   backend-dev:
     build:
@@ -34,8 +34,8 @@ services:
       - ./agent-volume:/agent-volume
     environment:
       - FLASK_ENV=development
-    command: ["bondai", "--server", "2663", "--enable-prompt-logging"]
+    command: ["bondai", "--server", "2663", "--enable-prompt-logging", "--enable-dangerous"]
     networks:
     - default
-    hostname: backend
-    container_name: backend
+    hostname: backend-dev
+    container_name: backend-dev
