@@ -9,11 +9,11 @@ ui/data-volume
 ui/app/backups
 ui/tools
 ui/app/_backup
-ui/app/test/
-docker/agent-volume/
+ui/app/test
+docker/agent-volume
 .vscode
 website/build
-node_modules/
+node_modules
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
