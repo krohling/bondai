@@ -1,2 +1,2 @@
 include bondai/prompt/default_prompt_template.md
-include bondai/cli/onboarding_prompt_template.md
+include bondai/cli/conversational_agent_prompt_template.md
