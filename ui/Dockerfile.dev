@@ -1,0 +1,31 @@
+# Dockerfile.dev
+
+# Use the official Node.js 20 image from Docker Hub
+FROM node:20-alpine
+
+# RUN apk update && \
+#     apk add --no-cache python3 py3-pip make g++ 
+
+# Set environment variables
+ENV NODE_ENV=development
+
+# Set the working directory inside the image
+WORKDIR /app
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Copy package.json and lock file
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy local code to the container image
+COPY . .
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Command to run the application
+CMD ["pnpm", "run", "dev"]

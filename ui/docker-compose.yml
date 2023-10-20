@@ -1,0 +1,29 @@
+# docker-compose.yml
+version: '3.5'
+
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 80:3000
+    volumes:
+      - ./data-volume:/app/data
+
+  backend:
+    image: smartico/bondai:latest
+    #restart: always
+    working_dir: /agent-volume
+    env_file:
+      - ./.env
+    ports:
+      - "2663:2663"
+    volumes:
+      - ./agent-volume:/agent-volume
+    command: ["bondai", "--server", "2663", "--enable-prompt-logging"]
+    networks:
+    - default
+    hostname: backend
+    container_name: backend
