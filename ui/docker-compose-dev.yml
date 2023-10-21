@@ -34,7 +34,7 @@ services:
       - ./agent-volume:/agent-volume
     environment:
       - FLASK_ENV=development
-    command: ["bondai", "--server", "2663", "--enable-prompt-logging"]
+    command: ["bondai", "--server", "2663", "--enable-prompt-logging", "--enable-dangerous"]
     networks:
     - default
     hostname: backend

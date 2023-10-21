@@ -1,0 +1,12 @@
+POST http://localhost:2663/agents/80a53a8c-0b00-4253-ae29-e1282543e7f7/start
+Content-Type: application/json
+
+{
+    "task": "find a photo of bob marley and save it to disk.",
+    "task_budget": "1.00",
+    "max_steps": ""
+}
+
+
+GET http://localhost:2663/agents
+Content-Type: application/json

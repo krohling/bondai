@@ -267,6 +267,7 @@ class Agent:
 
     def stop(self):
         """Gracefully stops the thread."""
+        print("Gracefully stopping the thread.")
         self._stop_thread = True
         if self._thread:
             self._thread.join()

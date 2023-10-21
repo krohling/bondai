@@ -14,4 +14,4 @@ services:
       - "8000:8000"
     volumes:
       - ../agent-volume:/agent-volume
-    command: ["bondai", "--server", "2663", "--enable-prompt-logging"]
+    command: ["bondai", "--server", "2663", "--enable-prompt-logging", "--enable-dangerous"]

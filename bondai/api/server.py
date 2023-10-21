@@ -26,7 +26,7 @@ class BondAIAPIServer:
         self.port = port
         self.app = Flask(__name__)
         self.api = Api(self.app)
-        self.socketio = SocketIO(self.app)
+        self.socketio = SocketIO(self.app, cors_allowed_origins="http://localhost")
         CORS(self.app)
         self.agents = {}
         setup_routes(self)
@@ -144,10 +144,12 @@ class BondAIAPIServer:
             self.socketio.send(payload)
 
     def run(self):
-        self.socketio.run(self.app, port=self.port)
+        allow_unsafe = False
+        if os.environ.get('FLASK_ENV') == 'development':
+            allow_unsafe = True
+        self.socketio.run(self.app, host='0.0.0.0', port=self.port, allow_unsafe_werkzeug=allow_unsafe)
 
     def shutdown(self):
         # Use this function to gracefully shutdown any resources if needed
         print("Shutting down BondAIAPI...")
         self.socketio.stop()
-

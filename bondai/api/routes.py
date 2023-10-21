@@ -91,6 +91,7 @@ def setup_routes(server):
 
     @server.app.route('/agents/<agent_id>/stop', methods=['POST'])
     def stop_agent(agent_id):
+        print(f"Attempting to stop the agent: {agent_id}")
         agent_wrapper = server.agents.get(agent_id)
         if not agent_wrapper:
             abort(404)
