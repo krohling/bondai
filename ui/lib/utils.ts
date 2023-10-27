@@ -12,6 +12,31 @@ export const nanoid = customAlphabet(
   7
 ) // 7-character random string
 
+export const getAgentName = (agent_id: string) => {
+  let agentName = localStorage.getItem('bondai_agent_' + agent_id);
+  if (agentName) {
+    return agentName;
+  } else {
+    // Retrieve existing IDs
+    const existingIDs = JSON.parse(localStorage.getItem("existing_agent_ids") || "[]");
+
+    // Generate a new unique ID
+    let newID;
+    do {
+      newID = Math.floor(Math.random() * 100);
+    } while (existingIDs.includes(newID));
+
+    // Add the new ID to the list and update localStorage
+    existingIDs.push(newID);
+    localStorage.setItem("existing_agent_ids", JSON.stringify(existingIDs));
+
+    // Create the new agent name
+    agentName = 'Agent ' + newID;
+    localStorage.setItem('bondai_agent_' + agent_id, agentName);
+    return agentName;
+  }
+};
+
 export async function fetcher<JSON = any>(
   input: RequestInfo,
   init?: RequestInit
@@ -42,3 +67,24 @@ export function formatDate(input: string | number | Date): string {
     year: 'numeric'
   })
 }
+
+export function isJSON(str: string) {
+  try {
+      JSON.parse(str);
+  } catch (e) {
+      return false;
+  }
+  return true;
+}
+
+export const convertObjectToString = (obj: any): string => {
+  let str = '';
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'object' && value !== null) {
+      str += `${key.charAt(0).toUpperCase() + key.slice(1)}: \n${convertObjectToString(value)}\n`;
+    } else {
+      str += `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}\n`;
+    }
+  }
+  return str.trim();
+};
