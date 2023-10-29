@@ -1,13 +1,16 @@
-// ui/components/agent-send-chat.tsx
-import React, { useRef } from 'react';
+// ui/components/agent-chat-stage.tsx
+import React, { useRef, useEffect } from 'react';
 import { AgentChatStageProps } from '@/lib/agent-types';
 import { Loader } from '@/components/ui/loader';
 import { isJSON, convertObjectToString } from '@/lib/utils';
 import ButtonPanel from '@/components/agent-button-panel';
-
+import { saveConversationToFile, readConversationFromFile } from '@/lib/agentFileStorage';
 
 export const AgentChatStage = ({
-  messages
+  messages,
+  setMessages,
+  isAgentWorking,
+  agentId,
 } : AgentChatStageProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +61,7 @@ export const AgentChatStage = ({
     }
 
     return (
-      <div className='card mb-4 text-white text rounded p-4 border border-gray-500 shadow-xl'>                  
+      <div className='card mb-4 text-white text rounded p-4 border border-gray-500 shadow-xl card-gradient'>                  
         <div className='card-body'>
           <h2 className='card-title mb-4'>
             <span className='glass text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-white border border-white dark:border-gray-500'>{renderAgentEvent(messageType)}</span>
@@ -73,33 +76,65 @@ export const AgentChatStage = ({
   const renderAgentEvent = (condition: string): string => {
     switch (condition) {
       case 'agent_message':
+      case 'conversational_agent_message':
+      case 'conversational_agent_start':
       case 'agent_step_completed':
+      case 'task_agent_step_completed':
         return 'AGENT';
       default:
         return condition;
     }
   };
 
+  // Load saved messages when component mounts
+  useEffect(() => {
+    const loadMessages = async () => {
+      const response = await readConversationFromFile(agentId);
+      if (response.ok) {
+        const conversationData = await response.json();
+        if (conversationData && conversationData.messages) {  
+          const transformedMessages = conversationData.messages.map((msg: any) => {
+            if (msg.event === "user_message") {
+              return `User: ${msg.data.message}`;
+            } else {
+              return JSON.stringify(msg);
+            }
+          });
+          setMessages(transformedMessages);
+        }
+      } else {
+        console.log(`Failed to load messages: ${response.status}`);
+      }
+    };
+    loadMessages();
+  }, []);
+
+
+  console.log("messages loop", messages)
   return (
   <>
     <ul className='text-sm font-normal'>
 
       {messages?.map((message, index) => (
-      <li className='mb-4' key={index}>
+        <li className='mb-4' key={index}>
         {formatMessage(message)}
-      </li>
+        </li>
       ))}
 
-      <div className="card card-gradient mb-4 text-white text rounded p-4 border border-gray-500 shadow-xl">                  
-        <div className="card-body">
-          <h2 className="card-title mb-4">
-            <span className="glass text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-white border border-white dark:border-gray-300">AGENT</span>
-          </h2>
-          <div className='flex items-center'><Loader color='white' /> Working</div>
+      {isAgentWorking && (
+      <li key={`9998-${agentId}`}>
+        <div className="card card-gradient mb-4 text-white text rounded p-4 border border-gray-500 shadow-xl">                  
+          <div className="card-body">
+            <h2 className="card-title mb-4">
+              <span className="glass text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-white border border-white dark:border-gray-300">AGENT</span>
+            </h2>
+            <div className='flex items-center'><Loader color='white' /> Working</div>
+          </div>
         </div>
-      </div>
+      </li>
+      )}
 
-      <div ref={messagesEndRef}></div>
+      <li key={`9999-${agentId}`} ref={messagesEndRef}></li>
     </ul>
   </>
   )

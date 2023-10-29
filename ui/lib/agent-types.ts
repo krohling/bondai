@@ -62,6 +62,13 @@ export interface AgentTabProps {
   setMaxSteps: (string: string) => void;
 }
 
+export interface AgentBudgetProps {
+  budgetValue: string;
+  setBudget: (string: string) => void;
+  maxStepsValue: string;
+  setMaxSteps: (string: string) => void;
+}
+
 export interface AgentStatusProps {
   steps: string[] | undefined;
   isAgentWorking: boolean;
@@ -76,10 +83,13 @@ export interface AgentChatBoxProps {
   agent: Agent | undefined;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   setMessages: (prevMessages: any) => void;
+  messages: string[] | undefined;
   setIsAgentWorking: (boolean: boolean) => void;
+  isAgentStarted: boolean;
   ws: Socket<any, any> | null;
   budgetValue: string;
   maxStepsValue: string;
+  agentState: boolean;
 }
 
 export interface AgentCreateTaskProps {
@@ -95,7 +105,9 @@ export interface AgentCreateTaskProps {
 
 export interface AgentChatStageProps {
   messages: string[] | undefined;
+  setMessages: (prevMessages: any) => void;
   isAgentWorking: boolean;
+  agentId?: string;
 }
 
 

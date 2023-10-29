@@ -12,6 +12,7 @@ import { AgentChatProps, Agent } from '@/lib/agent-types';
 const AgentChatPanel = ({ 
   isAgentWorking,
   setMessages,
+  messages,
   setIsAgentWorking,
   ws,
   steps,
@@ -24,10 +25,14 @@ const AgentChatPanel = ({
   agentState,
   setAgentState,
  }: AgentChatProps) => {
-  const [messages] = useState<string[]>([]);
   const [budgetValue, setBudgetValue] = useState<string>('0.00');
-  const [maxStepsValue, setMaxStepsValue] = useState<string>('10');
+  const [maxStepsValue, setMaxStepsValue] = useState<string>('0');
   const [isStartingAgent, setIsStartingAgent] = useState(false);
+  const [isComponentLoaded, setIsComponentLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsComponentLoaded(true);
+  }, []);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -35,14 +40,15 @@ const AgentChatPanel = ({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const stepsEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  //console.log("isAgentStarted", isAgentStarted);
-  //console.log("isAgentWorking", isAgentWorking);
+  console.log("isAgentStarted", isAgentStarted);
+  console.log("isAgentWorking", isAgentWorking);
 
   /* scrolling */
   useEffect(() => {
-    // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    // stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, steps]);
   
   useEffect(() => {
@@ -94,8 +100,8 @@ const AgentChatPanel = ({
         },
         body: JSON.stringify({
           task: "",
-          task_budget: budgetValue,
-          max_steps: maxStepsValue,
+          /*task_budget: budgetValue,*/
+          /*max_steps: maxStepsValue,*/
         }),
       });
       const startAgent = await res.json();
@@ -133,13 +139,16 @@ const AgentChatPanel = ({
 
   const agent: Agent | undefined = agents?.find(a => a.agent_id === agentId);
 
-  if (!agent) {
-    return (
-      <div>Agent not found.</div>
-    )
+  if (!isComponentLoaded) {
+    return <div>Loading...</div>;
   }
 
-  console.log("found agent: ", agent);
+  if (!agent) {
+    return <div>Agent not found.</div>;
+  }
+
+  // console.log("Rendering context:", typeof window === 'undefined' ? "Server" : "Client");
+  console.log("Agent Found: ", agent);
   
   return (
     <>
@@ -151,7 +160,7 @@ const AgentChatPanel = ({
         </div>
       </div>
 
-      <div className='max-w-[600px] flex flex-col flex-1'>
+      <div className='max-w-[1000px] flex flex-col flex-1'>
 
           <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
             <ul className="flex flex-wrap -mb-px" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
@@ -208,17 +217,22 @@ const AgentChatPanel = ({
                     <>
                       <AgentChatStage
                         messages={messages}
+                        setMessages={setMessages}
                         isAgentWorking={isAgentWorking}
+                        agentId={agentId}
                       />
 
                       <AgentChatBox
                         agent={agent}
                         textareaRef={textareaRef}
                         setMessages={setMessages}
+                        messages={messages}
                         setIsAgentWorking={setIsAgentWorking}
+                        isAgentStarted={isAgentStarted}
                         ws={ws}
                         budgetValue={budgetValue}
                         maxStepsValue={maxStepsValue}
+                        agentState={agentState}
                       />
                     </>
                   )}

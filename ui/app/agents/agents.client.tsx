@@ -7,6 +7,7 @@ import AgentStatusPanel from '@/components/agent-status-panel';
 import AgentListPanel from '@/components/agent-list-panel';
 import AgentDashboard from '@/components/agent-dashboard';
 import { AgentProps } from '@/lib/agent-types';
+import { saveConversationToFile, readConversationFromFile } from '@/lib/agentFileStorage';
 
 const AgentChat = ({ 
   agents,
@@ -21,7 +22,7 @@ const AgentChat = ({
   const [isAgentStarted, setIsAgentStarted] = useState<boolean>(false);
   const [isAgentWorking, setIsAgentWorking] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('task');
-  const [refreshState, setRefreshState] = useState(0);
+  // const [refreshState, setRefreshState] = useState(0);
   const stepsEndRef = useRef<HTMLDivElement>(null);
 
   const handleAgentStarted = useCallback(() => {
@@ -39,36 +40,39 @@ const AgentChat = ({
     console.log('Message received:', res.event);
 
     
-    if (res.event === 'conversational_agent_message') {
+    if (res.event === 'conversational_agent_started') {
+      console.log('conversational_agent_started', res);
+
+    } else if (res.event === 'conversational_agent_message') {
       console.log('conversational_agent_message', res);
-      //setMessages(prevMessages => [...prevMessages, response]);
+      const agent_id = res.data.agent_id;
+      setMessages(prevMessages => [...prevMessages, response]);
+      saveConversationToFile(res);
+      setIsAgentWorking(false);
       setIsAgentStarted(true);
       setAgentState('AGENT_STATE_RUNNING');
-    } else
 
-
-    /* OLD */
-    if (res.event === 'agent_message') {
+    } else if (res.event === 'agent_message') {
       console.log('agent_message', res);
       setMessages(prevMessages => [...prevMessages, response]);
       setIsAgentWorking(false);
 
-    } else if (res.event === 'agent_step_completed') {
-      console.log('agent_step_completed', res);
+    } else if (res.event === 'task_agent_step_completed') {
+      console.log('task_agent_step_completed', res);
       res.data?.step ? setMessages(prevMessages => [...prevMessages, response]) : null;
       res.data?.step?.function?.name ? setSteps(prevMessages => [...prevMessages || [], res.data.step.function.name]) : null;
 
-    } else if (res.event === 'agent_completed') {
-      console.log('agent_completed', res);
+    } else if (res.event === 'task_agent_completed') {
+      console.log('task_agent_completed', res);
       setSteps(prevMessages => [...prevMessages || [], 'Completed']);
 
-    } else if (res.event === 'agent_started') {
-      console.log('agent_started', res);
+    } else if (res.event === 'task_agent_started') {
+      console.log('task_agent_started', res);
       setSteps(prevMessages => [...prevMessages || [], 'Started']);
 
     } else {
       console.log('agent uknown', res);
-      setMessages(prevMessages => [...prevMessages, response]);
+      //setMessages(prevMessages => [...prevMessages, response]);
     }
     /* END OLD */
   }, []);
@@ -99,11 +103,11 @@ const AgentChat = ({
     };
   }, [handleAgentStarted, handleAgentCompleted, handleSocketMessage]);
 
-  useEffect(() => {
-    if (isAgentStarted) {
-      setRefreshState(prevState => prevState + 1);
-    }
-  }, [isAgentStarted]);
+  // useEffect(() => {
+  //   if (isAgentStarted) {
+  //     setRefreshState(prevState => prevState + 1);
+  //   }
+  // }, [isAgentStarted]);
 
   return (
     <>
@@ -120,12 +124,13 @@ const AgentChat = ({
           />
         </div>
 
-        <div id="chat-panel" className="flex-grow m-3 p-5">
+        <div id="chat-panel" className="flex-grow m-3 p-5 sm:p-3">
           {
             /* Conditionally render AgentChatPanel based on the URL */
             agentId ? (
               <AgentChatPanel 
                 setMessages={setMessages}
+                messages={messages}
                 isAgentWorking={isAgentWorking}
                 setIsAgentWorking={setIsAgentWorking}
                 ws={ws}
@@ -148,7 +153,7 @@ const AgentChat = ({
           }
         </div>
 
-        <div id="status-panel" className='min-w-[200px] w-[200px] text-black dark:text-white dark:bg-black/40 px-3 py-5'>
+        <div id="status-panel" className='min-w-[250px] w-[250px] text-black dark:text-white px-3 py-5'>
           <AgentStatusPanel
             steps={steps}
             isAgentWorking={isAgentWorking}

@@ -3,9 +3,12 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 
 
-export const AgentBudgetSteps = () => {
-  const [budgetValue, setBudgetValue] = useState<string>('0.00');
-  const [maxStepsValue, setMaxStepsValue] = useState<string>('10');
+export const AgentBudgetSteps = ({
+  budgetValue,
+  setBudgetValue,
+  maxStepsValue,
+  setMaxStepsValue,
+}: AgentBudgetProps) => {
 
   const setBudget = () => {
     localStorage.setItem('budget', budgetValue);
@@ -28,7 +31,7 @@ export const AgentBudgetSteps = () => {
   useEffect(() => {
     const init = async () => {
       setBudgetValue(localStorage.getItem('budget') || '0.00');
-      setMaxStepsValue(localStorage.getItem('maxSteps') || '10');
+      setMaxStepsValue(localStorage.getItem('maxSteps') || '0');
     }
     init();
   }, []);

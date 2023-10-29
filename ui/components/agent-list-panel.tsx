@@ -73,15 +73,15 @@ const AgentListPanel = ({
       >
         Create
       </button>
-      {
-        window?.location?.pathname != '/agents' && 
-        <Link 
-          href={`/agents/`}
-          className='inline-block bg-background/50 border hover:bg-white/20 text-xs shadow-sm dark:shadow-lg py-2 px-3 text-black dark:text-white rounded flex-start'
-        >
-          Dashboard
-        </Link>
-      }
+      
+
+      <Link 
+        href={`/agents/`}
+        className='inline-block bg-background/50 border hover:bg-white/20 text-xs shadow-sm dark:shadow-lg py-2 px-3 text-black dark:text-white rounded flex-start'
+      >
+        Dashboard
+      </Link>
+      
 
       <ul className='text-sm mt-5'>
         {agents?.map((agent, index) => (

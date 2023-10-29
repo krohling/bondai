@@ -49,7 +49,7 @@ const AgentStatusPanel = ({
  
   return (
     <>
-      <div className='flex-grow'>
+      <div className='min-w-[250px] w-[250px] flex-grow fixed border-l right-0 p-4' style={{ height: 'calc(100vh - 64px)', top: '64px' }}>
         <h2 className='mb-4 flex items-center'>
           <div className='text-sm'>
             {renderAgentState(agentState)} 
