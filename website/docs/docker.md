@@ -14,10 +14,10 @@ Before running the BondAI Docker container it is recommended that you create a d
 mkdir agent-volume
 docker pull krohling/bondai:latest
 docker run -it --rm \
-           -v ./agent-volume:/agent-volume \
-           -w /agent-volume \
-           OPENAI_API_KEY=sk-XXXXXXXXXX \
-           bondai:latest bondai
+    -v "$(pwd)/agent-volume:/agent-volume" \
+    -w /agent-volume \
+    -e OPENAI_API_KEY=sk-XXXXXXXXXX \
+    krohling/bondai:latest bondai
 ```
 
 ## BondAI with Docker Compose
