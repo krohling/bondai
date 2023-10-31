@@ -1,4 +1,4 @@
-from bondai import AGENT_STATE_RUNNING
+from bondai import AGENT_STATE_RUNNING, AGENT_STATE_STOPPED
 from .api_error import BondAIAPIError
 
 class AgentWrapper:
@@ -35,6 +35,7 @@ class AgentWrapper:
     def stop_agent(self):
         self.task_agent.stop()
         self.conversational_agent.stop()
+        self.state = AGENT_STATE_STOPPED
     
     def get_agent_tool_options(self):
         return [t.get_tool_function() for t in self.tools]
