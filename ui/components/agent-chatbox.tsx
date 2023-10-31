@@ -1,20 +1,18 @@
 // ui/components/agent-send-chat.tsx
-import React, { useEffect, useState } from 'react';
-import { AgentChatBoxProps } from '@/lib/agent-types';
-import { saveConversationToFile, readConversationFromFile } from '@/lib/agentFileStorage';
-
+import React, { useEffect } from 'react';
+import { AgentChatBoxProps } from '@/lib/agentTypes';
+import { saveConversationToFile } from '@/lib/agentFileStorage';
+import { toast } from 'react-hot-toast';
 
 export const AgentChatBox = ({
   agent,
   textareaRef,
   setMessages,
-  messages,
   setIsAgentWorking,
-  isAgentStarted,
+  isAgentWorking,
   agentState,
   ws,
-  budgetValue,
-  maxStepsValue,
+  setAgentWorkingMessage,
 } : AgentChatBoxProps) => {
 
   const clearTextAreaValue = () => {
@@ -44,9 +42,14 @@ export const AgentChatBox = ({
   }, []);
 
   const sendMessageToAgent = async (message: string) => {
-    setMessages((prevMessages: any) => [...prevMessages, 'User: ' + message]);
+
+    if (isAgentWorking) {
+      toast.success('Agent is working..');
+      return;
+    }
 
     setIsAgentWorking(true);
+    setAgentWorkingMessage('Working');
 
     if (ws) {
       const msgPayload = {
@@ -57,9 +60,8 @@ export const AgentChatBox = ({
         }
       }
       ws.emit('message', msgPayload);
-
+      setMessages((prevMessages: any) => [...prevMessages, msgPayload]);
       saveConversationToFile(msgPayload);
-
       console.log(`Sending message to agent ${agent?.agent_id}`, message);
     }
     clearTextAreaValue();
@@ -68,23 +70,23 @@ export const AgentChatBox = ({
   return (
     <>
     {agentState === 'AGENT_STATE_RUNNING' && (
-      <>
-      <textarea
-        id='message'
-        ref={textareaRef}
-        placeholder='Send a message.'
-        className='resize-none hide-scrollbar mt-4 space-y-4 bg-black/70 p-4 shadow-sm dark:shadow-lg border text-black dark:text-white placeholder-black dark:placeholder-white text-sm  focus:outline-none'
-        onChange={handleInput}></textarea>
-      <button 
-        className='bg-black/70 border hover:bg-white/20 text-xs shadow-sm dark:shadow-lg py-2 px-3 mt-2 text-black dark:text-white rounded'
-        onClick={() => {
-          const messageElement = document.getElementById('message') as HTMLInputElement;
-          sendMessageToAgent(messageElement?.value);
-        }}
-        >
-        Send Message
-      </button>
-      </>
+      <div className='max-w-[600px] flex flex-col w-full'>
+        <textarea
+          id='message'
+          ref={textareaRef}
+          placeholder='Send a message.'
+          className='resize-none hide-scrollbar mt-4 space-y-4 bg-black/70 p-4 shadow-sm dark:shadow-lg border text-black dark:text-white placeholder-black dark:placeholder-white text-sm  focus:outline-none'
+          onChange={handleInput}></textarea>
+        <button 
+          className='bg-black/70 border hover:bg-white/20 text-xs shadow-sm dark:shadow-lg py-2 px-3 mt-2 text-black dark:text-white rounded'
+          onClick={() => {
+            const messageElement = document.getElementById('message') as HTMLInputElement;
+            sendMessageToAgent(messageElement?.value);
+          }}
+          >
+          Send Message
+        </button>
+      </div>
     )}
     </>
   )

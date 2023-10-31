@@ -14,12 +14,8 @@ export async function POST(req: Request, res: Response) {
       const convString = fs.readFileSync(filePath, 'utf8');
       const wrappedConvString = `{"messages":${convString}}`;
       return new Response(wrappedConvString);
-
     } else {
-      console.log('Sending 404 response: Failed to read chat');
-      return new Response('Failed to read chat', {
-        status: 404,
-      })
+      return new Response('{}');
     }
     
   } catch (error) {

@@ -1,40 +1,9 @@
 // /app/task/task.client.tsx
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Loader from '@/components/ui/loader';
+import { Loader } from '@/components/ui/loader';
 import React, {ChangeEvent} from 'react';
 import { toast } from 'react-hot-toast';
-
-interface ResType {
-  data: any;
-  event: string;
-}
-
-interface MsgObject {
-  data: {
-    step: {
-      error: string;
-      exit: string;
-      function: {
-        arguments: {
-          append: boolean,
-          filename: string,
-          text: string,
-          thought: string
-        },
-        name: string
-      };
-      message: string;
-      output: string;
-    }
-  },
-  event: string;
-}
-
-interface RenderAgentEvent {
-  agent_message: string;
-  messageType: string;
-}
 
 interface ButtonProps {
   messageTool: string;

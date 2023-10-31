@@ -1,13 +1,12 @@
 // ui/components/agent-chat-panel.tsx
-import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AgentBudgetSteps } from '@/components/agent-budget-steps';
 import { AgentSettings } from '@/components/agent-settings';
 import { Loader } from '@/components/ui/loader';
 import { AgentChatBox } from '@/components/agent-chatbox';
 import { AgentChatStage } from '@/components/agent-chat-stage';
-import { AgentCreateTask } from '@/components/agent-create-task';
-import { AgentChatProps, Agent } from '@/lib/agent-types';
-
+import { AgentChatProps, Agent } from '@/lib/agentTypes';
+import { startAgentAPI, stopAgentAPI } from '@/lib/agentActions';
 
 const AgentChatPanel = ({ 
   isAgentWorking,
@@ -16,6 +15,7 @@ const AgentChatPanel = ({
   setIsAgentWorking,
   ws,
   steps,
+  setSteps,
   agents,
   agentId,
   activeTab,
@@ -24,6 +24,8 @@ const AgentChatPanel = ({
   setIsAgentStarted,
   agentState,
   setAgentState,
+  agentWorkingMessage,
+  setAgentWorkingMessage,
  }: AgentChatProps) => {
   const [budgetValue, setBudgetValue] = useState<string>('0.00');
   const [maxStepsValue, setMaxStepsValue] = useState<string>('0');
@@ -39,17 +41,7 @@ const AgentChatPanel = ({
   };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const stepsEndRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  console.log("isAgentStarted", isAgentStarted);
-  console.log("isAgentWorking", isAgentWorking);
-
-  /* scrolling */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, steps]);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -83,57 +75,29 @@ const AgentChatPanel = ({
   
     };
 
-    window.addEventListener('scroll', handleScroll);
+    //window.addEventListener('scroll', handleScroll);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      //window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   const startAgent = async () => {
+    console.log("startAgent(): ", agentId);
     setIsStartingAgent(true);
-    try {
-      const res = await fetch(`http://localhost:2663/agents/${agentId}/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          task: "",
-          /*task_budget: budgetValue,*/
-          /*max_steps: maxStepsValue,*/
-        }),
-      });
-      const startAgent = await res.json();
-      console.log('startAgent:', startAgent, 'agentId:', agentId);
-      if (startAgent.status == "success") {
-        // Success status informs us the start up request was received
-        // component re-render will occur on receipt of conversational_agent_message websocket event
-      }
-      return;
-
-    } catch (error: any) {
-      console.log('Cannot start agent:', error.message);
-    }
+    setIsAgentWorking(true);
+    setAgentWorkingMessage('Starting');
+    startAgentAPI(agentId, budgetValue, maxStepsValue);
   };
 
   const stopAgent = async () => {
-    try {
-      const res = await fetch(`http://localhost:2663/agents/${agentId}/stop`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      const stopAgent = await res.json();
-      console.log('stopAgent:', stopAgent, 'agentId:', agentId);
-      if (stopAgent.status == "success") {
-        setIsAgentStarted(false);
-      }
-      return;
-
-    } catch (error: any) {
-      console.log('Cannot start agent:', error.message);
+    console.log("stopAgent(): ", agentId);
+    const stopAgentResult = await stopAgentAPI(agentId)
+    
+    if (stopAgentResult.status == "success") {
+      setAgentState('AGENT_STATE_STOPPED');
+      setIsAgentWorking(false);
+      setIsAgentStarted(false);
     }
   };
 
@@ -147,8 +111,7 @@ const AgentChatPanel = ({
     return <div>Agent not found.</div>;
   }
 
-  // console.log("Rendering context:", typeof window === 'undefined' ? "Server" : "Client");
-  console.log("Agent Found: ", agent);
+  //console.log("Agent Found: ", agent);
   
   return (
     <>
@@ -211,7 +174,7 @@ const AgentChatPanel = ({
             {activeTab === 'task' && ( 
               <div role="tabpanel" aria-labelledby="task-tab">
 
-                <div className='max-w-[600px] flex flex-col flex-1 mt-5'>
+                <div className='flex flex-col flex-1 mt-5 items-center justify-center '>
 
                   {agentState === 'AGENT_STATE_RUNNING' && (
                     <>
@@ -219,7 +182,11 @@ const AgentChatPanel = ({
                         messages={messages}
                         setMessages={setMessages}
                         isAgentWorking={isAgentWorking}
+                        steps={steps}
+                        setSteps={setSteps}
                         agentId={agentId}
+                        agentWorkingMessage={agentWorkingMessage}
+                        setAgentWorkingMessage={setAgentWorkingMessage}
                       />
 
                       <AgentChatBox
@@ -228,16 +195,18 @@ const AgentChatPanel = ({
                         setMessages={setMessages}
                         messages={messages}
                         setIsAgentWorking={setIsAgentWorking}
+                        isAgentWorking={isAgentWorking}
                         isAgentStarted={isAgentStarted}
                         ws={ws}
                         budgetValue={budgetValue}
                         maxStepsValue={maxStepsValue}
                         agentState={agentState}
+                        setAgentWorkingMessage={setAgentWorkingMessage}
                       />
                     </>
                   )}
 
-                  <div className='flex flex-col justify-between items-center mt-10 space-y-5 sm:space-y-0 sm:space-x-5'>
+                  <div className='max-w-[600px] flex flex-col justify-between items-center mt-10 space-y-5 sm:space-y-0 sm:space-x-5'>
                     <div className='flex items-center'>
 
                       {agentState === 'AGENT_STATE_RUNNING' ? (
@@ -291,7 +260,12 @@ const AgentChatPanel = ({
                 <div className='max-w-[600px] flex flex-col flex-1 mt-5'>
                   <div className='text-sm'>Let's get setup.</div>
                   <AgentSettings/>
-                  <AgentBudgetSteps/>
+                  <AgentBudgetSteps
+                    budgetValue={budgetValue} 
+                    setBudgetValue={setBudgetValue} 
+                    maxStepsValue={maxStepsValue} 
+                    setMaxStepsValue={setMaxStepsValue}
+                  />
                 </div>
               </div>
             )}

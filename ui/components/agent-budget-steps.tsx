@@ -1,6 +1,7 @@
 // ui/components/agent-budget-steps.tsx
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
+import { AgentBudgetProps } from '@/lib/agentTypes';
 
 
 export const AgentBudgetSteps = ({

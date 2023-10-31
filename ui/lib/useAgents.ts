@@ -1,7 +1,6 @@
 // lib/useAgents.ts
 import { useState, useEffect } from 'react';
 import { getAgentName } from '@/lib/utils';
-import { type Agent } from '@/lib/agent-types';
 
 const useAgents = () => {
   const [agents, setAgents] = useState<any[]>([]);
@@ -22,7 +21,7 @@ const useAgents = () => {
           name: getAgentName(agent.agent_id),
         };
       });
-      console.log('getAgents:', agentList);
+      // console.log('getAgents:', agentList);
       setAgents(agentList);
     } catch (error: any) {
       console.log('Cannot get agents:', error.message);

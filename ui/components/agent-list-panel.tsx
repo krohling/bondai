@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAgentName } from '@/lib/utils';
-import { Agent, AgentListProps } from '@/lib/agent-types';
+import { Agent, AgentListProps } from '@/lib/agentTypes';
 
 
 const AgentListPanel = ({ 
@@ -10,17 +10,17 @@ const AgentListPanel = ({
   agents: initialAgents, refreshAgents,
   activeTab,
   setActiveTab,
-  agentState
+  agentState,
+  setAgentState,
 }: AgentListProps) => {
   const [agents, setAgents] = useState<Agent[] | null>(initialAgents);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
-
-  if (agents && agents.length > 0) {
-    console.log("AgentListPanel agents", agents);
-  }
 
   useEffect(() => {
     setAgents(initialAgents);
+    console.log("initialAgents", initialAgents);
+    if (initialAgents && initialAgents.length > -1) {
+      setAgentState('AGENTS_FOUND')
+    }
   }, [initialAgents]);
 
   const handleTabClick = (tab: string) => {
@@ -34,7 +34,6 @@ const AgentListPanel = ({
         method: 'POST'
       });
       const newAgent = await res.json();
-      console.log('newAgent:', newAgent, typeof newAgent);
       const newAgentNamed = {
         ...newAgent,
         name: getAgentName(newAgent.agent_id),
@@ -47,7 +46,7 @@ const AgentListPanel = ({
       }
       await refreshAgents();
       
-      console.log('createAgent:', newAgent);
+      console.log('newAgent:', newAgent);
       return createAgent;
 
     } catch (error: any) {
@@ -55,12 +54,10 @@ const AgentListPanel = ({
     }
   };
 
-  useEffect(() => {
-    setLastRefreshed(new Date());
-  }, [agentState]);
-
   return (
-    <div className='flex-grow'>
+    <>
+    {agentState && (
+    <div className='flex-grow p-4'>
       <h2 className='text-sm mb-4 flex items-center'>
         Agents
       </h2>
@@ -74,14 +71,12 @@ const AgentListPanel = ({
         Create
       </button>
       
-
       <Link 
         href={`/agents/`}
         className='inline-block bg-background/50 border hover:bg-white/20 text-xs shadow-sm dark:shadow-lg py-2 px-3 text-black dark:text-white rounded flex-start'
       >
         Dashboard
       </Link>
-      
 
       <ul className='text-sm mt-5'>
         {agents?.map((agent, index) => (
@@ -154,35 +149,10 @@ const AgentListPanel = ({
           </li>
         ))}
       </ul>
-
-      {agentState === 'AGENT_STATE_RUNNING' && ( 
-        <>
-          <div className='hidden text-xs font-light text-white/30 mt-6'>
-            Refreshed: 
-            <div>
-              {lastRefreshed.toLocaleString()}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/*
-      <ul className='text-sm mt-5'>
-        {agents?.map((agent, index) => (
-          <li key={index}>
-            <Link key={index} href={`/agents/${agent.agent_id}`}>
-              <h2 className='mb-1 flex items-center hover:bg-white/5 p-2'>
-                <span className="relative flex h-3 w-3 mr-3">
-                  <span className="relative inline-flex rounded-full h-3 w-3 border-2 border-slate-500 bg-transparent"></span>
-                </span>
-                {agent.name}
-              </h2>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    */}
+      
     </div>
+    )}
+    </>
   );
 };
 

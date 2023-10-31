@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
     title: {
-      default: 'Bondai - Open source Artificial Intelligent Task Engine',
+      default: 'Bondai - Open Source Artificial Intelligent Task Engine',
       template: `%s - Bondai`
     },
     description: 'An Open Source AI-powered Task Engine',
