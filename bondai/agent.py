@@ -265,11 +265,11 @@ class Agent:
         if self._thread:
             self._thread.join()
 
-    def stop(self):
-        """Gracefully stops the thread."""
-        print("Gracefully stopping the thread.")
+    def stop(self, timeout=5):
+        """Gracefully stops the thread, with a timeout."""
+        print("Agent issued stop command.")
         self._stop_thread = True
-        if self._thread:
-            self._thread.join()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout)
         self._stop_thread = False
-
+        print(f"Agent stopped, state changed to: {self.state}")
