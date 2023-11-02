@@ -15,7 +15,7 @@ const AgentChat = ({
   refreshAgents
   }: AgentProps) => {
 
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<{ [key: string]: string[]; }>({});
   const [steps, setSteps] = useState<string[]>([]);
   const [agentState, setAgentState] = useState<string>('');
   const [ws, setWs] = useState<Socket<any, any> | null>(null);
@@ -45,13 +45,33 @@ const AgentChat = ({
 
     } else if (res.event === 'conversational_agent_message') {
       console.log('conversational_agent_message', res);
-      setMessages(prevMessages => [...prevMessages, response]);
+      // setMessages(prevMessages => [...prevMessages, response]);
+
+      let agent_id = res.data.agent_id;
+      setMessages(prevMessages => {
+        let updatedMessages = { ...prevMessages };
+  
+        if (!updatedMessages[agent_id]) {
+          updatedMessages[agent_id] = [];
+        }
+        updatedMessages[agent_id].push(response);
+        return updatedMessages;
+      });
       setIsAgentWorking(false);
       setIsAgentStarted(true);
 
     } else if (res.event === 'agent_message') {
       console.log('agent_message', res);
-      setMessages(prevMessages => [...prevMessages, response]);
+      let agent_id = res.data.agent_id;
+      setMessages(prevMessages => {
+        let updatedMessages = { ...prevMessages };
+  
+        if (!updatedMessages[agent_id]) {
+          updatedMessages[agent_id] = [];
+        }
+        updatedMessages[agent_id].push(response);
+        return updatedMessages;
+      });
       setIsAgentWorking(false);
 
     } else if (res.event === 'task_agent_step_started') {
@@ -60,14 +80,36 @@ const AgentChat = ({
 
     } else if (res.event === 'task_agent_step_tool_selected') {
       console.log('task_agent_step_tool_selected', res);
-      res.data?.step ? setMessages(prevMessages => [...prevMessages, response]) : null;
+      if (res.data?.step) {
+        let agent_id = res.data.agent_id;
+        setMessages(prevMessages => {
+          let updatedMessages = { ...prevMessages };
+    
+          if (!updatedMessages[agent_id]) {
+            updatedMessages[agent_id] = [];
+          }
+          updatedMessages[agent_id].push(response);
+          return updatedMessages;
+        });
+      }
       res.data?.step?.function?.name ? setSteps(prevMessages => [...prevMessages || [], 'Selecting Tool']) : null;
       res.data?.step?.function?.name ? setSteps(prevMessages => [...prevMessages || [], res.data.step.function.name]) : null;
       setAgentWorkingMessage('Selecting Tool');
 
     } else if (res.event === 'task_agent_step_completed') {
       console.log('task_agent_step_completed', res);
-      res.data?.step ? setMessages(prevMessages => [...prevMessages, response]) : null;
+      if (res.data?.step) {
+        let agent_id = res.data.agent_id;
+        setMessages(prevMessages => {
+          let updatedMessages = { ...prevMessages };
+    
+          if (!updatedMessages[agent_id]) {
+            updatedMessages[agent_id] = [];
+          }
+          updatedMessages[agent_id].push(response);
+          return updatedMessages;
+        });
+      }
       setAgentWorkingMessage('Step Completed');
 
     } else if (res.event === 'task_agent_completed') {

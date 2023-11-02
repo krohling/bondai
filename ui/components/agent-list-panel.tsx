@@ -18,7 +18,8 @@ const AgentListPanel = ({
   useEffect(() => {
     setAgents(initialAgents);
     console.log("initialAgents", initialAgents);
-    if (initialAgents && initialAgents.length > -1) {
+    console.log("initialAgents?.length", initialAgents?.length);
+    if (initialAgents && initialAgents?.length > 0) {
       setAgentState('AGENTS_FOUND')
     }
   }, [initialAgents]);
@@ -56,7 +57,6 @@ const AgentListPanel = ({
 
   return (
     <>
-    {agentState && (
     <div className='flex-grow p-4'>
       <h2 className='text-sm mb-4 flex items-center'>
         Agents
@@ -78,6 +78,7 @@ const AgentListPanel = ({
         Dashboard
       </Link>
 
+      {agentState && (
       <ul className='text-sm mt-5'>
         {agents?.map((agent, index) => (
           <li key={index}>
@@ -149,9 +150,9 @@ const AgentListPanel = ({
           </li>
         ))}
       </ul>
+    )}
       
     </div>
-    )}
     </>
   );
 };

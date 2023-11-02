@@ -60,7 +60,18 @@ export const AgentChatBox = ({
         }
       }
       ws.emit('message', msgPayload);
-      setMessages((prevMessages: any) => [...prevMessages, msgPayload]);
+      // setMessages((prevMessages: any) => [...prevMessages, msgPayload]);
+
+      let agent_id = agent?.agent_id || '';
+      setMessages((prevMessages: any) => {
+        let updatedMessages = { ...prevMessages };
+  
+        if (!updatedMessages[agent_id]) {
+          updatedMessages[agent_id] = [];
+        }
+        updatedMessages[agent_id].push(msgPayload);
+        return updatedMessages;
+      });
       saveConversationToFile(msgPayload);
       console.log(`Sending message to agent ${agent?.agent_id}`, message);
     }

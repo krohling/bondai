@@ -217,11 +217,18 @@ export const AgentChatStage = ({
       const response = await readConversationFromFile(agentId);
       if (response?.ok) {
         const conversationData = await response.json();
+        console.log('loadMessages conversationData:', conversationData);
         if (conversationData && conversationData.messages) {  
           const transformedMessages = conversationData.messages.map((msg: any) => {
             return JSON.stringify(msg);
           });
-          setMessages(transformedMessages);
+          // setMessages(transformedMessages);
+          let agent_id: any = agentId || '';
+          let updatedMessages: any[] = [];
+          setMessages(() => {
+            updatedMessages[agent_id]?.push(transformedMessages);
+            return updatedMessages;
+          });
         }
       } else {
         console.log(`Failed to load messages: ${response?.status}`);
@@ -236,12 +243,16 @@ export const AgentChatStage = ({
     stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, steps]);
 
+  const agentMessages = messages && agentId !== undefined ? messages[agentId] : [];
+
+  console.log('Agent Messages:', agentMessages);
+
   return (
     <ul className='text-sm font-normal w-full'>
 
-      {messages?.map((message, index) => (
+      {agentMessages?.map((message: any, index: React.Key | null | undefined) => (
         <li key={index} className='mb-4'>
-        {processMessage(message)}
+          {processMessage(message)}
         </li>
       ))}
 

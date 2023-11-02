@@ -19,7 +19,7 @@ export type Agent = {
 export interface AgentChatProps {
   isAgentWorking: boolean;
   setMessages: (prevMessages: any) => void;
-  messages: string[] | undefined;
+  messages: { [key: string]: string[]; } | undefined;
   setIsAgentWorking: (boolean: boolean) => void;
   ws: Socket<any, any> | null;
   steps: string[] | undefined;
@@ -90,7 +90,7 @@ export interface AgentChatBoxProps {
   agent: Agent | undefined;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   setMessages: (prevMessages: any) => void;
-  messages: string[] | undefined;
+  messages: { [key: string]: string[]; } | undefined;
   setIsAgentWorking: (boolean: boolean) => void;
   isAgentWorking: boolean;
   isAgentStarted: boolean;
@@ -113,7 +113,7 @@ export interface AgentCreateTaskProps {
 }
 
 export interface AgentChatStageProps {
-  messages: string[] | undefined;
+  messages: { [key: string]: string[]; } | undefined;
   setMessages: (prevMessages: any) => void;
   isAgentWorking: boolean;
   steps: string[] | undefined;
@@ -122,6 +122,3 @@ export interface AgentChatStageProps {
   agentWorkingMessage: string;
   setAgentWorkingMessage: (string: string) => void;
 }
-
-
-
