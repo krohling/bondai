@@ -41,7 +41,6 @@ const AgentChatPanel = ({
   };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   
   useEffect(() => {
     const handleScroll = () => {
@@ -110,8 +109,6 @@ const AgentChatPanel = ({
   if (!agent) {
     return <div>Agent not found.</div>;
   }
-
-  //console.log("Agent Found: ", agent);
   
   return (
     <>

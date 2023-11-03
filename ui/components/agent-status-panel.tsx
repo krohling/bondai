@@ -39,7 +39,7 @@ const AgentStatusPanel = ({
         stateText = 'Agent Stopped';
         break;
       default:
-        stateText = '';
+        stateText = condition;
         break;
     }
     return `${stateText}`;
@@ -117,11 +117,11 @@ const AgentStatusPanel = ({
  
   return (
     <>
-    {agentId && (
+    { agentId && (
       <div className='flex-grow p-4'>
         <h2 className='mb-4 flex items-center'>
           <div className='text-sm'>
-            {renderAgentState(agentState)}
+            {renderAgentState(agentState)} 
           </div>
           {agentState === 'AGENT_STATE_RUNNING' ? (
             <AgentStatus status='active' /> 
@@ -143,7 +143,7 @@ const AgentStatusPanel = ({
           <li key={`anchor-${agentId}`} ref={stepsEndRef} className='pb-40'></li>
         </ul>
       </div>
-    )}
+      )}
     </>
   );
 };

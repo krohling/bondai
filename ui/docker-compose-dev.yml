@@ -4,8 +4,8 @@ version: '3.5'
 services:
   frontend-dev:
     build:
-      context: ./
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: Dockerfile.ui.dev
     restart: always
     ports:
       - 80:3000
@@ -22,8 +22,8 @@ services:
 
   backend-dev:
     build:
-      context: ../
-      dockerfile: ./docker-extra/Dockerfile
+      context: .
+      dockerfile: Dockerfile.bondai.dev
     #restart: always
     working_dir: /agent-volume
     env_file:

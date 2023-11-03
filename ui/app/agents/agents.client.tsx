@@ -15,7 +15,7 @@ const AgentChat = ({
   refreshAgents
   }: AgentProps) => {
 
-  const [messages, setMessages] = useState<{ [key: string]: string[]; }>({});
+  const [messages, setMessages] = React.useState<{ [key: string]: string[] }>({});
   const [steps, setSteps] = useState<string[]>([]);
   const [agentState, setAgentState] = useState<string>('');
   const [ws, setWs] = useState<Socket<any, any> | null>(null);
@@ -37,59 +37,37 @@ const AgentChat = ({
 
   const handleSocketMessage = useCallback(async(response: string) => {
     const res = JSON.parse(response);
-    //console.log(res.event, res);
+    console.log(res.event, res);
     
     if (res.event === 'conversational_agent_started') {
-      console.log('conversational_agent_started', res);
       setAgentState('AGENT_STATE_RUNNING');
 
     } else if (res.event === 'conversational_agent_message') {
-      console.log('conversational_agent_message', res);
-      // setMessages(prevMessages => [...prevMessages, response]);
-
-      let agent_id = res.data.agent_id;
       setMessages(prevMessages => {
-        let updatedMessages = { ...prevMessages };
-  
-        if (!updatedMessages[agent_id]) {
-          updatedMessages[agent_id] = [];
-        }
-        updatedMessages[agent_id].push(response);
-        return updatedMessages;
+        let agentMessages = [...(prevMessages[res.data.agent_id] || []), res];
+
+        return { ...prevMessages, [res.data.agent_id]: agentMessages };
       });
       setIsAgentWorking(false);
       setIsAgentStarted(true);
 
     } else if (res.event === 'agent_message') {
-      console.log('agent_message', res);
-      let agent_id = res.data.agent_id;
       setMessages(prevMessages => {
-        let updatedMessages = { ...prevMessages };
-  
-        if (!updatedMessages[agent_id]) {
-          updatedMessages[agent_id] = [];
-        }
-        updatedMessages[agent_id].push(response);
-        return updatedMessages;
+        let agentMessages = [...(prevMessages[res.data.agent_id] || []), res];
+
+        return { ...prevMessages, [res.data.agent_id]: agentMessages };
       });
       setIsAgentWorking(false);
 
     } else if (res.event === 'task_agent_step_started') {
-      console.log('task_agent_step_started', res);
-      setAgentWorkingMessage('Working out First Step');
+      setAgentWorkingMessage('Working');
 
     } else if (res.event === 'task_agent_step_tool_selected') {
-      console.log('task_agent_step_tool_selected', res);
       if (res.data?.step) {
-        let agent_id = res.data.agent_id;
         setMessages(prevMessages => {
-          let updatedMessages = { ...prevMessages };
-    
-          if (!updatedMessages[agent_id]) {
-            updatedMessages[agent_id] = [];
-          }
-          updatedMessages[agent_id].push(response);
-          return updatedMessages;
+          let agentMessages = [...(prevMessages[res.data.agent_id] || []), res];
+  
+          return { ...prevMessages, [res.data.agent_id]: agentMessages };
         });
       }
       res.data?.step?.function?.name ? setSteps(prevMessages => [...prevMessages || [], 'Selecting Tool']) : null;
@@ -97,28 +75,20 @@ const AgentChat = ({
       setAgentWorkingMessage('Selecting Tool');
 
     } else if (res.event === 'task_agent_step_completed') {
-      console.log('task_agent_step_completed', res);
       if (res.data?.step) {
-        let agent_id = res.data.agent_id;
         setMessages(prevMessages => {
-          let updatedMessages = { ...prevMessages };
-    
-          if (!updatedMessages[agent_id]) {
-            updatedMessages[agent_id] = [];
-          }
-          updatedMessages[agent_id].push(response);
-          return updatedMessages;
+          let agentMessages = [...(prevMessages[res.data.agent_id] || []), res];
+  
+          return { ...prevMessages, [res.data.agent_id]: agentMessages };
         });
       }
       setAgentWorkingMessage('Step Completed');
 
     } else if (res.event === 'task_agent_completed') {
-      console.log('task_agent_completed', res);
       setSteps(prevMessages => [...prevMessages || [], 'Completed']);
-      setAgentWorkingMessage('Task Completed');
+      setAgentWorkingMessage('Task Complete..');
 
     } else if (res.event === 'task_agent_started') {
-      console.log('task_agent_started', res);
       setSteps(prevMessages => [...prevMessages || [], 'Started']);
       setAgentWorkingMessage('Starting Task');
 
@@ -135,7 +105,7 @@ const AgentChat = ({
       rejectUnauthorized: false,
     });
 
-    console.log('Registering socket handlers');
+    // console.log('Registering socket handlers');
 
     socket.on('conversational_agent_started', () => {
       console.log('agent_started event received');
@@ -159,12 +129,6 @@ const AgentChat = ({
       socket.disconnect();
     };
   }, [handleAgentStarted, handleAgentCompleted, handleSocketMessage]);
-
-  // useEffect(() => {
-  //   if (isAgentStarted) {
-  //     setRefreshState(prevState => prevState + 1);
-  //   }
-  // }, [isAgentStarted]);
 
   return (
     <>

@@ -25,9 +25,13 @@ export async function POST(req: Request, res: Response) {
 
     const newMessageId = generateHash(conversationData);
 
-    const isDuplicate = existingConversation.some(
-      (conv: { messageId: string; }) => conv.messageId === newMessageId
-    );
+    let isDuplicate = false;
+    if (conversationData.data.event != 'conversational_agent_started' &&
+        conversationData.data.event != 'task_agent_completed') {
+      isDuplicate = existingConversation.some(
+        (conv: { messageId: string; }) => conv.messageId === newMessageId
+      );
+    }
 
     if (!isDuplicate) {
       existingConversation.push({ messageId: newMessageId, ...conversationData });

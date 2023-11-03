@@ -5,12 +5,14 @@ import { Loader } from '@/components/ui/loader';
 import { isJSON, convertObjectToString } from '@/lib/utils';
 import ButtonPanel from '@/components/agent-button-panel';
 import { readConversationFromFile } from '@/lib/agentFileStorage';
+import { Anybody } from 'next/font/google';
 
 interface ToolDataProps {
   toolName: string;
   toolInput: string;
   toolQuery: string;
   toolThought: string;
+  toolCommand: string;
   toolTotalCost: string;
 }
 
@@ -23,6 +25,7 @@ interface MsgPayloadProps {
     query: string;
     thought: string;
     input: string;
+    command: string;
   };
   buttonPanel?: JSX.Element | null;
   selectingTool?: boolean;
@@ -74,11 +77,12 @@ export const AgentChatStage = ({
     }
 
     toolPayload = {
-      toolName: msgData.data?.step?.function.name.replace(/_/g, ' ').toUpperCase() ?? '',
-      toolInput: msgData.data?.step?.function.arguments.input?? '',
-      toolQuery: msgData.data?.step?.function.arguments.query?? '',
-      toolThought: msgData.data?.step?.function.arguments.thought?? '',
-      toolTotalCost: msgData.data?.step?.function.arguments.totalCost?? '',
+      toolName: msgData.data?.step?.function?.name?.replace(/_/g, ' ').toUpperCase() ?? '',
+      toolInput: msgData.data?.step?.function?.arguments?.input?? '',
+      toolQuery: msgData.data?.step?.function?.arguments?.query?? '',
+      toolCommand: msgData.data?.step?.function?.arguments?.command?? '',
+      toolThought: msgData.data?.step?.function?.arguments?.thought?? '',
+      toolTotalCost: msgData.data?.step?.function?.arguments?.totalCost?? '',
     }
 
     if (messageTool) {
@@ -217,18 +221,16 @@ export const AgentChatStage = ({
       const response = await readConversationFromFile(agentId);
       if (response?.ok) {
         const conversationData = await response.json();
-        console.log('loadMessages conversationData:', conversationData);
         if (conversationData && conversationData.messages) {  
           const transformedMessages = conversationData.messages.map((msg: any) => {
-            return JSON.stringify(msg);
+            const res = JSON.stringify(msg);
+            const agent_id: any = agentId
+            setMessages((prevMessages: any) => {
+              let agentMessages = [...(prevMessages[agent_id] || []), res];
+              return { ...prevMessages, [agent_id]: agentMessages };
+            });
           });
           // setMessages(transformedMessages);
-          let agent_id: any = agentId || '';
-          let updatedMessages: any[] = [];
-          setMessages(() => {
-            updatedMessages[agent_id]?.push(transformedMessages);
-            return updatedMessages;
-          });
         }
       } else {
         console.log(`Failed to load messages: ${response?.status}`);
@@ -237,22 +239,24 @@ export const AgentChatStage = ({
     loadMessages();
   }, []);
 
-  // Auto scrolling 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, steps]);
+  // Auto scrolling
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //     stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }, 1000);
+  
+  //   return () => clearTimeout(timer);
+  // }, [messages, steps]);
 
-  const agentMessages = messages && agentId !== undefined ? messages[agentId] : [];
-
-  console.log('Agent Messages:', agentMessages);
+  const agentMessages = agentId !== undefined ? (messages[agentId] || []) : [];
 
   return (
     <ul className='text-sm font-normal w-full'>
 
-      {agentMessages?.map((message: any, index: React.Key | null | undefined) => (
+      {agentMessages?.map((message, index) => (
         <li key={index} className='mb-4'>
-          {processMessage(message)}
+        {processMessage(message)}
         </li>
       ))}
 

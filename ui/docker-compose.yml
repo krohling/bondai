@@ -5,7 +5,7 @@ services:
   frontend:
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.ui
     restart: always
     ports:
       - 80:3000
@@ -13,11 +13,12 @@ services:
       - ./data-volume:/app/data
 
   backend:
-    image: smartico/bondai:latest
-    #restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.bondai
     working_dir: /agent-volume
     env_file:
-      - ./.env
+      - ../.env
     ports:
       - "2663:2663"
     volumes:
