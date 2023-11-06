@@ -19,11 +19,11 @@ class AgentTool(Tool):
     def __init__(self, agent=None, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613)):
         super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         
-        from bondai import Agent
+        from bondai import ConversationalAgent
         if agent:
             self.agent = agent
         else:
-            self.agent = Agent(prompt_builder=prompt_builder, tools=tools, llm=llm)
+            self.agent = ConversationalAgent(prompt_builder=prompt_builder, tools=tools, llm=llm)
     
     def run(self, arguments):
         task_description = arguments.get('task_description')

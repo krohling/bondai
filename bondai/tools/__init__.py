@@ -6,6 +6,7 @@ from .python_repl_tool import PythonREPLTool
 from .shell_tool import ShellTool
 from .langchain_tool import LangChainTool
 from .response_query import ResponseQueryTool
+from .task_completed_tool import TaskCompletedTool
 
 __all__ = [
     "Tool",
@@ -17,5 +18,6 @@ __all__ = [
     "InputParameters",
     "HumanTool",
     "LangChainTool",
-    "ResponseQueryTool"
+    "ResponseQueryTool",
+    "TaskCompletedTool"
 ]

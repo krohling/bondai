@@ -4,7 +4,7 @@ import os
 import sys
 import json
 from termcolor import cprint, colored
-from bondai import Agent, BudgetExceededException
+from bondai import ConversationalAgent, BudgetExceededException
 from bondai.models.openai import enable_logging
 from bondai.tools import HumanTool
 from bondai.cli import get_tools, OnboardingTool
@@ -36,19 +36,19 @@ ONBOARDING_TASK = f"""
 You are BondAI's helpful and friendly Onboarding AI assistant. You should communicate in a friendly and helpful manner.
 Your job is to help understand what task the user wants to complete and gather all the information needed to start the task.
 This information will then be given to another AI assistant that will complete the task.
-Once you have gathered ALL of the required information from the user you will call the 'final_answer' tool to send the information to the next AI assistant.
+Once you have gathered ALL of the required information from the user you will call the 'task_completed' tool to send the information to the next AI assistant.
 ALWAYS greet the user with a friendly message.
 
 
 You MUST gather the following REQUIRED information from the user:
-- The Task Description (task_description): This must be detailed enough for the next AI assistant to understand what the user wants to do. Ask the user any necessary follow up questions. Confirm that the description you have with the user before calling the 'final_answer' tool.
-- The Task Budget (task_budget): This is the maximum amount of money the user is willing to spend on this task. Ask the user any necessary follow up questions. Confirm that the budget you have with the user before calling the 'final_answer' tool.
+- The Task Description (task_description): This must be detailed enough for the next AI assistant to understand what the user wants to do. Ask the user any necessary follow up questions. Confirm that the description you have with the user before calling the 'task_completed' tool.
+- The Task Budget (task_budget): This is the maximum amount of money the user is willing to spend on this task. Ask the user any necessary follow up questions. Confirm that the budget you have with the user before calling the 'task_completed' tool.
 
 
 IMPORTANT information:
 - ALWAYS greet the user with a friendly message.
-- If the user asks to exit you should call the 'final_answer' tool with the 'user_exit' parameter set to True. DO NOT ask for any other information from the user.
-- ALWAYS confirm the Task Description and Task Budget with the user before calling the 'final_answer' tool.
+- If the user asks to exit you should call the 'task_completed' tool with the 'user_exit' parameter set to True. DO NOT ask for any other information from the user.
+- ALWAYS confirm the Task Description and Task Budget with the user before calling the 'task_completed' tool.
 
 
 REMEMBER: ALWAYS greet the user with a friendly message. Here is an example greeting you can use to get started:
@@ -65,7 +65,7 @@ def get_task_definition():
         HumanTool(),
         OnboardingTool()
     ]
-    onboarding_agent = Agent(tools=onboarding_tools, quiet=True)
+    onboarding_agent = ConversationalAgent(tools=onboarding_tools, quiet=True)
     onboarding_result = onboarding_agent.run(ONBOARDING_TASK)
     return json.loads(onboarding_result.output)
 
@@ -77,7 +77,7 @@ def run_task(task_config):
     print(colored("Budget:", 'white', attrs=["bold"]), colored(f"${task_budget}", 'white'))
     print(colored("Tools:", 'white', attrs=["bold"]), colored("\n".join(tool_ids), 'white'))
     
-    agent = Agent(tools=tool_options, budget=task_budget, quiet=False)
+    agent = ConversationalAgent(tools=tool_options, budget=task_budget, quiet=False)
     try:
         result = agent.run(task_description)
         cprint(f"\n\n{result.output}\n", 'white')

@@ -201,7 +201,7 @@ stderr:
 Output: Result Variables: SmartPlug: <class 'pyHS100.smartplug.SmartPlug'> plug: <SmartPlug at 192.168.4....
 
 
-Using the final_answer tool
+Using the task_completed tool
 Arguments
 input: The Bedroom Lamp has been successfully turned off.
 Output: The Bedroom Lamp has been successfully turned off.

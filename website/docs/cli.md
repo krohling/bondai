@@ -56,7 +56,7 @@ Output: File unicorns.md written successfully
 Total Cost: $0.21
 
 
-Using the final_answer tool
+Using the task_completed tool
 Arguments
 input: The short story about unicorns has been written and saved to a file named unicorns.md successfully.
 Output: The short story about unicorns has been written and saved to a file named unicorns.md successfully.

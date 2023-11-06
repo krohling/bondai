@@ -35,7 +35,7 @@ class ToolMakerTool(Tool):
         self.llm = llm
     
     def run(self, arguments):
-        from bondai import Agent
+        from bondai import ConversationalAgent
         tool_description = arguments.get('tool_description')
         code_snippet = arguments.get('code_snippet')
 
@@ -50,7 +50,7 @@ class ToolMakerTool(Tool):
             "{", "{{"
         ).replace("}", "}}")
 
-        result = Agent(
+        result = ConversationalAgent(
             llm=self.llm,
             prompt_builder=DefaultPromptBuilder(llm=self.llm, prompt_template=PROMPT_TEMPLATE), 
             tools=[

@@ -5,7 +5,7 @@ import openai
 import tiktoken
 from .openai_models import MODELS, MODEL_TYPE_LLM
 
-TEMPERATURE = 0.1
+DEFAULT_TEMPERATURE = 0.1
 
 embedding_tokens = 0
 embedding_costs = 0.0
@@ -106,10 +106,11 @@ def get_completion(
     previous_messages=[], 
     functions=[], 
     model='gpt-4', 
-    connection_params={}
+    connection_params={},
+    **kwargs
 ):
     messages = __build_completion_messages(prompt, system_prompt=system_prompt, previous_messages=previous_messages)
-    response = __get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params)
+    response = __get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
     message = response["choices"][0]["message"]
@@ -145,11 +146,12 @@ def get_streaming_completion(
     model='gpt-4', 
     connection_params={},
     content_stream_callback=None, 
-    function_stream_callback=None
+    function_stream_callback=None,
+    **kwargs
 ):
     connection_params['stream'] = True
     messages = __build_completion_messages(prompt, system_prompt=system_prompt, previous_messages=previous_messages)
-    response = __get_completion(messages, functions=functions, model=model, connection_params=connection_params)
+    response = __get_completion(messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     content = ''
     function_name = ''
@@ -266,7 +268,8 @@ def __get_completion(
     messages,
     functions=None, 
     model='gpt-4', 
-    connection_params={}
+    connection_params={},
+    **kwargs
 ):
     attempts = 0
     max_retries = 3
@@ -275,7 +278,7 @@ def __get_completion(
             attempts += 1
             params = { 
                 'messages': messages,
-                'temperature': TEMPERATURE
+                'temperature': DEFAULT_TEMPERATURE
             }
 
             if len(functions) > 0:
@@ -285,7 +288,8 @@ def __get_completion(
 
             return openai.ChatCompletion.create(
                 **params,
-                **connection_params
+                **connection_params,
+                **kwargs
             )
         except Exception as e:
             time.sleep(15)

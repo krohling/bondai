@@ -70,7 +70,7 @@ query: plt.plot(years, gdp) plt.xlabel('Years') plt.ylabel('GDP in billions') pl
 Output: This command ran successfully with no output.
 
 
-Using the final_answer tool
+Using the task_completed tool
 Arguments
 input: The line chart of the U.S. GDP from 2000 to 2010 has been successfully generated and saved as 'us...
 Output: The line chart of the U.S. GDP from 2000 to 2010 has been successfully generated and saved as 'us...

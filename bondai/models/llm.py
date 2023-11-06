@@ -7,11 +7,11 @@ class LLM(ABC):
         return False
 
     @abstractmethod
-    def get_completion(prompt, system_prompt='', previous_messages=[], functions=[]):
+    def get_completion(prompt, system_prompt='', previous_messages=[], functions=[], **kwargs):
         pass
 
     @abstractmethod
-    def get_streaming_completion(prompt, system_prompt='', previous_messages=[], functions=[], content_stream_callback=None, function_stream_callback=None):
+    def get_streaming_completion(prompt, system_prompt='', previous_messages=[], functions=[], content_stream_callback=None, function_stream_callback=None, **kwargs):
         pass
 
     @abstractmethod

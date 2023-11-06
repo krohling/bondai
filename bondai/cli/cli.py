@@ -4,7 +4,7 @@ import argparse
 import os
 import json
 from termcolor import cprint, colored
-from bondai import Agent, BudgetExceededException
+from bondai import ConversationalAgent, BudgetExceededException
 from bondai.tools import Tool, HumanTool, AgentTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.util import ModelLogger, load_local_resource
@@ -103,7 +103,7 @@ onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_
 
 llm=OpenAILLM(MODEL_GPT4_0613)
 
-task_agent = Agent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
+task_agent = ConversationalAgent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
 task_agent_tool = AgentTool(task_agent)
 task_agent_tool.description = (
     "This tool allows you to use the BondAI Agent to solve the user's task."
@@ -132,11 +132,11 @@ def run_cli():
     try:
         if args.server:
             port = int(args.server)
-            api_agent = Agent(
+            api_agent = ConversationalAgent(
                 llm = llm,
                 prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
                 tools=[task_agent_tool],
-                final_answer_tool=None,
+                task_completed_tool=None,
             )
             agent_wrapper = CLIAgentWrapper(api_agent, task_agent, tools)
             server = BondAIAPIServer(agent_wrapper=agent_wrapper, port=port)
@@ -150,10 +150,10 @@ def run_cli():
                 cprint(f"\n\nStopping BondAI server...\n", 'red')
                 pass
         else:
-            cli_agent = Agent(
+            cli_agent = ConversationalAgent(
                 llm = llm,
                 prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
-                final_answer_tool=exit_tool,
+                task_completed_tool=exit_tool,
                 tools=[
                     human_tool,
                     task_agent_tool

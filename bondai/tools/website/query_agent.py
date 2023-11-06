@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from bondai import Agent
+from bondai import ConversationalAgent
 from bondai.tools import Tool
 from bondai.prompt import DefaultPromptBuilder
 from .query import WebsiteQueryTool
@@ -39,7 +39,7 @@ This is the question you need to answer:
 class WebsiteQueryAgentTool(Tool):
     def __init__(self, llm=OpenAILLM(MODEL_GPT4_0613), budget=None):
         super(WebsiteQueryAgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.agent = Agent(prompt_builder=DefaultPromptBuilder(llm), tools=WEBSITE_TOOLS, llm=llm, budget=budget)
+        self.agent = ConversationalAgent(prompt_builder=DefaultPromptBuilder(llm), tools=WEBSITE_TOOLS, llm=llm, budget=budget)
     
     def run(self, arguments):
         self.agent.reset_memory()

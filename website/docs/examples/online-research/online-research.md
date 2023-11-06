@@ -118,7 +118,7 @@ text: # Metformin and Aging  ## Summary of Findings  Metformin, a drug commonly 
 Output: File metformin.md written successfully
 
 
-Using the final_answer tool
+Using the task_completed tool
 Arguments
 input: The task has been completed. The research on the usage of Metformin as a drug to treat aging and ...
 Output: The task has been completed. The research on the usage of Metformin as a drug to treat aging and ...

@@ -55,3 +55,6 @@ class ResponseQueryTool(Tool):
             return response
         else:
             return f"{response_id} is not a valid response_id"
+    
+    def clear_responses(self):
+        self.responses = {}

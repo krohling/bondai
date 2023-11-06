@@ -10,3 +10,11 @@ def load_local_resource(local_file, resource):
             return file.read()
     else:
         return pkg_resources.resource_string(__name__, f"prompt/{resource}").decode()
+
+def format_print_string(s, length=100):
+    # Remove newlines
+    s = s.replace('\n', ' ').replace('\r', '')
+    
+    if len(s) <= length:
+        return s
+    return s[:length - 3] + "..."

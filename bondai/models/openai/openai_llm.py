@@ -1,6 +1,6 @@
 import os
 from bondai.models import LLM
-from .openai_wrapper import get_streaming_completion, get_completion, count_tokens, get_max_tokens
+from .openai_wrapper import get_streaming_completion, count_tokens, get_max_tokens
 from .openai_connection_params import (
     GPT_35_CONNECTION_PARAMS,
     GPT_4_CONNECTION_PARAMS,
@@ -23,7 +23,7 @@ class OpenAILLM(LLM):
     def supports_streaming(self):
         return True
 
-    def get_completion(self, prompt, system_prompt='', previous_messages=[], functions=[]):
+    def get_completion(self, prompt, system_prompt='', previous_messages=[], functions=[], **kwargs):
         if MODELS[self.model]['family'] == MODEL_FAMILY_GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:
@@ -35,9 +35,11 @@ class OpenAILLM(LLM):
             previous_messages, 
             functions, 
             self.model, 
-            connection_params=connection_params)
+            connection_params=connection_params,
+            **kwargs
+        )
 
-    def get_streaming_completion(self, prompt, system_prompt='', previous_messages=[], functions=[], content_stream_callback=None, function_stream_callback=None):
+    def get_streaming_completion(self, prompt, system_prompt='', previous_messages=[], functions=[], content_stream_callback=None, function_stream_callback=None, **kwargs):
         if MODELS[self.model]['family'] == MODEL_FAMILY_GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:
@@ -51,7 +53,9 @@ class OpenAILLM(LLM):
             self.model, 
             connection_params=connection_params, 
             content_stream_callback=content_stream_callback,
-            function_stream_callback=function_stream_callback)
+            function_stream_callback=function_stream_callback,
+            **kwargs
+        )
 
     def count_tokens(self, prompt):
         return count_tokens(prompt, self.model)
