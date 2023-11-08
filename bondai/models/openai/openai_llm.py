@@ -13,12 +13,13 @@ from .openai_models import (
 )
 
 class OpenAILLM(LLM):
-    def __init__(self, model, connection_details={}):
+    def __init__(self, model, generation_params={}):
         if model not in MODEL_NAMES:
             raise Exception(f"Model {model} is not supported.")
         if MODELS[model]['model_type'] != MODEL_TYPE_LLM:
             raise Exception(f"Model {model} is not an LLM model.")
         self.model = model
+        self.generation_params = generation_params
 
     def supports_streaming(self):
         return True
@@ -35,7 +36,9 @@ class OpenAILLM(LLM):
             previous_messages, 
             functions, 
             self.model, 
-            connection_params=connection_params)
+            connection_params=connection_params,
+            generation_params=self.generation_params
+        )
 
     def get_streaming_completion(self, prompt, system_prompt='', previous_messages=[], functions=[], content_stream_callback=None, function_stream_callback=None):
         if MODELS[self.model]['family'] == MODEL_FAMILY_GPT4:
@@ -50,8 +53,10 @@ class OpenAILLM(LLM):
             functions, 
             self.model, 
             connection_params=connection_params, 
+            generation_params=self.generation_params,
             content_stream_callback=content_stream_callback,
-            function_stream_callback=function_stream_callback)
+            function_stream_callback=function_stream_callback
+        )
 
     def count_tokens(self, prompt):
         return count_tokens(prompt, self.model)
