@@ -1,8 +1,8 @@
-import os
 import json
 import time
 import openai
 import tiktoken
+from typing import Optional
 from .openai_models import MODELS, MODEL_TYPE_LLM
 
 DEFAULT_TEMPERATURE = 0.1
@@ -22,19 +22,19 @@ def disable_logging():
     global logger
     logger = None
 
-def get_gpt_tokens():
+def get_gpt_tokens() -> int:
     return gpt_tokens
 
-def get_embedding_tokens():
+def get_embedding_tokens() -> int:
     return embedding_tokens
 
-def get_gpt_costs():
+def get_gpt_costs() -> float:
     return gpt_costs
 
-def get_embedding_costs():
+def get_embedding_costs() -> float:
     return embedding_costs
 
-def get_total_cost():
+def get_total_cost() -> float:
     return embedding_costs + gpt_costs
 
 def reset_total_cost():
@@ -61,15 +61,15 @@ def calculate_cost(model_name, usage):
         print(f"Unknown model: {model_name}")
 
 
-def get_max_tokens(model):
+def get_max_tokens(model) -> int:
     return MODELS[model]['max_tokens']
 
 
-def count_tokens(prompt, model):
+def count_tokens(prompt, model) -> int:
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(prompt))
 
-def create_embedding(text, model="text-embedding-ada-002", connection_params={}):
+def create_embedding(text, model="text-embedding-ada-002", connection_params={}) -> [float]:
     tries = 0
     while True:
         try:
@@ -101,16 +101,13 @@ def create_embedding(text, model="text-embedding-ada-002", connection_params={})
             tries += 1
 
 def get_completion(
-    prompt, 
-    system_prompt='', 
-    previous_messages=[], 
+    messages=[], 
     functions=[], 
     model='gpt-4', 
     connection_params={},
     **kwargs
-):
-    messages = __build_completion_messages(prompt, system_prompt=system_prompt, previous_messages=previous_messages)
-    response = __get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
+) -> (str, Optional[dict]):
+    response = _get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
     message = response["choices"][0]["message"]
@@ -126,10 +123,8 @@ def get_completion(
                 pass
     
     calculate_cost(model, response['usage'])
-    __log_completion(
-        prompt,
-        system_prompt=system_prompt, 
-        previous_messages=previous_messages, 
+    _log_completion(
+        messages,
         functions=functions,
         response_content=content,
         response_function=function
@@ -139,19 +134,16 @@ def get_completion(
 
 
 def get_streaming_completion(
-    prompt, 
-    system_prompt='', 
-    previous_messages=[], 
+    messages=[], 
     functions=[], 
     model='gpt-4', 
     connection_params={},
     content_stream_callback=None, 
     function_stream_callback=None,
     **kwargs
-):
+) -> (str, Optional[dict]):
     connection_params['stream'] = True
-    messages = __build_completion_messages(prompt, system_prompt=system_prompt, previous_messages=previous_messages)
-    response = __get_completion(messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
+    response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     content = ''
     function_name = ''
@@ -202,10 +194,8 @@ def get_streaming_completion(
         'completion_tokens': completion_token_count
     })
 
-    __log_completion(
-        prompt,
-        system_prompt=system_prompt, 
-        previous_messages=previous_messages, 
+    _log_completion(
+        messages,
         functions=functions,
         response_content=content,
         response_function=function
@@ -214,34 +204,7 @@ def get_streaming_completion(
     return content, function
 
 
-def __build_completion_messages(prompt, system_prompt='', previous_messages=[]):
-    messages = []
-
-    if system_prompt:
-        messages.append({
-            "role": "system",
-            "content": system_prompt
-        })
-    
-    if len(previous_messages) > 0:
-        for m in previous_messages:
-            messages.append({
-                "role": "user",
-                "content": m['prompt']
-            })
-            messages.append({
-                "role": "assistant",
-                "content": m['response']
-            })
-
-    messages.append({
-        "role": "user",
-        "content": prompt
-    })
-
-    return messages
-
-def __log_completion(prompt, system_prompt='', previous_messages=[], functions=[], response_content='', response_function=None):
+def _log_completion(messages=[], functions=[], response_content='', response_function=None):
     global logger
     if not logger:
         return
@@ -250,27 +213,21 @@ def __log_completion(prompt, system_prompt='', previous_messages=[], functions=[
     if len(functions) > 0:
         fs_str = json.dumps(functions)
         prompt_log += f"TOOLS:\n{fs_str}\n\n"
-
-    if system_prompt:
-        prompt_log += f"SYSTEM: {system_prompt}\n\n"
     
-    if len(previous_messages) > 0:
-        prompt_log += "PREVIOUS MESSAGES:\n"
-        for m in previous_messages:
-            prompt_log += f"{m}\n"
-        prompt_log += '\n'
+    if len(messages) > 0:
+        m_str = json.dumps(messages)
+        prompt_log += f"MESSAGES:\n{m_str}\n\n"
 
-    prompt_log += f"PROMPT: {prompt}\n\n"
     logger.log(prompt_log, response_content, function=response_function)
 
 
-def __get_completion(
+def _get_completion(
     messages,
     functions=None, 
     model='gpt-4', 
     connection_params={},
     **kwargs
-):
+) -> (str, Optional[dict]):
     attempts = 0
     max_retries = 3
     while True:

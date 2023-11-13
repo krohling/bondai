@@ -1,30 +1,44 @@
+import platform
 from datetime import datetime
 from typing import Optional
 from bondai.models import LLM
-from bondai.prompt import PromptBuilder
+from bondai.prompt import JinjaPromptBuilder
 from bondai.util import load_local_resource
-from .util import format_previous_steps
 
 DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, 'prompt_template.md')
 
-class ReactPromptBuilder(PromptBuilder):
+class ReactPromptBuilder(JinjaPromptBuilder):
 
-    def __init__(self, llm: LLM, prompt_template: Optional[str]=DEFAULT_PROMPT_TEMPLATE):
+    def __init__(self, llm: LLM, prompt_template: Optional[str] = DEFAULT_PROMPT_TEMPLATE):
         self._llm = llm
-        self._prompt_template = prompt_template
+        super().__init__(prompt_template=prompt_template)
 
-    def build_prompt(self, task_description: str, previous_steps=[], max_tokens: int=None, **kwargs) -> str:
+    def build_prompt(self, persona: str = None, task_description: str = None, previous_steps=[], max_tokens: int = None, **kwargs) -> str:
         if not max_tokens:
             max_tokens = self._llm.get_max_tokens()
 
-        prompt_vars = { 'task': task_description, 'datetime': str(datetime.now()) }
-        prompt = self._apply_prompt_template(self._prompt_template, **prompt_vars, **kwargs)
+        # Start with the full previous steps and remove from the beginning if necessary
+        retained_steps = previous_steps[:]
+        prompt = super().build_prompt(
+            persona=persona,
+            task_description=task_description,
+            previous_steps=retained_steps,
+            **kwargs
+        )
 
-        if len(previous_steps) > 0:
-            str_work = 'This is a list of previous steps that you already completed on this TASK.'
-            remaining_tokens = max_tokens - self._llm.count_tokens(prompt)
-            str_work += format_previous_steps(self._llm, previous_steps, remaining_tokens)
-        else:
-            str_work = '**No previous steps have been completed**'
+        # Check the prompt size and remove steps from the beginning until it fits
+        prompt_size = self._llm.count_tokens(prompt)
+        while prompt_size > max_tokens:
+            if not retained_steps:
+                # If there are no previous steps left to remove and the prompt is still too large, raise an exception
+                raise ValueError("The prompt is too large and cannot be trimmed down because the previous_steps array is empty.")
+            retained_steps.pop(0)  # Remove the oldest step
+            prompt = super().build_prompt(
+                persona=persona,
+                task_description=task_description,
+                previous_steps=retained_steps,
+                **kwargs
+            )
+            prompt_size = self._llm.count_tokens(prompt)
 
-        return self._apply_prompt_template(prompt, **{ 'work': str_work })
+        return prompt

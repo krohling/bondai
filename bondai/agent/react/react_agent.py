@@ -1,5 +1,5 @@
+import asyncio
 import uuid
-import threading
 from enum import Enum
 from termcolor import colored, cprint
 from datetime import datetime
@@ -33,7 +33,21 @@ class AgentStep:
     created_at: datetime = field(default_factory=lambda: datetime.now())
     completed_at: str = None
 
-class EventNames(Enum):
+@dataclass
+class AgentResult:
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    task_description: Optional[str]=None
+    task_budget: Optional[float]=None
+    max_steps: Optional[int]=None
+    output: Optional[str]=None
+    error_message: str
+    success: bool
+    execution_cancelled: bool
+    total_cost: float = None
+    started_at: datetime = field(default_factory=lambda: datetime.now())
+    completed_at: str = None
+
+class ReactAgentEventNames(Enum):
     AGENT_STARTED: str = 'agent_started'
     AGENT_ERROR: str = 'agent_error'
     STEP_STARTED: str = 'step_started'
@@ -45,8 +59,12 @@ DEFAULT_MAX_TOOL_RESPONSE_SIZE: int = 2000 #Measured in tokens
 DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, 'prompt_template.md')
 
 class ReactAgent(Agent):
+    """
+    An agent that uses the ReAct style of LLM interaction.
+    """
 
     def __init__(self, 
+                 persona: str=None,
                  prompt_builder: Optional[PromptBuilder]=None, 
                  llm: LLM=OpenAILLM(MODEL_GPT4_0613), 
                  fallback_llm: LLM=OpenAILLM(MODEL_GPT35_TURBO_0613), 
@@ -54,29 +72,47 @@ class ReactAgent(Agent):
                  max_tool_response_size: int = DEFAULT_MAX_TOOL_RESPONSE_SIZE, 
                  quiet: bool=True
                 ):
+        """
+        Initializes a new instance of the ReactAgent class.
+
+        Args:
+            persona (str, optional): The persona to use. Defaults to None.
+            prompt_builder (Optional[PromptBuilder], optional): The prompt builder to use. Defaults to None.
+            llm (LLM, optional): The LLM to use. Defaults to OpenAILLM(MODEL_GPT4_0613).
+            fallback_llm (LLM, optional): The fallback LLM to use. Defaults to OpenAILLM(MODEL_GPT35_TURBO_0613).
+            tools (Optional[Tool], optional): The tools to use. Defaults to [].
+            max_tool_response_size (int, optional): The maximum size of the tool response. Defaults to DEFAULT_MAX_TOOL_RESPONSE_SIZE.
+            quiet (bool, optional): Whether to run the agent in quiet mode. Defaults to True.
+        """
         super().__init__(
             prompt_builder=prompt_builder if prompt_builder else ReactPromptBuilder(llm, DEFAULT_PROMPT_TEMPLATE),
             llm=llm,
             tools=tools,
             quiet=quiet,
             allowed_events=[
-                EventNames.AGENT_STARTED, 
-                EventNames.AGENT_ERROR, 
-                EventNames.STEP_STARTED,
-                EventNames.STEP_TOOL_SELECTED,
-                EventNames.STEP_COMPLETED, 
-                EventNames.AGENT_COMPLETED
+                ReactAgentEventNames.AGENT_STARTED, 
+                ReactAgentEventNames.AGENT_ERROR, 
+                ReactAgentEventNames.STEP_STARTED,
+                ReactAgentEventNames.STEP_TOOL_SELECTED,
+                ReactAgentEventNames.STEP_COMPLETED, 
+                ReactAgentEventNames.AGENT_COMPLETED
             ]
         )
 
+        self._persona = persona
+        self._execution_cancelled: bool = False
         self._max_tool_response_size: int = max_tool_response_size
         self._task_steps: [AgentStep] = []
         self._response_query_tool: ResponseQueryTool = ResponseQueryTool()
         self._fallback_llm: LLM = fallback_llm
-        self._thread: threading.Thread = None
-        self._stop_thread: bool = False
     
     def save_state(self):
+        """
+        Saves the state of the agent.
+
+        Returns:
+            dict: The state of the agent.
+        """
         state = super().save_state()
         state['task_steps'] = self._task_steps
 
@@ -86,6 +122,12 @@ class ReactAgent(Agent):
         return state
 
     def load_state(self, state):
+        """
+        Loads the state of the agent.
+
+        Args:
+            state (dict): The state of the agent.
+        """
         super().load_state(state)
         self._task_steps = state['task_steps']
 
@@ -93,14 +135,34 @@ class ReactAgent(Agent):
             self._response_query_tool.load_state(state['response_query_tool'])
 
     def _run_step(self, task_description: str='') -> AgentStep:
+        """
+        Runs a step of the agent.
+
+        Args:
+            task_description (str, optional): The description of the task. Defaults to ''.
+
+        Returns:
+            AgentStep: The step that was run.
+        """
         step = AgentStep()
-        self._trigger_event(EventNames.STEP_STARTED, step=step)
+        self._trigger_event(ReactAgentEventNames.STEP_STARTED, step=step)
         
         if len(self._response_query_tool.responses) > 0:
             self._tools.append(self._response_query_tool)
 
-        llm_prompt: str = self._prompt_builder.build_prompt(task_description=task_description, previous_steps=self._task_steps)
-        llm_response, llm_response_function = self._get_llm_response(prompt=llm_prompt)
+        llm_prompt: str = self._prompt_builder.build_prompt(
+            persona=self._persona,
+            task_description=task_description, 
+            previous_steps=self._task_steps
+        )
+
+        messages = [
+            {
+                'role': 'system',
+                'content': llm_prompt
+            }
+        ]
+        llm_response, llm_response_function = self._get_llm_response(messages=messages)
         step.llm_prompt, step.llm_response, step.llm_response_function = llm_prompt, llm_response, llm_response_function
 
         if not llm_response_function and not self._quiet:
@@ -111,7 +173,7 @@ class ReactAgent(Agent):
             selected_tools = [t for t in self._tools if t.name == llm_response_function['name']]
             if len(selected_tools) > 0:
                 selected_tool = selected_tools[0]
-                self._trigger_event(EventNames.STEP_TOOL_SELECTED, step=step)
+                self._trigger_event(ReactAgentEventNames.STEP_TOOL_SELECTED, step=step)
                 
                 try:
                     args = llm_response_function['arguments'] if 'arguments' in llm_response_function else {}
@@ -139,8 +201,6 @@ class ReactAgent(Agent):
                                 step.agent_complete = tool_output['agent_complete']
                         else:
                             step.tool_output = tool_output
-
-                        step.total_cost = get_total_cost()
                         
                         if step.tool_output:
                             if self._llm.count_tokens(step.tool_output) > self._max_tool_response_size:
@@ -171,13 +231,33 @@ class ReactAgent(Agent):
         return step
 
     def run(self, task_description: Optional[str]=None, task_budget: Optional[float]=None, max_steps: Optional[int]=None) -> AgentStep:
+        """
+        Runs the agent's task.
+
+        Args:
+            task_description (Optional[str], optional): The description of the task. Defaults to None.
+            task_budget (Optional[float], optional): The budget for the task. Defaults to None.
+            max_steps (Optional[int], optional): The maximum number of steps for the task. Defaults to None.
+
+        Returns:
+            AgentStep: The step that was run.
+        """
+        if self._status == AgentStatus.RUNNING:
+            raise Exception('Execution is already in progress.')
+        
+        result = AgentResult(
+            task_description=task_description, 
+            task_budget=task_budget, 
+            max_steps=max_steps
+        )
+        starting_cost = get_total_cost()
+
+        # completed_at: str = None
+        
         try:
-            if self._status == AgentStatus.RUNNING:
-                raise Exception('Execution is already in progress.')
-            
             self._status = AgentStatus.RUNNING
             self._trigger_event(
-                EventNames.AGENT_STARTED, 
+                ReactAgentEventNames.AGENT_STARTED, 
                 task_description=task_description, 
                 task_budget=task_budget, 
                 max_steps=max_steps
@@ -185,58 +265,88 @@ class ReactAgent(Agent):
 
             step_counter = 0
             while True:
-                if self._stop_thread:
+                if self._execution_cancelled:
+                    result.execution_cancelled = True
                     break
                 step_counter += 1
                 step: AgentStep = self._run_step(task_description)
                 step.step_complete = True
+                step.total_cost = get_total_cost() - starting_cost
                 step.completed_at = datetime.now()
                 self._task_steps.append(step)
-                self._trigger_event(EventNames.STEP_COMPLETED, step=step)
+                self._trigger_event(ReactAgentEventNames.STEP_COMPLETED, step=step)
                 
-                
-                total_cost = get_total_cost()
                 if not self._quiet:
                     print(colored("Total Cost:", 'green', attrs=["bold"]), colored('$' + str(round(total_cost, 2)), 'white'))
 
                 if step.agent_complete:
+                    result.output = step.tool_output
+                    result.success = True
                     return step
 
-                if task_budget and total_cost >= task_budget:
+                if task_budget and step.total_cost >= task_budget:
                     raise BudgetExceededException("The budget for this task has been reached without successfully finishing.")
                 if max_steps and step_counter >= max_steps:
                     raise MaxStepsExceededException("The maximum number of steps for this task has been reached without successfully finishing.")
         except Exception as e:
-            self._trigger_event(EventNames.AGENT_ERROR, error=str(e))
-            if threading.current_thread() is threading.main_thread():
+            result.error_message = str(e)
+            self._trigger_event(ReactAgentEventNames.AGENT_ERROR, error=str(e))
+            if asyncio.iscoroutine():
                 raise e
         finally:
-            self._trigger_event(EventNames.AGENT_COMPLETED)
+            self._trigger_event(ReactAgentEventNames.AGENT_COMPLETED)
             self._status = AgentStatus.IDLE
+        
+        result.total_cost = get_total_cost() - starting_cost
+        result.completed_at = datetime.now()
+        return result
 
-    def run_async(self, task_description: str='', task_budget: float=None, max_steps: int=None):
-        """Runs the agent's task in a separate thread."""
-        if self._status == AgentStatus.RUNNING or (self._thread and self._thread.is_alive()):
+    async def run_async(self, task_description: str='', task_budget: float=None, max_steps: int=None):
+        """
+        Runs the agent's task in a separate thread.
+
+        Args:
+            task_description (str, optional): The description of the task. Defaults to ''.
+            task_budget (float, optional): The budget for the task. Defaults to None.
+            max_steps (int, optional): The maximum number of steps for the task. Defaults to None.
+
+        Returns:
+            coroutine: The coroutine that runs the task.
+        """
+        if self._status == AgentStatus.RUNNING or (self._task and not self._task.done()):
             raise Exception('Cannot start agent while it is in a running state.')
-        self._thread = threading.Thread(target=self.run, args=(task_description, task_budget, max_steps))
-        self._thread.start()
-
-    def join(self):
-        """Blocks until the thread completes."""
-        if self._thread:
-            self._thread.join()
+        self._task = asyncio.create_task(self.run(task_description, task_budget, max_steps))
+        return self._task
 
     def stop(self, timeout: int=5):
-        """Gracefully stops the thread, with a timeout."""
-        self._stop_thread = True
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout)
-            if self._thread.is_alive():
-                # The thread is still alive after the timeout, so kill it.
-                self._thread.terminate()  # This assumes `_thread` supports termination; not all threads do
-        self._stop_thread = False
+        """
+        Gracefully stops the task, with a timeout.
+
+        Args:
+            timeout (int, optional): The timeout for stopping the task. Defaults to 5.
+        """
+        async def _stop_async(self, timeout: int=5):
+            self._execution_cancelled = True
+            if self._task and not self._task.done():
+                try:
+                    await asyncio.wait_for(self._task, timeout=timeout)
+                except asyncio.TimeoutError:
+                    self._task.cancel()
+            self._execution_cancelled = False
+        
+        asyncio.run(_stop_async(timeout))
+
+    def join(self):
+        """Blocks until the task completes."""
+        async def _join_async(self):
+            if self._task:
+                await self._task
+        asyncio.run(_join_async())
     
     def reset_memory(self):
+        """
+        Resets the memory of the agent.
+        """
         if self._status == AgentStatus.RUNNING:
             raise Exception('Cannot reset memory while agent is in a running state.')
         self._task_steps: [AgentStep] = []

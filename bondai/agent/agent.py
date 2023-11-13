@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
@@ -31,6 +32,7 @@ class Agent(EventMixin, ABC):
                 ):
         super().__init__(allowed_events=allowed_events)
         
+        self._id = str(uuid.uuid4())
         self._status: AgentStatus = AgentStatus.IDLE
         self._prompt_builder = prompt_builder
         self._llm: LLM = llm
@@ -40,6 +42,10 @@ class Agent(EventMixin, ABC):
     @property
     def status(self) -> AgentStatus:
         return self._status
+
+    @property
+    def id(self) -> str:
+        return self._id
     
     def add_tool(self, tool):
         if not any([t.name == tool.name for t in self._tools]):
@@ -67,7 +73,7 @@ class Agent(EventMixin, ABC):
             if tool.name in state['tools']:
                 tool.load_state(state['tools'][tool.name])
 
-    def _get_llm_response(self, prompt: str, previous_messages=[], content_stream_callback: Optional[callable]=None) -> (str, Optional[dict]):
+    def _get_llm_response(self, messages=[], content_stream_callback: Optional[callable]=None) -> (str, Optional[dict]):
         llm_functions: [dict] = list(map(lambda t: t.get_tool_function(), self._tools))
 
         if self._llm.supports_streaming() and (any([t.supports_streaming for t in self._tools]) or content_stream_callback):
@@ -78,17 +84,15 @@ class Agent(EventMixin, ABC):
                     tool.handle_stream_update(arguments_buffer)
             
             llm_response, llm_response_function = self._llm.get_streaming_completion(
-                prompt, 
+                messages=messages,
                 functions=llm_functions, 
-                previous_messages=previous_messages,
                 function_stream_callback=function_stream_callback,
                 content_stream_callback=content_stream_callback
             )
         else:
             llm_response, llm_response_function = self._llm.get_completion(
-                prompt, 
+                messages=messages,
                 functions=llm_functions,
-                previous_messages=previous_messages
             )
         
         return llm_response, llm_response_function
