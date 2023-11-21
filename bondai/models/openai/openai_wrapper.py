@@ -1,9 +1,9 @@
 import json
 import time
-import openai
 import tiktoken
 from typing import Optional
-from .openai_models import MODELS, MODEL_TYPE_LLM
+from openai import OpenAI, AzureOpenAI
+from .openai_models import MODELS, MODEL_TYPE_LLM, OPENAI_CONNECTION_TYPE_AZURE
 
 DEFAULT_TEMPERATURE = 0.1
 
@@ -69,36 +69,39 @@ def count_tokens(prompt, model) -> int:
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(prompt))
 
-def create_embedding(text, model="text-embedding-ada-002", connection_params={}) -> [float]:
-    tries = 0
-    while True:
-        try:
-            params = {
-                'input': text if isinstance(text, list) else [text],
-            }
-            if 'deployment_id' not in connection_params:
-                params['model'] = model
+def create_embedding(text, model="text-embedding-ada-002", connection_params={}, **kwargs) -> [float]:
+    params = {
+        'input': text if isinstance(text, list) else [text],
+    }
 
-            response = openai.Embedding.create(
-                **params,
-                **connection_params
-            )
+    if connection_params.get('api_type', '') == OPENAI_CONNECTION_TYPE_AZURE:
+        client = AzureOpenAI(
+            api_key=connection_params['api_key'],
+            api_version=connection_params['api_version'],
+            azure_endpoint=connection_params['azure_endpoint'],
+        )
+        params['model'] = connection_params['azure_deployment']
+    else:
+        client = OpenAI(**connection_params)
+        params['model'] = model
+    
+    
+    response = client.embeddings.create(
+        **params,
+        **kwargs
+    )
 
-            calculate_cost(model, response['usage'])
+    calculate_cost(model, {
+        'total_tokens': response.usage.total_tokens,
+        'prompt_tokens': response.usage.prompt_tokens,
+        'completion_tokens': response.usage.total_tokens - response.usage.prompt_tokens
+    })
 
-            embeddings = [d['embedding'] for d in response['data']]
-            if len(embeddings) > 0:
-                return embeddings
-            else:
-                return embeddings[0]
-
-        except Exception as e:
-            if tries >= 3:
-                raise e
-            
-            print(e)
-            time.sleep(5)
-            tries += 1
+    embeddings = [d.embedding for d in response.data]
+    if len(embeddings) > 0:
+        return embeddings
+    else:
+        return embeddings[0]
 
 def get_completion(
     messages=[], 
@@ -110,27 +113,30 @@ def get_completion(
     response = _get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
-    message = response["choices"][0]["message"]
-    content = message.get('content')
-    if message.get("function_call"):
+    message = response.choices[0].message
+    if message.function_call:
         function = {
-            'name': message["function_call"]['name']
+            'name': message.function_call.name
         }
-        if 'arguments' in message["function_call"]:
+        if message.function_call.arguments:
             try:
-                function['arguments'] = json.loads(message["function_call"]['arguments'])
+                function['arguments'] = json.loads(message.function_call.arguments)
             except json.decoder.JSONDecodeError:
                 pass
     
-    calculate_cost(model, response['usage'])
+    calculate_cost(model, {
+        'total_tokens': response.usage.total_tokens,
+        'prompt_tokens': response.usage.prompt_tokens,
+        'completion_tokens': response.usage.total_tokens - response.usage.prompt_tokens
+    })
     _log_completion(
         messages,
         functions=functions,
-        response_content=content,
+        response_content=message.content,
         response_function=function
     )
 
-    return content, function
+    return message.content, function
 
 
 def get_streaming_completion(
@@ -142,31 +148,28 @@ def get_streaming_completion(
     function_stream_callback=None,
     **kwargs
 ) -> (str, Optional[dict]):
-    connection_params['stream'] = True
-    response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
+    response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, stream=True, **kwargs)
 
     content = ''
     function_name = ''
     function_arguments = ''
 
     for chunk in response:
-        if len(chunk['choices']) == 0:
+        if len(chunk.choices) == 0:
             continue
         
-        choice = chunk['choices'][0]
-        delta = choice.get('delta', {})
-        
-        if delta.get('content'):
-            content += delta['content']
+        delta = chunk.choices[0].delta
+        if delta.content:
+            content += delta.content
             if content_stream_callback:
-                content_stream_callback(delta['content'])
+                content_stream_callback(delta.content)
         
-        function_call = delta.get('function_call')
+        function_call = delta.function_call
         if function_call:
-            if function_call.get('name'):
-                function_name += function_call['name']
-            if function_call.get('arguments'):
-                function_arguments += function_call['arguments']
+            if function_call.name:
+                function_name += function_call.name
+            if function_call.arguments:
+                function_arguments += function_call.arguments
             if function_stream_callback:
                 function_stream_callback(function_name, function_arguments)
 
@@ -228,27 +231,26 @@ def _get_completion(
     connection_params={},
     **kwargs
 ) -> (str, Optional[dict]):
-    attempts = 0
-    max_retries = 3
-    while True:
-        try:
-            attempts += 1
-            params = { 
-                'messages': messages,
-                'temperature': DEFAULT_TEMPERATURE
-            }
+    if connection_params.get('api_type', '') == OPENAI_CONNECTION_TYPE_AZURE:
+        client = AzureOpenAI(
+            api_key=connection_params['api_key'],
+            api_version=connection_params['api_version'],
+            azure_endpoint=connection_params['azure_endpoint'],
+            azure_deployment=connection_params['azure_deployment'],
+        )
+    else:
+        client = OpenAI(**connection_params)
+    
+    params = { 
+        'messages': messages,
+        'temperature': DEFAULT_TEMPERATURE,
+        'model': model
+    }
 
-            if len(functions) > 0:
-                params['functions'] = functions
-            if 'engine' not in connection_params:
-                params['model'] = model
-
-            return openai.ChatCompletion.create(
-                **params,
-                **connection_params,
-                **kwargs
-            )
-        except Exception as e:
-            time.sleep(15)
-            if attempts >= max_retries:
-                raise e
+    if len(functions) > 0:
+        params['tools'] = functions
+    
+    return client.chat.completions.create(
+        **params,
+        **kwargs
+    )

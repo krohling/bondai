@@ -1,5 +1,5 @@
 import platform
-import datetime
+from datetime import datetime
 from jinja2 import Template
 from bondai.prompt import PromptBuilder
 

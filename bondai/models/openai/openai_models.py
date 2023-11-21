@@ -15,6 +15,7 @@ MODEL_FAMILIES = [
 MODEL_GPT4 = 'gpt-4'
 MODEL_GPT4_0613 = 'gpt-4-0613'
 MODEL_GPT4_32K = 'gpt-4-32k'
+MODEL_GPT4_TURBO_1106 = 'gpt-4-1106-preview'
 MODEL_GPT35_TURBO = 'gpt-3.5-turbo'
 MODEL_GPT35_TURBO_16K = 'gpt-3.5-turbo-16k'
 MODEL_GPT35_TURBO_0613 = 'gpt-3.5-turbo-0613'
@@ -25,6 +26,7 @@ MODEL_NAMES = [
     MODEL_GPT4,
     MODEL_GPT4_0613,
     MODEL_GPT4_32K,
+    MODEL_GPT4_TURBO_1106,
     MODEL_GPT35_TURBO,
     MODEL_GPT35_TURBO_16K,
     MODEL_GPT35_TURBO_0613,
@@ -53,6 +55,13 @@ MODELS = {
         'max_tokens': 32767,
         'input_price_per_token': 0.00006,
         'output_price_per_token': 0.00012,
+    },
+    MODEL_GPT4_TURBO_1106: {
+        'model_type': MODEL_TYPE_LLM,
+        'family': MODEL_FAMILY_GPT4,
+        'max_tokens': 128000,
+        'input_price_per_token': 0.00001,
+        'output_price_per_token': 0.00003,
     },
     MODEL_GPT35_TURBO: {
         'model_type': MODEL_TYPE_LLM,

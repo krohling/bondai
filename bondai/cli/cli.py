@@ -141,7 +141,7 @@ def run_cli():
             agent_wrapper = CLIAgentWrapper(api_agent, task_agent, tools)
             server = BondAIAPIServer(agent_wrapper=agent_wrapper, port=port)
 
-            conversational_tool = ConversationTool(server.socketio)
+            conversational_tool = ConversationTool(server._socketio)
             api_agent.add_tool(conversational_tool)
 
             try:

@@ -54,31 +54,31 @@ if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_AZURE:
     EMBEDDINGS_CONNECTION_PARAMS = {
         'api_type': 'azure',
         'api_key': AZURE_OPENAI_EMBEDDINGS_API_KEY,
-        'api_base': AZURE_OPENAI_EMBEDDINGS_API_BASE,
         'api_version': AZURE_OPENAI_EMBEDDINGS_API_VERSION,
-        'deployment_id': AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT
+        'azure_endpoint': AZURE_OPENAI_EMBEDDINGS_API_BASE,
+        'azure_deployment': AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT
     }
 
     GPT_35_CONNECTION_PARAMS = {
         'api_type': 'azure',
         'api_key': AZURE_OPENAI_GPT35_API_KEY,
-        'api_base': AZURE_OPENAI_GPT35_API_BASE,
         'api_version': AZURE_OPENAI_GPT35_API_VERSION,
-        'engine': AZURE_OPENAI_GPT35_DEPLOYMENT
+        'azure_endpoint': AZURE_OPENAI_GPT35_API_BASE,
+        'azure_deployment': AZURE_OPENAI_GPT35_DEPLOYMENT
     }
 
     GPT_4_CONNECTION_PARAMS = {
         'api_type': 'azure',
         'api_key': AZURE_OPENAI_GPT4_API_KEY,
-        'api_base': AZURE_OPENAI_GPT4_API_BASE,
         'api_version': AZURE_OPENAI_GPT4_API_VERSION,
-        'engine': AZURE_OPENAI_GPT4_DEPLOYMENT
+        'azure_endpoint': AZURE_OPENAI_GPT4_API_BASE,
+        'azure_deployment': AZURE_OPENAI_GPT4_DEPLOYMENT
     }
 
     DALLE_CONNECTION_PARAMS = {
         'api_type': 'azure',
         'api_key': AZURE_OPENAI_DALLE_API_KEY,
-        'api_base': AZURE_OPENAI_DALLE_API_BASE,
         'api_version': AZURE_OPENAI_DALLE_API_VERSION,
-        'engine': AZURE_OPENAI_DALLE_DEPLOYMENT
+        'azure_endpoint': AZURE_OPENAI_DALLE_API_BASE,
+        'azure_deployment': AZURE_OPENAI_DALLE_DEPLOYMENT
     }

@@ -13,7 +13,7 @@ from .openai_models import (
 )
 
 class OpenAILLM(LLM):
-    def __init__(self, model):
+    def __init__(self, model: str):
         if model not in MODEL_NAMES:
             raise Exception(f"Model {model} is not supported.")
         if MODELS[model]['model_type'] != MODEL_TYPE_LLM:

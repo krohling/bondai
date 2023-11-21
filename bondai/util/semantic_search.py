@@ -1,5 +1,5 @@
 import nltk
-import time
+import faiss
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -9,12 +9,6 @@ EMBED_BATCH_SIZE = 16
 MAX_EMBED_TOKENS = 250
 MAX_EMBED_WORKERS = 5
 SENTENCE_CONCAT_COUNT = 4
-
-def cosine_similarity(vec1, vec2):
-  dot_product = np.dot(vec1, vec2)
-  norm1 = np.linalg.norm(vec1)
-  norm2 = np.linalg.norm(vec2)
-  return dot_product / (norm1 * norm2)
 
 def split_text(embedding_model, text, max_length):
     result = []
@@ -60,12 +54,22 @@ def split_tokens(embedding_model, input, max_length):
 def semantic_search(embedding_model, query, text, max_tokens):
     if embedding_model.count_tokens(text) <= max_tokens: return text
 
-    results = []
     sentences = split_text(embedding_model, text, MAX_EMBED_TOKENS)
     query_embedding = embedding_model.create_embedding(query)
-    
-    # Split the sentences into batches of up to 16 sentences
+    query_embedding = np.array(query_embedding).astype('float32')
+
+    # Convert embeddings to FAISS compatible format (they need to be normalized)
+    faiss.normalize_L2(query_embedding)
+
+    # Create a FAISS index
+    index = faiss.IndexFlatIP(query_embedding.shape[1])  # IndexFlatIP is for inner product (which is equivalent to cosine similarity when vectors are normalized)
+
+    # Split the sentences into batches of up to EMBED_BATCH_SIZE sentences
     sentence_batches = [sentences[i:i+EMBED_BATCH_SIZE] for i in range(0, len(sentences), EMBED_BATCH_SIZE)]
+
+    # Store embeddings and their corresponding sentences
+    embeddings_list = []
+    sentences_list = []
 
     # Parallelize the calls to create_embedding using ThreadPoolExecutor
     with ThreadPoolExecutor(MAX_EMBED_WORKERS) as executor:
@@ -74,30 +78,33 @@ def semantic_search(embedding_model, query, text, max_tokens):
             batch = future_to_batch[future]
             try:
                 batch_embeddings = future.result()
-                for s, s_embedding in zip(batch, batch_embeddings):
-                    similarity = cosine_similarity(query_embedding, s_embedding)
-                    results.append({
-                        "sentence": s,
-                        "similarity": similarity,
-                        "order": sentences.index(s)
-                    })
+                embeddings_list.extend(batch_embeddings)
+                sentences_list.extend(batch)
             except Exception as e:
                 print(e)
 
-    results.sort(key=lambda x: x['similarity'], reverse=True)
+    embeddings_list = [np.array(embedding).astype('float32') for embedding in embeddings_list]
+    # Add all sentence embeddings to the index
+    embeddings_array = np.vstack(embeddings_list)
+    faiss.normalize_L2(embeddings_array)  # Normalize the embeddings
+    index.add(embeddings_array)  # Add to FAISS index
+
+    # Query the index for the top N most similar sentences
+    D, I = index.search(query_embedding, len(sentences_list))  # Search for all sentences
+
+    # Sort results by similarity
+    sorted_results = sorted(zip(I[0], D[0], sentences_list), key=lambda x: x[1], reverse=True)
 
     filtered = []
     str_items = ''
-    for r in results:
-        if embedding_model.count_tokens(f"{str_items}\n\n{r['sentence']}") <= max_tokens:
-            str_items += f"\n\n{r['sentence']}"
-            filtered.append(r)
+    for idx, _, sentence in sorted_results:
+        if embedding_model.count_tokens(f"{str_items}\n\n{sentence}") <= max_tokens:
+            str_items += f"\n\n{sentence}"
+            filtered.append(sentence)
         else:
             break
 
-    filtered.sort(key=lambda x: x['order'])
-    filtered_str = map(lambda x: x['sentence'], filtered)
-    output = '\n\n'.join(filtered_str)
+    output = '\n\n'.join(filtered)
 
     return output
 
