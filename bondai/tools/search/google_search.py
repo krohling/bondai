@@ -19,13 +19,16 @@ class Parameters(BaseModel):
     thought: str
 
 class GoogleSearchTool(Tool):
-    def __init__(self, google_api_key=GOOGLE_API_KEY, google_cse_id=GOOGLE_CSE_ID):
+    def __init__(self, 
+                    google_api_key: str = GOOGLE_API_KEY, 
+                    google_cse_id: str = GOOGLE_CSE_ID
+                ):
         super(GoogleSearchTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.google_cse_id = google_cse_id
         self.siterestrict = False
         self.search_engine = build("customsearch", "v1", developerKey=google_api_key)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         query = arguments.get('query')
         count = int(arguments.get('count', '5'))
         page = int(arguments.get('page', '1'))

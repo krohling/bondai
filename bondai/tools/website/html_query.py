@@ -2,9 +2,10 @@ import requests
 from pydantic import BaseModel
 from bondai.tools.tool import Tool
 from bondai.util.web import get_website_html
+from bondai.models import LLM
 from bondai.models.openai import (
     OpenAILLM,  
-    MODEL_GPT35_TURBO_16K
+    OpenAIModelNames
 )
 
 TOOL_NAME = 'website_html_query'
@@ -25,11 +26,11 @@ class Parameters(BaseModel):
     thought: str
 
 class WebsiteHtmlQueryTool(Tool):
-    def __init__(self, llm=OpenAILLM(MODEL_GPT35_TURBO_16K)):
+    def __init__(self, llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)):
         super(WebsiteHtmlQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.llm = llm
+        self._llm = llm
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         url = arguments['url']
         question = arguments['question']
 
@@ -44,7 +45,7 @@ class WebsiteHtmlQueryTool(Tool):
             return "The request timed out."
 
         prompt = build_prompt(question, html)
-        response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT, model=self.model)[0]
+        response = self._llm.get_completion(prompt, QUERY_SYSTEM_PROMPT, model=self.model)[0]
 
         return response
 

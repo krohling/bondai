@@ -18,7 +18,7 @@ class FileWriteTool(Tool):
     def __init__(self):
         super(FileWriteTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         filename = arguments.get('filename')
         text = arguments.get('text')
 

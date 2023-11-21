@@ -11,16 +11,16 @@ from bondai.util import ModelLogger, load_local_resource
 from bondai.api import BondAIAPIServer, ConversationTool
 from bondai.models.openai import (
     OpenAILLM, 
-    MODEL_GPT4_0613, 
+    OpenAIModelNames,
     enable_logging,
     OPENAI_CONNECTION_TYPE,
-    OPENAI_CONNECTION_TYPE_OPENAI,
+    OpenAIConnectionType,
 )
 
 from .default_tools import get_tools
 from .cli_agent_wrapper import CLIAgentWrapper
 
-if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.get('OPENAI_API_KEY'):
+if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
     user_input = input()
     if user_input == 'exit':
@@ -101,7 +101,7 @@ tool_descriptions = ''.join([f"{tool.name}: {tool.description}\n" for tool in to
 onboarding_prompt_template = load_local_resource(__file__, 'onboarding_prompt_template.md')
 onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_descriptions)
 
-llm=OpenAILLM(MODEL_GPT4_0613)
+llm=OpenAILLM(OpenAIModelNames.GPT4_0613)
 
 task_agent = ConversationalAgent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
 task_agent_tool = AgentTool(task_agent)

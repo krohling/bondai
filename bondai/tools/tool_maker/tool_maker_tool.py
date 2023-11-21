@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from langchain.tools import ShellTool
 from langchain.tools.python.tool import PythonREPLTool
-from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613
+from bondai.models import LLM
+from bondai.models.openai import OpenAILLM, OpenAIModelNames
 from bondai.tools import Tool, LangChainTool
 from bondai.util import load_local_resource
 from bondai.prompt import DefaultPromptBuilder
@@ -30,11 +31,13 @@ class Parameters(BaseModel):
     thought: str
 
 class ToolMakerTool(Tool):
-    def __init__(self, llm=OpenAILLM(MODEL_GPT4_0613)):
+    def __init__(self, 
+                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613)
+                ):
         super(ToolMakerTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.llm = llm
+        self._llm = llm
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         from bondai import ConversationalAgent
         tool_description = arguments.get('tool_description')
         code_snippet = arguments.get('code_snippet')
@@ -51,8 +54,8 @@ class ToolMakerTool(Tool):
         ).replace("}", "}}")
 
         result = ConversationalAgent(
-            llm=self.llm,
-            prompt_builder=DefaultPromptBuilder(llm=self.llm, prompt_template=PROMPT_TEMPLATE), 
+            llm=self._llm,
+            prompt_builder=DefaultPromptBuilder(llm=self._llm, prompt_template=PROMPT_TEMPLATE), 
             tools=[
                 LangChainTool(shell_tool, ShellToolParameters),
                 LangChainTool(PythonREPLTool(), PythonREPLParameters)

@@ -10,11 +10,15 @@ ALPACA_MARKETS_API_KEY = os.environ.get('ALPACA_MARKETS_API_KEY')
 ALPACA_MARKETS_SECRET_KEY = os.environ.get('ALPACA_MARKETS_SECRET_KEY')
 
 class ListPositionsTool(Tool):
-    def __init__(self, alpaca_api_key=ALPACA_MARKETS_API_KEY, alpaca_secret_key=ALPACA_MARKETS_SECRET_KEY):
+    def __init__(self, 
+                    alpaca_api_key: str = ALPACA_MARKETS_API_KEY, 
+                    alpaca_secret_key: str = ALPACA_MARKETS_SECRET_KEY,
+                    paper: bool = True
+                ):
         super(ListPositionsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION)
-        self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
+        self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         response = self.trading_client.get_all_positions()
 
         if len(response) > 0:

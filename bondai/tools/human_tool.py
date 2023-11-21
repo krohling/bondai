@@ -8,7 +8,7 @@ class HumanTool(Tool):
     def __init__(self):
         super(HumanTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         question = arguments['input']
 
         if question is None:

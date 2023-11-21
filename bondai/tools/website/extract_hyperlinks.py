@@ -17,7 +17,7 @@ class WebsiteExtractHyperlinksTool(Tool):
     def __init__(self):
         super(WebsiteExtractHyperlinksTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         url = arguments['url']
         if url is None:
             raise Exception('url is required')

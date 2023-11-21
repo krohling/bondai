@@ -14,11 +14,14 @@ class Parameters(BaseModel):
     count: int
     thought: str
 
-def get_email_attr(message, attr):
+def get_email_attr(message: dict, attr: str) -> str:
     return next((h['value'] for h in message['payload']['headers'] if h['name'] == attr), None)
 
 class ListEmailsTool(Tool):
-    def __init__(self, credentials=None, credentials_filename='gmail-token.pickle'):
+    def __init__(self, 
+                    credentials: str | None = None, 
+                    credentials_filename: str | None = 'gmail-token.pickle'
+                ):
         super(ListEmailsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         if credentials:
             self.service = build('gmail', 'v1', credentials=credentials)
@@ -30,7 +33,7 @@ class ListEmailsTool(Tool):
         else:
             raise Exception('No credentials provided.')
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         page = int(arguments.get('page', '1'))
         count = int(arguments.get('count', DEFAULT_RESULT_COUNT))
         query = arguments.get('query', '')

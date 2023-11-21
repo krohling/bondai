@@ -1,6 +1,8 @@
 import nltk
 import faiss
 import numpy as np
+from typing import List
+from bondai.models import EmbeddingModel
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 nltk.download("punkt", quiet=True)
@@ -10,7 +12,7 @@ MAX_EMBED_TOKENS = 250
 MAX_EMBED_WORKERS = 5
 SENTENCE_CONCAT_COUNT = 4
 
-def split_text(embedding_model, text, max_length):
+def split_text(embedding_model: str, text: str, max_length: int) -> List[str]:
     result = []
     split = nltk.sent_tokenize(text)
     split = concatenate_strings(split, SENTENCE_CONCAT_COUNT)
@@ -30,14 +32,14 @@ def split_text(embedding_model, text, max_length):
     filtered_list = [s for s in result if s.strip()]
     return filtered_list
 
-def concatenate_strings(arr, n):
+def concatenate_strings(arr: List[str], n: int) -> List[str]:
     arr2 = []
     for i in range(0, len(arr), n):
         concat_str = ''.join(arr[i: i+n])
         arr2.append(concat_str)
     return arr2
 
-def split_tokens(embedding_model, input, max_length):
+def split_tokens(embedding_model: EmbeddingModel, input: str, max_length: int) -> List[str]:
     if embedding_model.count_tokens(input) <= max_length: return input
 
     item = ''
@@ -51,7 +53,7 @@ def split_tokens(embedding_model, input, max_length):
     return result
 
 
-def semantic_search(embedding_model, query, text, max_tokens):
+def semantic_search(embedding_model: EmbeddingModel, query: str, text: str, max_tokens: int) -> str:
     if embedding_model.count_tokens(text) <= max_tokens: return text
 
     sentences = split_text(embedding_model, text, MAX_EMBED_TOKENS)

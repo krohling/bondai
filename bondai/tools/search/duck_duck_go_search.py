@@ -14,7 +14,7 @@ class Parameters(BaseModel):
     page: int
     thought: str
 
-def search_duckduckgo(query, count=10, page=1):
+def search_duckduckgo(query: str, count: int = 10, page: int = 1) -> str:
     ddg_client = Client()
     response = ddg_client.search(query, count=count, page=page)
 
@@ -27,7 +27,7 @@ class DuckDuckGoSearchTool(Tool):
     def __init__(self):
         super(DuckDuckGoSearchTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         query = arguments.get('query')
         count = int(arguments.get('count', '5'))
         page = int(arguments.get('page', '1'))

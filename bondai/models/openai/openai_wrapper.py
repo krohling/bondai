@@ -1,9 +1,10 @@
 import json
 import time
 import tiktoken
-from typing import Optional
+from typing import List, Callable
 from openai import OpenAI, AzureOpenAI
-from .openai_models import MODELS, MODEL_TYPE_LLM, OPENAI_CONNECTION_TYPE_AZURE
+from .openai_models import ModelConfig, OpenAIModelType, OpenAIConnectionType
+from bondai.util import ModelLogger
 
 DEFAULT_TEMPERATURE = 0.1
 
@@ -14,7 +15,7 @@ gpt_costs = 0.0
 
 logger = None
 
-def enable_logging(model_logger):
+def enable_logging(model_logger: ModelLogger):
     global logger
     logger = model_logger
 
@@ -44,14 +45,14 @@ def reset_total_cost():
     gpt_costs = 0.0
     gpt_tokens = 0
 
-def calculate_cost(model_name, usage):
+def calculate_cost(model_name: str, usage: dict):
     global embedding_costs, embedding_tokens, gpt_costs, gpt_tokens
 
-    if model_name in MODELS:
-        model = MODELS[model_name]
+    if model_name in ModelConfig:
+        model = ModelConfig[model_name]
         token_count = usage['total_tokens']
 
-        if model['model_type'] == MODEL_TYPE_LLM:
+        if model['model_type'] == OpenAIModelType.LLM:
             gpt_tokens += token_count
             gpt_costs += (usage['prompt_tokens'] * model['input_price_per_token']) + (usage['completion_tokens'] * model['output_price_per_token'])
         else:
@@ -61,20 +62,20 @@ def calculate_cost(model_name, usage):
         print(f"Unknown model: {model_name}")
 
 
-def get_max_tokens(model) -> int:
-    return MODELS[model]['max_tokens']
+def get_max_tokens(model: str) -> int:
+    return ModelConfig[model]['max_tokens']
 
 
-def count_tokens(prompt, model) -> int:
+def count_tokens(prompt: str, model: dict) -> int:
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(prompt))
 
-def create_embedding(text, model="text-embedding-ada-002", connection_params={}, **kwargs) -> [float]:
+def create_embedding(text: str, model: str = "text-embedding-ada-002", connection_params: dict = {}, **kwargs) -> [float]:
     params = {
         'input': text if isinstance(text, list) else [text],
     }
 
-    if connection_params.get('api_type', '') == OPENAI_CONNECTION_TYPE_AZURE:
+    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE:
         client = AzureOpenAI(
             api_key=connection_params['api_key'],
             api_version=connection_params['api_version'],
@@ -104,12 +105,12 @@ def create_embedding(text, model="text-embedding-ada-002", connection_params={},
         return embeddings[0]
 
 def get_completion(
-    messages=[], 
-    functions=[], 
-    model='gpt-4', 
-    connection_params={},
+    messages: List[dict] = [], 
+    functions: List[dict] = [], 
+    model: str = 'gpt-4', 
+    connection_params: dict = {},
     **kwargs
-) -> (str, Optional[dict]):
+) -> (str, dict | None):
     response = _get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
@@ -140,14 +141,14 @@ def get_completion(
 
 
 def get_streaming_completion(
-    messages=[], 
-    functions=[], 
-    model='gpt-4', 
-    connection_params={},
-    content_stream_callback=None, 
-    function_stream_callback=None,
+    messages: List[dict] = [], 
+    functions: List[dict] = [], 
+    model: str ='gpt-4', 
+    connection_params: dict = {},
+    content_stream_callback: Callable[[str], None] | None = None,
+    function_stream_callback: Callable[[str], None] | None = None,
     **kwargs
-) -> (str, Optional[dict]):
+) -> (str, dict | None):
     response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, stream=True, **kwargs)
 
     content = ''
@@ -207,7 +208,12 @@ def get_streaming_completion(
     return content, function
 
 
-def _log_completion(messages=[], functions=[], response_content='', response_function=None):
+def _log_completion(
+            messages: List[dict] = [], 
+            functions: List[dict] = [], 
+            response_content: str = '', 
+            response_function: dict = None
+        ):
     global logger
     if not logger:
         return
@@ -225,13 +231,13 @@ def _log_completion(messages=[], functions=[], response_content='', response_fun
 
 
 def _get_completion(
-    messages,
-    functions=None, 
-    model='gpt-4', 
-    connection_params={},
+    messages: List[dict] = [], 
+    functions: List[dict] = [], 
+    model: str = 'gpt-4', 
+    connection_params: dict = {},
     **kwargs
-) -> (str, Optional[dict]):
-    if connection_params.get('api_type', '') == OPENAI_CONNECTION_TYPE_AZURE:
+) -> (str, dict | None):
+    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE:
         client = AzureOpenAI(
             api_key=connection_params['api_key'],
             api_version=connection_params['api_version'],

@@ -2,11 +2,11 @@ import requests
 from pydantic import BaseModel
 from bondai.tools import Tool
 from bondai.util import get_website_text, semantic_search
+from bondai.models import LLM, EmbeddingModel
 from bondai.models.openai import (
     OpenAILLM, 
     OpenAIEmbeddingModel, 
-    MODEL_GPT35_TURBO_16K, 
-    MODEL_TEXT_EMBEDDING_ADA_002
+    OpenAIModelNames
 )
 
 TOOL_NAME = 'website_query'
@@ -16,7 +16,7 @@ REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 }
 
-def build_prompt(question, context):
+def build_prompt(question: str, context: str) -> str:
     return f"""{context}
 
 
@@ -30,12 +30,15 @@ class Parameters(BaseModel):
     thought: str
 
 class WebsiteQueryTool(Tool):
-    def __init__(self, llm=OpenAILLM(MODEL_GPT35_TURBO_16K), embedding_model=OpenAIEmbeddingModel(MODEL_TEXT_EMBEDDING_ADA_002)):
+    def __init__(self, 
+                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K), 
+                    embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)
+                ):
         super(WebsiteQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.llm = llm
-        self.embedding_model = embedding_model
+        self._llm = llm
+        self._embedding_model = embedding_model
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         url = arguments['url']
         question = arguments['question']
 
@@ -49,9 +52,9 @@ class WebsiteQueryTool(Tool):
         except requests.Timeout:
             return "The request timed out."
 
-        text = semantic_search(self.embedding_model, question, text, 16000)
+        text = semantic_search(self._embedding_model, question, text, 16000)
         prompt = build_prompt(question, text)
-        response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
+        response = self._llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
 
         return response
 

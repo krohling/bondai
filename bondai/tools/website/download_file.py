@@ -17,7 +17,7 @@ class DownloadFileTool(Tool):
     def __init__(self):
         super(DownloadFileTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         url = arguments.get('url')
         filename = arguments.get('filename')
 

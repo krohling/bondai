@@ -28,11 +28,15 @@ class Parameters(BaseModel):
     thought: str
 
 class CreateOrderTool(Tool):
-    def __init__(self, alpaca_api_key=ALPACA_MARKETS_API_KEY, alpaca_secret_key=ALPACA_MARKETS_SECRET_KEY):
+    def __init__(self, 
+                    alpaca_api_key: str = ALPACA_MARKETS_API_KEY, 
+                    alpaca_secret_key: str = ALPACA_MARKETS_SECRET_KEY,
+                    paper: bool = True
+                ):
         super(CreateOrderTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
+        self._trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         side = arguments.get('side')
         symbol = arguments.get('symbol')
         quantity = arguments.get('quantity')
@@ -59,7 +63,7 @@ class CreateOrderTool(Tool):
             order = LimitOrderRequest(symbol=symbol, limit_price=limit_price, qty=quantity, side=side, time_in_force=time_in_force)
 
         try:
-            response = self.trading_client.submit_order(order_data=order)
+            response = self._trading_client.submit_order(order_data=order)
             return format_order_response(response)
         except APIError as e:
             return e.message

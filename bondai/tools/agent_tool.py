@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from bondai.tools import Tool
-from bondai.models.openai import OpenAILLM, MODEL_GPT4_0613
+from bondai.agents import Agent
+from bondai.agents.react import ReactAgent
+from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 TOOL_NAME = 'agent_tool'
 TOOL_DESCRIPTION = (
@@ -16,20 +18,19 @@ class Parameters(BaseModel):
     thought: str
 
 class AgentTool(Tool):
-    def __init__(self, agent=None, prompt_builder=None, tools=[], llm=OpenAILLM(MODEL_GPT4_0613)):
+    def __init__(self, agent: ReactAgent):
         super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        
-        from bondai import ConversationalAgent
-        if agent:
-            self.agent = agent
-        else:
-            self.agent = ConversationalAgent(prompt_builder=prompt_builder, tools=tools, llm=llm)
+        if agent is None:
+            raise Exception("Agent is required.")
+        if not isinstance(agent, ReactAgent):
+            raise Exception("Agent must be a ReactAgent.")
+        self._agent = agent
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         task_description = arguments.get('task_description')
         if task_description is None:
             raise Exception("'task_description' is required.")
         
-        result = self.agent.run(task_description).output
-        self.agent.reset_memory()
+        result = self._agent.run(task_description).output
+        self._agent.reset_memory()
         return result

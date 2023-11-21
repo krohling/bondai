@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Callable
 from bondai.models import LLM
 from .openai_wrapper import get_streaming_completion, count_tokens, get_max_tokens
 from .openai_connection_params import (
@@ -6,25 +6,30 @@ from .openai_connection_params import (
     GPT_4_CONNECTION_PARAMS,
 )
 from .openai_models import (
-    MODEL_NAMES, 
-    MODELS, 
-    MODEL_TYPE_LLM, 
-    MODEL_FAMILY_GPT4
+    ModelConfig, 
+    OpenAIModelNames,
+    OpenAIModelType,
+    OpenAIModelFamilyType
 )
 
 class OpenAILLM(LLM):
     def __init__(self, model: str):
-        if model not in MODEL_NAMES:
+        model_names = [m.value for m in OpenAIModelNames]
+        if model not in model_names:
             raise Exception(f"Model {model} is not supported.")
-        if MODELS[model]['model_type'] != MODEL_TYPE_LLM:
+        if ModelConfig[model]['model_type'] != OpenAIModelType.LLM:
             raise Exception(f"Model {model} is not an LLM model.")
         self._model = model
 
     def supports_streaming(self) -> bool:
         return True
 
-    def get_completion(self, messages=[], functions=[], **kwargs) -> (str, Optional[dict]):
-        if MODELS[self._model]['family'] == MODEL_FAMILY_GPT4:
+    def get_completion(self, 
+                        messages: List[dict] = [], 
+                        functions: List[dict] = [], 
+                        **kwargs
+                    ) -> (str, dict | None):
+        if ModelConfig[self._model]['family'] == OpenAIModelFamilyType.GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:
             connection_params = GPT_35_CONNECTION_PARAMS
@@ -37,8 +42,14 @@ class OpenAILLM(LLM):
             **kwargs
         )
 
-    def get_streaming_completion(self, messages=[], functions=[], content_stream_callback=None, function_stream_callback=None, **kwargs) -> (str, Optional[dict]):
-        if MODELS[self._model]['family'] == MODEL_FAMILY_GPT4:
+    def get_streaming_completion(self, 
+                                    messages: List[dict] = [], 
+                                    functions: List[dict] = [],
+                                    content_stream_callback: Callable[[str], None] = None,
+                                    function_stream_callback: Callable[[str], None] = None,
+                                    **kwargs
+                                ) -> (str, dict | None):
+        if ModelConfig[self._model]['family'] == OpenAIModelFamilyType.GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:
             connection_params = GPT_35_CONNECTION_PARAMS
@@ -53,7 +64,7 @@ class OpenAILLM(LLM):
             **kwargs
         )
 
-    def count_tokens(self, prompt) -> int:
+    def count_tokens(self, prompt: str) -> int:
         return count_tokens(prompt, self._model)
 
     def get_max_tokens(self) -> int:

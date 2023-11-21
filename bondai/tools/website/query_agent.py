@@ -6,9 +6,10 @@ from .query import WebsiteQueryTool
 from .extract_hyperlinks import WebsiteExtractHyperlinksTool
 from .html_query import WebsiteHtmlQueryTool
 from .download_file import DownloadFileTool
+from bondai.models import LLM
 from bondai.models.openai import (
     OpenAILLM, 
-    MODEL_GPT4_0613
+    OpenAIModelNames
 )
 
 TOOL_NAME = 'website_query_agent'
@@ -37,11 +38,11 @@ This is the question you need to answer:
 {question}"""
 
 class WebsiteQueryAgentTool(Tool):
-    def __init__(self, llm=OpenAILLM(MODEL_GPT4_0613), budget=None):
+    def __init__(self, llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613), budget: float | None = None):
         super(WebsiteQueryAgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.agent = ConversationalAgent(prompt_builder=DefaultPromptBuilder(llm), tools=WEBSITE_TOOLS, llm=llm, budget=budget)
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         self.agent.reset_memory()
         url = arguments['url']
         question = arguments['question']

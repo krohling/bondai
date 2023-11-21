@@ -5,16 +5,17 @@ from typing import List
 from pydantic import BaseModel
 from bondai.tools import Tool
 from bondai.util import get_html_text
-from bondai.models.openai import OpenAILLM, MODEL_GPT35_TURBO_16K
+from bondai.models import LLM
+from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 TOOL_NAME = 'get_email_content'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about emails. Use the provided information to answer the user's QUESTION at the very end."
 TOOL_DESCRIPTION = "This tool allows to ask a question about the text content of a list of emails including summarization. Simply provide a comma seperated list of email ids in the 'email_ids' parameter and specify your question using the 'question' parameter."
 
-def get_email_attr(message, attr):
+def get_email_attr(message: dict, attr: str) -> str:
     return next((h['value'] for h in message['payload']['headers'] if h['name'] == attr), None)
 
-def build_prompt(question, context):
+def build_prompt(question: str, context: str) -> str:
     return f"""{context}
 
 
@@ -22,7 +23,7 @@ IMPORTANT: Answer the following question for the user.
 QUESTION: {question}
 """
 
-def parse_body(message):
+def parse_body(message: dict) -> str:
     payload = message['payload']
 
     if 'parts' in payload:
@@ -48,7 +49,11 @@ class Parameters(BaseModel):
     thought: str
 
 class QueryEmailsTool(Tool):
-    def __init__(self, credentials=None, credentials_filename='gmail-token.pickle', llm=OpenAILLM(MODEL_GPT35_TURBO_16K)):
+    def __init__(self, 
+                    credentials: str | None = None, 
+                    credentials_filename: str | None = 'gmail-token.pickle', 
+                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+                ):
         super(QueryEmailsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.llm = llm
         if credentials:
@@ -61,7 +66,7 @@ class QueryEmailsTool(Tool):
         else:
             raise Exception('No credentials provided.')
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         question = arguments.get('question')
         email_ids = arguments.get('email_ids')
 

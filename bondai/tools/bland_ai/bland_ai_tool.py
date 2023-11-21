@@ -32,10 +32,7 @@ class CallParameters(BaseModel):
     request_data: dict = {}
     thought: str
 
-
-
-
-def validate_phone_number(phone):
+def validate_phone_number(phone: str) -> bool:
     # International numbers (starting with '+')
     international_pattern = r'^\+\d{1,15}$'  # Starts with +, followed by 1 to 15 digits.
 
@@ -54,11 +51,11 @@ def validate_phone_number(phone):
 
 
 class BlandAITool(Tool):
-    def __init__(self, bland_ai_api_key=BLAND_AI_API_KEY):
+    def __init__(self, bland_ai_api_key: str = BLAND_AI_API_KEY):
         super(BlandAITool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, CallParameters)
-        self.bland_ai_api_key=bland_ai_api_key
+        self._bland_ai_api_key=bland_ai_api_key
 
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         if arguments.get('phone_number') is None:
             raise Exception("phone_number is required.")
         if arguments.get('task') is None:
@@ -87,8 +84,8 @@ class BlandAITool(Tool):
                 return f"Call to {arguments['phone_number']} has completed.\n\nTranscripts:\n{transcripts}"
             time.sleep(CHECK_INTERVAL)
 
-    def start_call(self, arguments):
-        headers = {'authorization': self.bland_ai_api_key}
+    def start_call(self, arguments: dict) -> str | None:
+        headers = {'authorization': self._bland_ai_api_key}
         response = requests.post(API_ENDPOINT + 'call', json=arguments, headers=headers)
         if response.status_code == 200:
             resp_data = response.json()
@@ -96,8 +93,8 @@ class BlandAITool(Tool):
                 return resp_data['call_id']
         return None
 
-    def check_call_status(self, call_id):
-        headers = {'authorization': self.bland_ai_api_key}
+    def check_call_status(self, call_id: str) -> [bool, str | None]:
+        headers = {'authorization': self._bland_ai_api_key}
         data = {'call_id': call_id}
         response = requests.post(API_ENDPOINT + 'logs', json=data, headers=headers)
         
@@ -109,8 +106,8 @@ class BlandAITool(Tool):
         
         return False, None
     
-    def end_call(self, call_id):
-        headers = {'authorization': self.bland_ai_api_key}
+    def end_call(self, call_id: str):
+        headers = {'authorization': self._bland_ai_api_key}
         data = {'call_id': call_id}
         requests.post(API_ENDPOINT + 'end', json=data, headers=headers)
 

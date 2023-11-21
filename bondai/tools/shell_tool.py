@@ -18,11 +18,11 @@ class Parameters(BaseModel):
     thought: str
 
 class ShellTool(Tool):
-    def __init__(self, execution_timeout=DEFAULT_EXECUTION_TIMEOUT):
+    def __init__(self, execution_timeout: int = DEFAULT_EXECUTION_TIMEOUT):
         super(ShellTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
-        self.execution_timeout = execution_timeout
+        self._execution_timeout = execution_timeout
 
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         cmd = arguments.get('command')
         if cmd is None:
             raise Exception("'command' parameter is required")
@@ -44,7 +44,7 @@ class ShellTool(Tool):
 
         return response
 
-    def execute_command(self, cmd):
+    def execute_command(self, cmd: str) -> (str, str):
         # Use threading to enforce timeout
         thread_exception = None
 
@@ -62,7 +62,7 @@ class ShellTool(Tool):
         q = Queue()
         thread = threading.Thread(target=target, args=(q,))
         thread.start()
-        thread.join(timeout=self.execution_timeout)
+        thread.join(timeout=self._execution_timeout)
 
         if thread_exception:
             raise thread_exception

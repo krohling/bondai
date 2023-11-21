@@ -2,11 +2,11 @@ import uuid
 from pydantic import BaseModel
 from bondai.tools import Tool
 from bondai.util import semantic_search
+from bondai.models import LLM, EmbeddingModel
 from bondai.models.openai import (
     OpenAILLM, 
     OpenAIEmbeddingModel, 
-    MODEL_GPT35_TURBO_16K, 
-    MODEL_TEXT_EMBEDDING_ADA_002
+    OpenAIModelNames,
 )
 
 TOOL_NAME = 'response_query'
@@ -27,18 +27,20 @@ class Parameters(BaseModel):
     thought: str
 
 class ResponseQueryTool(Tool):
-    def __init__(self, llm=OpenAILLM(MODEL_GPT35_TURBO_16K), embedding_model=OpenAIEmbeddingModel(MODEL_TEXT_EMBEDDING_ADA_002)):
+    def __init__(self, 
+                 llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K), 
+                 embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)):
         super(ResponseQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.llm = llm
-        self.embedding_model = embedding_model
-        self.responses = {}
+        self._llm = llm
+        self._embedding_model = embedding_model
+        self._responses = {}
     
-    def add_response(self, response):
+    def add_response(self, response: str) -> str:
         response_id = str(uuid.uuid4())
-        self.responses[response_id] = response
+        self._responses[response_id] = response
         return response_id
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         response_id = arguments['response_id']
         question = arguments['question']
 
@@ -47,14 +49,14 @@ class ResponseQueryTool(Tool):
         if question is None:
             raise Exception('question is required')
 
-        if response_id in self.responses:
-            text = self.responses[response_id]
-            text = semantic_search(self.embedding_model, question, text, 16000)
+        if response_id in self._responses:
+            text = self._responses[response_id]
+            text = semantic_search(self._embedding_model, question, text, 16000)
             prompt = build_prompt(question, text)
-            response = self.llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
+            response = self._llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
             return response
         else:
             return f"{response_id} is not a valid response_id"
     
     def clear_responses(self):
-        self.responses = {}
+        self._responses = {}

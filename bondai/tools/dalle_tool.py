@@ -24,7 +24,7 @@ class DalleTool(Tool):
     def __init__(self):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
 
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         description = arguments.get('description')
         filename = arguments.get('filename')
 

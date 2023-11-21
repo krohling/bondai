@@ -2,6 +2,7 @@ import io
 from contextlib import redirect_stdout, redirect_stderr
 from pydantic import BaseModel
 from multiprocessing import Process, Pipe
+from multiprocessing.connection import Connection
 from bondai.tools import Tool
 
 DEFAULT_EXECUTION_TIMEOUT = 60
@@ -15,7 +16,7 @@ class Parameters(BaseModel):
     code: str
     thought: str
 
-def execute_target(conn, code):
+def execute_target(conn: Connection, code: str):
     local_vars = {}
     stdout_str, stderr_str = "", ""
     
@@ -35,11 +36,11 @@ def execute_target(conn, code):
         conn.send([str(e), stdout_str, stderr_str])
 
 class PythonREPLTool(Tool):
-    def __init__(self, execution_timeout=DEFAULT_EXECUTION_TIMEOUT):
+    def __init__(self, execution_timeout: int = DEFAULT_EXECUTION_TIMEOUT):
         super(PythonREPLTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
-        self.execution_timeout = execution_timeout
+        self._execution_timeout = execution_timeout
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         code = arguments.get('code')
 
         if code is None:
@@ -67,13 +68,13 @@ class PythonREPLTool(Tool):
         
         return response
     
-    def execute_code(self, code):
+    def execute_code(self, code: str) -> (dict, str, str):
         # Create a pipe for communication
         parent_conn, child_conn = Pipe()
 
         process = Process(target=execute_target, args=(child_conn, code))
         process.start()
-        process.join(timeout=self.execution_timeout)
+        process.join(timeout=self._execution_timeout)
 
         if process.is_alive():
             process.terminate()

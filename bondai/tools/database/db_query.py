@@ -1,8 +1,10 @@
 import os
 import psycopg2
 from pydantic import BaseModel
+from typing import List
 from bondai.tools import Tool
-from bondai.models.openai import OpenAILLM, MODEL_GPT35_TURBO_16K
+from bondai.models import LLM
+from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 class Parameters(BaseModel):
     question: str
@@ -55,24 +57,24 @@ Please respond with a friendly text response to the user's question.
 
 class DatabaseQueryTool(Tool):
     def __init__(self, 
-                 pg_uri=PG_URI, 
-                 pg_host=PG_HOST, 
-                 pg_port=PG_PORT, 
-                 pg_username=PG_USERNAME, 
-                 pg_password=PG_PASSWORD, 
-                 pg_dbname=PG_DBNAME,
-                 llm=OpenAILLM(MODEL_GPT35_TURBO_16K)
+                 pg_uri: str = PG_URI, 
+                 pg_host: str = PG_HOST, 
+                 pg_port: int = PG_PORT, 
+                 pg_username: str = PG_USERNAME, 
+                 pg_password: str = PG_PASSWORD, 
+                 pg_dbname: str = PG_DBNAME,
+                 llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
             ):
         super(DatabaseQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self.pg_uri = pg_uri
-        self.pg_host = pg_host
-        self.pg_port = pg_port
-        self.pg_username = pg_username
-        self.pg_password = pg_password
-        self.pg_dbname = pg_dbname
-        self.llm = llm
+        self._pg_uri = pg_uri
+        self._pg_host = pg_host
+        self._pg_port = pg_port
+        self._pg_username = pg_username
+        self._pg_password = pg_password
+        self._pg_dbname = pg_dbname
+        self._llm = llm
     
-    def run(self, arguments):
+    def run(self, arguments: dict) -> str:
         question = arguments['question']
 
         if question is None:
@@ -85,7 +87,7 @@ class DatabaseQueryTool(Tool):
         attempts = 0
         while True:
             try:
-                query_response, _ = self.llm.get_completion(query_prompt)
+                query_response, _ = self._llm.get_completion(query_prompt)
                 rows, colnames = self.__query_database(query_response)
                 return self.__format_response(rows, colnames)
             except Exception as e:
@@ -93,7 +95,7 @@ class DatabaseQueryTool(Tool):
                 if attempts > MAX_QUERY_RETRIES:
                     raise e
     
-    def __format_response(self, rows, colnames):
+    def __format_response(self, rows: List[str], colnames: List[str]) -> str:
         markdown_output = "| " + " | ".join(colnames) + " |\n"
         markdown_output += "| " + " | ".join(["---"] * len(colnames)) + " |\n"
 
@@ -102,21 +104,21 @@ class DatabaseQueryTool(Tool):
         
         return markdown_output
 
-    def __get_database_connection(self):
-        if self.pg_uri:
+    def __get_database_connection(self) -> psycopg2.extensions.connection:
+        if self._pg_uri:
             # Establish the connection
-            return psycopg2.connect(self.pg_uri, sslmode='require')
+            return psycopg2.connect(self._pg_uri, sslmode='require')
         else:
             # Establish the connection
             return psycopg2.connect(
-                host=self.pg_host,
-                port=self.pg_port,
-                user=self.pg_username,
-                password=self.pg_password,
-                dbname=self.pg_dbname
+                host=self._pg_host,
+                port=self._pg_port,
+                user=self._pg_username,
+                password=self._pg_password,
+                dbname=self._pg_dbname
             )
     
-    def __query_database(self, query):
+    def __query_database(self, query: str) -> (List[str], List[str]):
         connection = None
         cursor = None
         try:
@@ -139,7 +141,7 @@ class DatabaseQueryTool(Tool):
             if connection:
                 connection.close()
     
-    def __get_database_schema(self):
+    def __get_database_schema(self) -> str:
         # Query the schema from information_schema
         rows, _ = self.__query_database((
             "SELECT table_name, column_name, data_type, is_nullable, column_default\n"
