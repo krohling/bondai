@@ -1,4 +1,5 @@
 import uuid
+import json
 from abc import ABC
 from enum import Enum
 from typing import List, Callable
@@ -27,7 +28,6 @@ class MaxStepsExceededException(AgentException):
 class Agent(EventMixin, ABC):
 
     def __init__(self, 
-                 prompt_builder: PromptBuilder,
                  llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613), 
                  tools: List[Tool] = [],
                  quiet: bool = True,
@@ -37,7 +37,6 @@ class Agent(EventMixin, ABC):
         
         self._id: str = str(uuid.uuid4())
         self._status: AgentStatus = AgentStatus.IDLE
-        self._prompt_builder: PromptBuilder = prompt_builder
         self._llm: LLM = llm
         self._tools: List[Tool] = tools
         self._quiet: bool = quiet
@@ -101,4 +100,21 @@ class Agent(EventMixin, ABC):
                 functions=llm_functions,
             )
         
+        if llm_response_function and 'arguments' in llm_response_function:
+            try:
+                llm_response_function['arguments'] = json.loads(llm_response_function['arguments'])
+            except json.decoder.JSONDecodeError:
+                raise AgentException(f"Invalid arguments were used for the function: '{llm_response_function['name']}'")
+
+
         return llm_response, llm_response_function
+    
+    def _execute_tool(self, tool_name: str, tool_arguments: dict = {}):
+        selected_tool = next((t for t in self._tools if t.name == tool_name), None)
+        if not selected_tool:
+            raise AgentException(f"You attempted to use a tool: '{tool_name}'. This tool does not exist.")
+
+        try:
+            return selected_tool.run(tool_arguments)
+        except Exception as e:
+            raise AgentException(f"The following error occurred using '{tool_name}': {str(e)}")

@@ -27,10 +27,11 @@ Name: **{{ member.name }}**
 
 Your response MUST follow this very specific format:
 
+- To message another Conversation Member, start your response with the name of the Conversation Member you would like to send your message to, followed by a ":". You may only address **one** Conversation Member.
+{%- if allow_exit %}
 - If the conversation is complete and no further communication is necessary, start your response with "EXIT:".
-- Otherwise, start your response with the name of the Conversation Member you would like to send your message to, followed by a ":". You may only address **one** Conversation Member.
-
-Here are some examples of VALID responses, demonstrating the use of the EXIT command where appropriate:
+{%- endif %}
+Here are some examples of VALID responses:
 
 ```
 Luna: {{ name }} here. I have a user inquiring about lunar phases and best stargazing practices. Could you share your latest astronomical data with me?
@@ -44,6 +45,7 @@ Sage: Hello, this is {{ name }}. I'm currently helping someone with historical r
 ```
 Muse: {{ name }} reaching out. There's a request for creative insights on Renaissance art and also for historical context. Could you provide your expertise?
 ```
+{%- if allow_exit %}
 ```
 EXIT: {{ name }} here. The user's question about lunar phases has been fully answered.
 ```
@@ -53,6 +55,7 @@ EXIT: Greetings from {{ name }}. The user's travel and stargazing plans are now 
 ```
 EXIT: {{ name }} reaching out. The creative block the user was experiencing has been resolved with our brainstorming session.
 ```
+{%- endif %}
 
 
 {%- if error_message %}

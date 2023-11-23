@@ -4,23 +4,23 @@ import argparse
 import os
 import json
 from termcolor import cprint, colored
-from bondai import ConversationalAgent, BudgetExceededException
+from bondai import Agent, BudgetExceededException
 from bondai.tools import Tool, HumanTool, AgentTool
 from bondai.prompt import DefaultPromptBuilder
 from bondai.util import ModelLogger, load_local_resource
 from bondai.api import BondAIAPIServer, ConversationTool
 from bondai.models.openai import (
     OpenAILLM, 
-    OpenAIModelNames,
+    MODEL_GPT4_0613, 
     enable_logging,
     OPENAI_CONNECTION_TYPE,
-    OpenAIConnectionType,
+    OPENAI_CONNECTION_TYPE_OPENAI,
 )
 
 from .default_tools import get_tools
 from .cli_agent_wrapper import CLIAgentWrapper
 
-if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get('OPENAI_API_KEY'):
+if OPENAI_CONNECTION_TYPE == OPENAI_CONNECTION_TYPE_OPENAI and not os.environ.get('OPENAI_API_KEY'):
     cprint(f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.", 'yellow')
     user_input = input()
     if user_input == 'exit':
@@ -101,9 +101,9 @@ tool_descriptions = ''.join([f"{tool.name}: {tool.description}\n" for tool in to
 onboarding_prompt_template = load_local_resource(__file__, 'onboarding_prompt_template.md')
 onboarding_prompt_template = onboarding_prompt_template.replace('{TOOLS}', tool_descriptions)
 
-llm=OpenAILLM(OpenAIModelNames.GPT4_0613)
+llm=OpenAILLM(MODEL_GPT4_0613)
 
-task_agent = ConversationalAgent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
+task_agent = Agent(llm=llm, tools=tools, quiet=args.quiet, enable_sub_agent=True)
 task_agent_tool = AgentTool(task_agent)
 task_agent_tool.description = (
     "This tool allows you to use the BondAI Agent to solve the user's task."
@@ -132,16 +132,16 @@ def run_cli():
     try:
         if args.server:
             port = int(args.server)
-            api_agent = ConversationalAgent(
+            api_agent = Agent(
                 llm = llm,
                 prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
                 tools=[task_agent_tool],
-                task_completed_tool=None,
+                final_answer_tool=None,
             )
             agent_wrapper = CLIAgentWrapper(api_agent, task_agent, tools)
             server = BondAIAPIServer(agent_wrapper=agent_wrapper, port=port)
 
-            conversational_tool = ConversationTool(server._socketio)
+            conversational_tool = ConversationTool(server.socketio)
             api_agent.add_tool(conversational_tool)
 
             try:
@@ -150,10 +150,10 @@ def run_cli():
                 cprint(f"\n\nStopping BondAI server...\n", 'red')
                 pass
         else:
-            cli_agent = ConversationalAgent(
+            cli_agent = Agent(
                 llm = llm,
                 prompt_builder=DefaultPromptBuilder(llm, onboarding_prompt_template), 
-                task_completed_tool=exit_tool,
+                final_answer_tool=exit_tool,
                 tools=[
                     human_tool,
                     task_agent_tool

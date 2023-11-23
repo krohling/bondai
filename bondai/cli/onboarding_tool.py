@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from bondai.tools import Tool
 
-TOOL_NAME = 'task_completed'
+TOOL_NAME = 'final_answer'
 TOOL_DESCRIPTION = """Use this tool ONLY after you have captured ALL of the required information from the user. This tool will send the information to the next AI assistant that will complete the task.
 - user_exit: This is a boolean value that indicates whether the user has asked to exit. If the user has asked to exit you should NOT ask for any other information from the user.
 - task_description: This must be detailed enough for the next AI assistant to understand what the user wants to do. Ask the user any necessary follow up questions.
@@ -35,7 +35,7 @@ class OnboardingTool(Tool):
         if not task_description:
             raise Exception('You must provide a task description.')
         if not user_confirmation:
-            raise Exception('You must confirm the task description with the user before calling the task_completed tool.')
+            raise Exception('You must confirm the task description with the user before calling the final_answer tool.')
         
         return json.dumps({
             'task_description': task_description,

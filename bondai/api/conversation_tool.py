@@ -1,7 +1,5 @@
 import json
-from threading import Event
-from socketio import Server
-from typing import List
+import threading
 from bondai.tools import Tool, InputParameters
 
 TOOL_NAME = 'conversation_tool'
@@ -12,31 +10,31 @@ TOOL_DESCRIPTION = (
 )
 
 class ConversationTool(Tool):
-    def __init__(self, socketio: Server):
+    def __init__(self, socketio):
         super(ConversationTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
-        self._socketio: Server = socketio
-        self._message_arrived_event: Event = Event()
-        self._user_message: str = None
+        self.socketio = socketio
+        self.message_arrived_event = threading.Event()
+        self.user_message = None
         self._setup_socket_listener()
 
     def _setup_socket_listener(self):
         # Set up the event listener once during initialization
-        @self._socketio.on('message')
+        @self.socketio.on('message')
         def handle_message(message):
             message = json.loads(message)
             if message.get('event') == 'user_message':
-                self._user_message = message['data']['message']
-                self._message_arrived_event.set()
+                self.user_message = message['data']['message']
+                self.message_arrived_event.set()
 
-    def run(self, arguments) -> str:
+    def run(self, arguments):
         # Check for required arguments
         question = arguments.get('input')
         if not question:
             raise ValueError("'input' argument is required")
 
         # Reset for each run
-        self._user_message = None
-        self._message_arrived_event.clear()
+        self.user_message = None
+        self.message_arrived_event.clear()
 
         # Emit message, now that our listener is guaranteed to be active
         message = {
@@ -46,12 +44,12 @@ class ConversationTool(Tool):
             }
         }
         payload = json.dumps(message)
-        self._socketio.send(payload)
+        self.socketio.send(payload)
 
         # Wait for user message
-        self._message_arrived_event.wait()
-        result = self._user_message
-        self._user_message = None
+        self.message_arrived_event.wait()
+        result = self.user_message
+        self.user_message = None
         print(result)
 
         return result

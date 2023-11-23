@@ -1,20 +1,19 @@
 import json
 import requests
-from typing import List, Callable
 from socketio import Client
 
 class BondAIAPIClient:
-    def __init__(self, base_url: str = 'http://127.0.0.1:2663'):
-        self._base_url: str = base_url
-        self._ws_client: Client = None
-        self._events: dict = {
+    def __init__(self, base_url='http://127.0.0.1:2663'):
+        self.base_url = base_url
+        self.ws_client = None
+        self._events = {
             'agent_message': [],
             'agent_started': [],
             'agent_step_completed': [],
             'agent_completed': [],
         }
     
-    def on(self, event_name: str) -> Callable:
+    def on(self, event_name):
         """Register a callback to an event."""
         if event_name not in self._events:
             raise ValueError(f"Unsupported event '{event_name}'")
@@ -25,18 +24,18 @@ class BondAIAPIClient:
         
         return decorator
 
-    def _trigger_event(self, event_name: str, *args, **kwargs):
+    def _trigger_event(self, event_name, *args, **kwargs):
         """Trigger the specified event."""
         for callback in self._events.get(event_name, []):
             callback(*args, **kwargs)
     
     def connect_ws(self):
-        if self._ws_client:
+        if self.ws_client:
             self.disconnect_ws()
-        self._ws_client = Client()
-        self._ws_client.connect(self._base_url)
+        self.ws_client = Client()
+        self.ws_client.connect(self.base_url)
 
-        @self._ws_client.on('message')
+        @self.ws_client.on('message')
         def on_message(message):
             message = json.loads(message)
             if message.get('event') == 'agent_message':
@@ -49,25 +48,25 @@ class BondAIAPIClient:
                 self._trigger_event('agent_completed')
 
     def disconnect_ws(self):
-        if self._ws_client:
-            self._ws_client.disconnect()
-            self._ws_client = None
+        if self.ws_client:
+            self.ws_client.disconnect()
+            self.ws_client = None
     
-    def is_ws_connected(self) -> bool:
-        return self._ws_client and self._ws_client.connected
+    def is_ws_connected(self):
+        return self.ws_client and self.ws_client.connected
 
-    def send_ws_message(self, event: str, data: dict):
+    def send_ws_message(self, event, data):
         if not self.is_ws_connected():
             self.connect_ws()
         message = {"event": event, "data": data}
         message_bytes = json.dumps(message).encode('utf-8')
-        self._ws_client.send(message_bytes)
+        self.ws_client.send(message_bytes)
     
-    def send_user_message(self, message: str):
+    def send_user_message(self, message):
         self.send_ws_message("user_message", {"message": message})
 
-    def _request(self, method: str, endpoint: str, data: dict | None = None) -> dict:
-        url = f"{self._base_url}{endpoint}"
+    def _request(self, method, endpoint, data=None):
+        url = f"{self.base_url}{endpoint}"
         try:
             if method == 'GET':
                 response = requests.get(url)
@@ -83,14 +82,10 @@ class BondAIAPIClient:
         except requests.RequestException as e:
             raise Exception(f"HTTP Request Error: {e}")
 
-    def get_agent(self) -> dict:
+    def get_agent(self):
         return self._request('GET', '/agent')
 
-    def start_agent(self, 
-                    task: str | None = None, 
-                    task_budget: float | None = None, 
-                    max_steps: int | None = None
-                ) -> dict:
+    def start_agent(self, task=None, task_budget=None, max_steps=None):
         data = {}
         if task:
             data['task'] = task
@@ -100,12 +95,12 @@ class BondAIAPIClient:
             data['max_steps'] = max_steps
         return self._request('POST', '/agent/start', data)
 
-    def add_agent_tool(self, tool_name: str) -> dict:
+    def add_agent_tool(self, tool_name):
         data = {'tool_name': tool_name}
         return self._request('POST', '/agent/tools', data)
 
-    def remove_agent_tool(self, tool_name: str) -> dict:
+    def remove_agent_tool(self, tool_name):
         return self._request('DELETE', f'/agent/tools/{tool_name}')
 
-    def get_tools(self) -> List[dict]:
+    def get_tools(self):
         return self._request('GET', '/tools')

@@ -14,6 +14,7 @@ class ConversationalPromptBuilder(JinjaPromptBuilder):
                     name: str, 
                     persona: str | None = None, 
                     conversation_members: List[ConversationMember] = [], 
+                    allow_exit: bool = True,
                     error_message: str | None = None, 
                     **kwargs
                 ) -> str:
@@ -21,6 +22,7 @@ class ConversationalPromptBuilder(JinjaPromptBuilder):
             name=name,
             persona=persona,
             conversation_members=conversation_members,
+            allow_exit=allow_exit,
             error_message=error_message,
             **kwargs
         )

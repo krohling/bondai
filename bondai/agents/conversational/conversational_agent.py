@@ -1,26 +1,28 @@
 from datetime import datetime
 from enum import Enum
 from typing import List, Callable
-from bondai.agents import Agent, AgentStatus, AgentException
 from bondai.util import load_local_resource
-from bondai.prompt import PromptBuilder
+from bondai.agents import Agent, AgentStatus, AgentException
+from bondai.prompt import PromptBuilder, JinjaPromptBuilder
 from bondai.models.llm import LLM
 from bondai.models.openai import (
     OpenAILLM, 
     OpenAIModelNames
 )
 from .conversation_member import ConversationMember, DEFAULT_MAX_SEND_ATTEMPTS
-from .conversational_prompt_builder import ConversationalPromptBuilder
-from .agent_message import AgentMessage, AgentMessageList, USER_MEMBER_NAME
+from .agent_message import AgentMessage, AgentMessageType, AgentMessageList, USER_MEMBER_NAME
 
 DEFAULT_AGENT_NAME = "BondAI"
-DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, 'prompt_template.md')
-
+DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, 'system_prompt_template.md')
+DEFAULT_MESSAGE_PROMPT_TEMPLATE = load_local_resource(__file__, 'message_prompt_template.md')
 
 class ConversationalAgentEventNames(Enum):
     MESSAGE_RECEIVED: str = 'message_received'
     MESSAGE_COMPLETED: str = 'message_completed'
     MESSAGE_ERROR: str = 'message_error'
+    TOOL_SELECTED: str = 'tool_selected'
+    TOOL_ERROR: str = 'tool_error'
+    TOOL_COMPLETED: str = 'tool_completed'
     CONVERSATION_EXIT: str = 'conversation_exit'
 
 class ConversationalAgent(Agent, ConversationMember):
@@ -29,9 +31,11 @@ class ConversationalAgent(Agent, ConversationMember):
                     name: str = DEFAULT_AGENT_NAME,
                     persona: str | None = None,
                     instructions: str | None = None,
-                    prompt_builder: PromptBuilder | None = None,
+                    system_prompt_builder: PromptBuilder = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
+                    message_prompt_builder: PromptBuilder = JinjaPromptBuilder(DEFAULT_MESSAGE_PROMPT_TEMPLATE),
                     llm: LLM=OpenAILLM(OpenAIModelNames.GPT4_0613),
-                    quiet: bool=True
+                    quiet: bool=True,
+                    allow_exit: bool=True
                 ):
         ConversationMember.__init__(
             self,
@@ -40,7 +44,7 @@ class ConversationalAgent(Agent, ConversationMember):
         )
         Agent.__init__(
             self,
-            prompt_builder=prompt_builder if prompt_builder else ConversationalPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
+            system_prompt_builder=system_prompt_builder,
             llm=llm,
             quiet=quiet,
             allowed_events=[
@@ -50,7 +54,10 @@ class ConversationalAgent(Agent, ConversationMember):
                 ConversationalAgentEventNames.CONVERSATION_EXIT
             ]
         )
+
         self._instructions: str = instructions
+        self._allow_exit: bool = allow_exit
+        self._message_prompt_builder = message_prompt_builder
         self._messages: AgentMessageList = AgentMessageList()
     
     @property
@@ -122,28 +129,55 @@ class ConversationalAgent(Agent, ConversationMember):
         while True:
             try_count += 1
             try:
-                system_prompt: str = self._prompt_builder.build_prompt(
+                system_prompt: str = self._system_prompt_builder.build_prompt(
                     name=self.name, 
                     persona=self.persona, 
                     instructions=self._instructions,
                     conversation_members=group_members, 
+                    allow_exit=self._allow_exit,
                     error_message=str(agent_error) if agent_error else None
                 )
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
-                llm_response, _ = self._get_llm_response(messages=llm_messages, content_stream_callback=content_stream_callback)
-                next_recipient_name, next_message, is_conversation_complete = ConversationalAgent._parse_response(llm_response, group_members=group_members)
+                llm_response, llm_response_function = self._get_llm_response(messages=llm_messages, content_stream_callback=content_stream_callback)
 
-                if not next_recipient_name and not is_conversation_complete:
-                    raise AgentException("InvalidResponseError: The response does not conform to the required format. If the conversation is not exiting a single recipient is expected, but none was found.")
-                
-                agent_message.response = next_message
-                agent_message.is_conversation_complete = is_conversation_complete
-                agent_message.success = True
-                agent_message.completed_at = datetime.now()
-                self._trigger_event(ConversationalAgentEventNames.MESSAGE_COMPLETED, self, agent_message)
+                if llm_response_function:
+                    tool_message = AgentMessage(
+                        type=AgentMessageType.TOOL,
+                        sender_name=self.name,
+                        recipient_name=llm_response_function['name'],
+                        tool_arguments=llm_response_function['arguments']
+                    )
+                    self._messages.add(tool_message)
+                    self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
+                    try:
+                        tool_output = self._execute_tool(llm_response_function['name'], llm_response_function['arguments'])
+                    except Exception as e:
+                        tool_message.error = e
+                        tool_message.success = False
+                        tool_message.completed_at = datetime.now()
+                        self._trigger_event(ConversationalAgentEventNames.TOOL_ERROR, self, tool_message)
+                    
+                    tool_message.response = tool_output
+                    tool_message.success = True
+                    tool_message.completed_at = datetime.now()
+                    self._trigger_event(ConversationalAgentEventNames.TOOL_COMPLETED, self, tool_message)
+                else:
+                    next_recipient_name, next_message, is_conversation_complete = ConversationalAgent._parse_response(llm_response, group_members=group_members)
 
-                if is_conversation_complete:
-                    self._trigger_event(ConversationalAgentEventNames.CONVERSATION_EXIT, self, agent_message)
+                    if is_conversation_complete and not self._allow_exit:
+                        raise AgentException("InvalidResponseError: The response does not conform to the required format. Conversation exit is not allowed, but the response starts with 'EXIT'.")
+
+                    if not next_recipient_name and not is_conversation_complete:
+                        raise AgentException("InvalidResponseError: The response does not conform to the required format. If the conversation is not exiting a single recipient is expected, but none was found.")
+                    
+                    agent_message.response = next_message
+                    agent_message.is_conversation_complete = is_conversation_complete
+                    agent_message.success = True
+                    agent_message.completed_at = datetime.now()
+                    self._trigger_event(ConversationalAgentEventNames.MESSAGE_COMPLETED, self, agent_message)
+
+                    if is_conversation_complete:
+                        self._trigger_event(ConversationalAgentEventNames.CONVERSATION_EXIT, self, agent_message)
                 break
             except Exception as e:
                 # print(f"Try Count: {try_count}")
@@ -205,9 +239,10 @@ class ConversationalAgent(Agent, ConversationMember):
         ]
 
         for message in messages:
-            content = f"{message.sender_name.lower()} to {message.recipient_name.lower()}: {message.message}"
+            role = 'tool' if message.type == AgentMessageType.TOOL else 'user'
+            content = self._message_prompt_builder.build_prompt(message=message)
             llm_messages.append({
-                'role': 'user',
+                'role': role,
                 'content': content
             })
 

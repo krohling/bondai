@@ -1,17 +1,25 @@
 import uuid
+from enum import Enum
 from typing import List, Set
 from datetime import datetime
 from dataclasses import dataclass, field
 
 USER_MEMBER_NAME = 'user'
 
+class AgentMessageType(Enum):
+    AGENT: str = 'AGENT'
+    TOOL: str = 'TOOL'
+
 @dataclass
 class AgentMessage:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    type: AgentMessageType = field(default=AgentMessageType.AGENT)
     sender_name: str | None = field(default=None)
     recipient_name: str | None = field(default=None)
     message: str | None = field(default=None)
     response: str | None = field(default=None)
+    tool_name: str | None = field(default=None)
+    tool_arguments: dict | None = field(default=None)
     success: bool = field(default=False)
     is_conversation_complete: bool = field(default=False)
     error: Exception | None = field(default=None)

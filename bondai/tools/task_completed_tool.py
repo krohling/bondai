@@ -10,7 +10,4 @@ class TaskCompletedTool(Tool):
         super().__init__('task_completed', "Use the task_completed tool when you have completed the requested task.", TaskCompletedToolParameters)
 
     def run(self, arguments: dict) -> dict(str, bool):
-        return {
-            'output': arguments['user_response'],
-            'agent_complete': True
-        }
+        return arguments['user_response'], True
