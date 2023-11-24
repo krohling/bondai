@@ -1,5 +1,4 @@
 import uuid
-import json
 from abc import ABC
 from enum import Enum
 from typing import Dict, List, Callable
@@ -41,12 +40,12 @@ class Agent(EventMixin, ABC):
         self._quiet: bool = quiet
     
     @property
-    def status(self) -> AgentStatus:
-        return self._status
-
-    @property
     def id(self) -> str:
         return self._id
+
+    @property
+    def status(self) -> AgentStatus:
+        return self._status
     
     def add_tool(self, tool: Tool):
         if not any([t.name == tool.name for t in self._tools]):
@@ -98,13 +97,6 @@ class Agent(EventMixin, ABC):
                 messages=messages,
                 functions=llm_functions,
             )
-        
-        if llm_response_function and 'arguments' in llm_response_function:
-            try:
-                llm_response_function['arguments'] = json.loads(llm_response_function['arguments'])
-            except json.decoder.JSONDecodeError:
-                raise AgentException(f"Invalid arguments were used for the function: '{llm_response_function['name']}'")
-
 
         return llm_response, llm_response_function
     

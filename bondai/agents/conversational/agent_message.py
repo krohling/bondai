@@ -32,7 +32,7 @@ class ConversationMessage(AgentMessage):
 
 @dataclass
 class ToolUsageMessage(AgentMessage):
-    role: str = field(default='tool')
+    role: str = field(default='function')
     tool_name: str | None = field(default=None)
     tool_arguments: Dict | None = field(default=None)
     tool_output: str | None = field(default=None)

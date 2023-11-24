@@ -36,7 +36,7 @@ class GroupConversation(EventMixin):
         self._filter_recipient_messages: bool = filter_recipient_messages
         self._messages: AgentMessageList = AgentMessageList()
 
-        self._init_agent_events()
+        self._init_member_events()
     
     @property
     def members(self) -> List[ConversationMember]:
@@ -47,56 +47,56 @@ class GroupConversation(EventMixin):
         for a in self.members:
             a.messages.remove_after(timestamp, inclusive=inclusive)
     
-    def _get_agent(self, agent_name: str) -> ConversationMember:
-        return next((agent for agent in self.members if agent.name.lower() == agent_name.lower()), None)
+    def _get_member(self, member_name: str) -> ConversationMember:
+        return next((m for m in self.members if m.name.lower() == member_name.lower()), None)
 
-    def _init_agent_events(self):
-        for agent in self.members:
-            agent.on(ConversationMemberEventNames.MESSAGE_RECEIVED)(
+    def _init_member_events(self):
+        for member in self.members:
+            member.on(ConversationMemberEventNames.MESSAGE_RECEIVED)(
                 self._on_member_message_received
             )
-            agent.on(ConversationMemberEventNames.MESSAGE_ERROR)(
+            member.on(ConversationMemberEventNames.MESSAGE_ERROR)(
                 self._on_member_message_error
             )
-            agent.on(ConversationMemberEventNames.MESSAGE_COMPLETED)(
+            member.on(ConversationMemberEventNames.MESSAGE_COMPLETED)(
                 self._on_member_message_completed
             )
-            agent.on(ConversationMemberEventNames.CONVERSATION_EXITED)(
+            member.on(ConversationMemberEventNames.CONVERSATION_EXITED)(
                 self._on_member_exited
             )
     
-    def _on_member_message_received(self, agent: ConversationMember, agent_message: ConversationMessage):
-        print(f"{agent_message.sender_name} to {agent_message.recipient_name}: {agent_message.message}")
-        self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, agent, agent_message)
+    def _on_member_message_received(self, member: ConversationMember, message: ConversationMessage):
+        print(f"{message.sender_name} to {message.recipient_name}: {message.message}")
+        self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, member, message)
     
-    def _on_member_message_error(self, agent: ConversationMember, agent_message: ConversationMessage):
-        exc = agent_message.error
+    def _on_member_message_error(self, member: ConversationMember, message: ConversationMessage):
+        exc = message.error
         traceback.print_exception(type(exc), exc, exc.__traceback__)
-        self._trigger_event(ConversationMemberEventNames.MESSAGE_ERROR, agent, agent_message)
+        self._trigger_event(ConversationMemberEventNames.MESSAGE_ERROR, member, message)
 
-    def _on_member_message_completed(self, agent: ConversationMember, agent_message: ConversationMessage):
-        self._messages.add(agent_message)
-        self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, agent, agent_message)
+    def _on_member_message_completed(self, member: ConversationMember, message: ConversationMessage):
+        self._messages.add(message)
+        self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, member, message)
     
-    def _on_member_exited(self, agent: ConversationMember, agent_message: ConversationMessage):
-        self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, agent, agent_message)
+    def _on_member_exited(self, member: ConversationMember, message: ConversationMessage):
+        self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, member, message)
     
 
     def save_state(self) -> Dict:
         state = {}
-        for agent in self.members:
-            state[agent.id] = agent.save_state()
+        for member in self.members:
+            state[member.id] = member.save_state()
         
         return state
 
     def load_state(self, state: Dict):
-        for agent in self.members:
-            agent.load_state(state[agent.id])
+        for member in self.members:
+            member.load_state(state[member.id])
 
     def send_message(self, 
                         recipient_name: str, 
                         message: str, 
-                        sender_name: str=USER_MEMBER_NAME, 
+                        sender_name: str = USER_MEMBER_NAME, 
                         content_stream_callback: Callable[[str], None] | None = None
                     ) -> str:
         next_message = ConversationMessage(
@@ -111,7 +111,7 @@ class GroupConversation(EventMixin):
             else:
                 sender_reachable_members = self._conversation_config.get_reachable_members(member_name=next_message.sender_name)
             
-            recipient = next((agent for agent in sender_reachable_members if agent.name.lower() == next_message.recipient_name.lower()), None)
+            recipient = next((m for m in sender_reachable_members if m.name.lower() == next_message.recipient_name.lower()), None)
             if not recipient:
                 raise AgentException(f"Recipient {next_message.recipient_name} not found")
 
@@ -134,6 +134,7 @@ class GroupConversation(EventMixin):
                 )
             except AgentException as e:
                 print("Error occurred, rewinding conversation...")
+                print(e)
                 # The recipient agent has errored out. We will rewind the conversation and try again.
                 previous_message = self._messages[-2] if len(self._messages) > 1 else self._messages[-1]
                 self.remove_messages_after(previous_message.timestamp)
@@ -163,5 +164,5 @@ class GroupConversation(EventMixin):
     
     def reset_memory(self):
         self._messages.clear()
-        for agent in self.members:
-            agent.reset_memory()
+        for member in self.members:
+            member.reset_memory()

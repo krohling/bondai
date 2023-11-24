@@ -253,7 +253,7 @@ def _get_completion(
     }
 
     if len(functions) > 0:
-        params['tools'] = functions
+        params['functions'] = functions
     
     return client.chat.completions.create(
         **params,

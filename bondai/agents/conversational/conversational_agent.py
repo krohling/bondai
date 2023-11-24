@@ -147,6 +147,7 @@ class ConversationalAgent(Agent, ConversationMember):
                     persona=self.persona, 
                     instructions=self._instructions,
                     conversation_members=group_members, 
+                    tools=self._tools,
                     allow_exit=self._allow_exit,
                     error_message=str(agent_error) if agent_error else None
                 )
@@ -154,19 +155,19 @@ class ConversationalAgent(Agent, ConversationMember):
                 # print("********** LLM Messages **********")
                 # print(llm_messages)
                 llm_response, llm_response_function = self._get_llm_response(messages=llm_messages, content_stream_callback=content_stream_callback)
+                print(llm_response_function)
 
                 if llm_response_function:
                     tool_message = ToolUsageMessage(
-                        sender_name=self.name,
                         tool_name=llm_response_function['name'],
-                        tool_arguments=llm_response_function['arguments']
+                        tool_arguments=llm_response_function.get('arguments')
                     )
                     self._messages.add(tool_message)
                     self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
                     tool_starting_cost = get_total_cost()
 
                     try:
-                        tool_message.tool_output = self._execute_tool(llm_response_function['name'], llm_response_function['arguments'])
+                        tool_message.tool_output = self._execute_tool(tool_message.tool_name, tool_message.tool_arguments)
                         tool_message.success = True
                     except Exception as e:
                         tool_message.error = e
@@ -213,6 +214,7 @@ class ConversationalAgent(Agent, ConversationMember):
                     agent_message.error = e
                     agent_message.success = False
                     self._trigger_event(ConversationMemberEventNames.MESSAGE_ERROR, self, agent_message)
+                    self._status = AgentStatus.IDLE
                     raise e
                         
                 
@@ -261,10 +263,17 @@ class ConversationalAgent(Agent, ConversationMember):
 
         for message in messages:
             content = self._message_prompt_builder.build_prompt(message=message).strip()
-            llm_messages.append({
-                'role': message.role,
-                'content': content
-            })
+            if message.role == 'function':
+                llm_messages.append({
+                    'role': message.role,
+                    'name': message.tool_name,
+                    'content': content
+                })
+            else:
+                llm_messages.append({
+                    'role': message.role,
+                    'content': content
+                })
 
         return llm_messages
 

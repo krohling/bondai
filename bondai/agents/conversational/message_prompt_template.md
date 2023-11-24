@@ -14,7 +14,7 @@ You used the **{{ message.tool_name }}** tool.
 # Tool Error:
 This tool did not run successfully and returned the following error:
 ```
-{{ str(message.error) }}
+{{ message.error }}
 ```
 {%- else %}
 # Tool Response:

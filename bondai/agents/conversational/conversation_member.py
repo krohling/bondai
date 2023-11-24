@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
 import asyncio
@@ -17,9 +18,14 @@ class ConversationMember(ABC):
                     name: str,
                     persona: str | None = None,
                 ):
+        self._id: str = str(uuid.uuid4())
         self._name: str = name
         self._persona: str = persona
         self._messages: AgentMessageList = AgentMessageList()
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     @property
     def name(self) -> str:

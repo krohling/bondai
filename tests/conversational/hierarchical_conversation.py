@@ -34,8 +34,8 @@ agent_b1 = ConversationalAgent(
 )
 agent_b2 = ConversationalAgent(
     name='B2', 
-    instructions="You are team member B2. Your task is to find out the value of x and y and compute the product. Once you have the answer you must share it, then you can EXIT.",
-    # tools=[FileWriteTool()],
+    instructions="You are team member B2. Your task is to find out the value of x and y from the other agents and compute the product. Once you have the answer you must save the value to a file named 'answer.txt' and share it with the user",
+    tools=[FileWriteTool()],
     # llm=llm
 )
 
