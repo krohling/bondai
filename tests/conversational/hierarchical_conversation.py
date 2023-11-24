@@ -1,13 +1,16 @@
-from bondai.models.openai import get_total_cost, OpenAILLM, OpenAIEmbeddingModel, OpenAIModelNames
-from bondai.util.semantic_search import semantic_search
+from bondai.models.openai import get_total_cost, OpenAILLM, OpenAIModelNames
+from bondai.tools.file import FileWriteTool
 from bondai.agents.conversational import (
     ConversationalAgent, 
     GroupConversation, 
-    TeamConversationConfig
+    TeamConversationConfig,
+    UserProxy
 )
 
 
 llm = OpenAILLM(OpenAIModelNames.GPT4_TURBO_1106)
+
+user_proxy = UserProxy()
 
 agent_a1 = ConversationalAgent(
     name='A1', 
@@ -32,6 +35,7 @@ agent_b1 = ConversationalAgent(
 agent_b2 = ConversationalAgent(
     name='B2', 
     instructions="You are team member B2. Your task is to find out the value of x and y and compute the product. Once you have the answer you must share it, then you can EXIT.",
+    # tools=[FileWriteTool()],
     # llm=llm
 )
 
@@ -40,9 +44,9 @@ conversation = GroupConversation(
         [agent_a1, agent_b1],
         [agent_a1, agent_a2, agent_a3],
         [agent_b1, agent_b2],
+        [user_proxy, agent_b2]
     )
 )
 
-answer = conversation.send_message(agent_b2.name, "Find the product of x and y, the other agents know x and y.")
-print("Final answer: ", answer)
+conversation.send_message(agent_b2.name, "Find the product of x and then notify the user. The other agents know x and y.")
 print (f"Total Cost: {get_total_cost()}")

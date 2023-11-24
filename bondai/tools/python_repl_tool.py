@@ -1,6 +1,7 @@
 import io
 from contextlib import redirect_stdout, redirect_stderr
 from pydantic import BaseModel
+from typing import Dict
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
 from bondai.tools import Tool
@@ -40,7 +41,7 @@ class PythonREPLTool(Tool):
         super(PythonREPLTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
         self._execution_timeout = execution_timeout
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         code = arguments.get('code')
 
         if code is None:
@@ -68,7 +69,7 @@ class PythonREPLTool(Tool):
         
         return response
     
-    def execute_code(self, code: str) -> (dict, str, str):
+    def execute_code(self, code: str) -> (Dict, str, str):
         # Create a pipe for communication
         parent_conn, child_conn = Pipe()
 

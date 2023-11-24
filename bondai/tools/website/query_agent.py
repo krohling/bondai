@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 from bondai import ConversationalAgent
 from bondai.tools import Tool
 from bondai.prompt import DefaultPromptBuilder
@@ -42,7 +43,7 @@ class WebsiteQueryAgentTool(Tool):
         super(WebsiteQueryAgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.agent = ConversationalAgent(prompt_builder=DefaultPromptBuilder(llm), tools=WEBSITE_TOOLS, llm=llm, budget=budget)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         self.agent.reset_memory()
         url = arguments['url']
         question = arguments['question']

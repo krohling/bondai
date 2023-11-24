@@ -3,6 +3,7 @@ import os
 import requests
 import time
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 
 TOOL_NAME = 'phone_call_tool'
@@ -29,7 +30,7 @@ CHECK_INTERVAL = 2
 class CallParameters(BaseModel):
     phone_number: str
     task: str
-    request_data: dict = {}
+    request_data: Dict = {}
     thought: str
 
 def validate_phone_number(phone: str) -> bool:
@@ -55,7 +56,7 @@ class BlandAITool(Tool):
         super(BlandAITool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, CallParameters)
         self._bland_ai_api_key=bland_ai_api_key
 
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         if arguments.get('phone_number') is None:
             raise Exception("phone_number is required.")
         if arguments.get('task') is None:
@@ -84,7 +85,7 @@ class BlandAITool(Tool):
                 return f"Call to {arguments['phone_number']} has completed.\n\nTranscripts:\n{transcripts}"
             time.sleep(CHECK_INTERVAL)
 
-    def start_call(self, arguments: dict) -> str | None:
+    def start_call(self, arguments: Dict) -> str | None:
         headers = {'authorization': self._bland_ai_api_key}
         response = requests.post(API_ENDPOINT + 'call', json=arguments, headers=headers)
         if response.status_code == 200:

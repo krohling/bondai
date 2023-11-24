@@ -1,5 +1,6 @@
 import pypdf
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 
 TOOL_NAME = 'file_read'
@@ -27,7 +28,7 @@ class FileReadTool(Tool):
     def __init__(self):
         super(FileReadTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         filename = arguments.get('filename')
         if filename is None:
             raise Exception('filename is required')

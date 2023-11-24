@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import Dict, List, Callable
 from bondai.models import LLM
 from .openai_wrapper import get_streaming_completion, count_tokens, get_max_tokens
 from .openai_connection_params import (
@@ -13,22 +13,19 @@ from .openai_models import (
 )
 
 class OpenAILLM(LLM):
-    def __init__(self, model: str):
-        model_names = [m.value for m in OpenAIModelNames]
-        if model not in model_names:
-            raise Exception(f"Model {model} is not supported.")
-        if ModelConfig[model]['model_type'] != OpenAIModelType.LLM:
-            raise Exception(f"Model {model} is not an LLM model.")
-        self._model = model
+    def __init__(self, model: OpenAIModelNames):
+        self._model = model.value
+        if ModelConfig[self._model]['model_type'] != OpenAIModelType.LLM:
+            raise Exception(f"Model {self._model} is not an LLM model.")
 
     def supports_streaming(self) -> bool:
         return True
 
     def get_completion(self, 
-                        messages: List[dict] = [], 
-                        functions: List[dict] = [], 
+                        messages: List[Dict] = [], 
+                        functions: List[Dict] = [], 
                         **kwargs
-                    ) -> (str, dict | None):
+                    ) -> (str, Dict | None):
         if ModelConfig[self._model]['family'] == OpenAIModelFamilyType.GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:
@@ -43,12 +40,12 @@ class OpenAILLM(LLM):
         )
 
     def get_streaming_completion(self, 
-                                    messages: List[dict] = [], 
-                                    functions: List[dict] = [],
+                                    messages: List[Dict] = [], 
+                                    functions: List[Dict] = [],
                                     content_stream_callback: Callable[[str], None] = None,
                                     function_stream_callback: Callable[[str], None] = None,
                                     **kwargs
-                                ) -> (str, dict | None):
+                                ) -> (str, Dict | None):
         if ModelConfig[self._model]['family'] == OpenAIModelFamilyType.GPT4:
             connection_params = GPT_4_CONNECTION_PARAMS
         else:

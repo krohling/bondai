@@ -3,6 +3,7 @@ import subprocess
 import shlex
 from queue import Queue
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 
 DEFAULT_EXECUTION_TIMEOUT = 60
@@ -22,7 +23,7 @@ class ShellTool(Tool):
         super(ShellTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters, dangerous=True)
         self._execution_timeout = execution_timeout
 
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         cmd = arguments.get('command')
         if cmd is None:
             raise Exception("'command' parameter is required")

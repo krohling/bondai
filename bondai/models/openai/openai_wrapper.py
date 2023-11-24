@@ -1,7 +1,6 @@
 import json
-import time
 import tiktoken
-from typing import List, Callable
+from typing import Dict, List, Callable
 from openai import OpenAI, AzureOpenAI
 from .openai_models import ModelConfig, OpenAIModelType, OpenAIConnectionType
 from bondai.util import ModelLogger
@@ -45,7 +44,7 @@ def reset_total_cost():
     gpt_costs = 0.0
     gpt_tokens = 0
 
-def calculate_cost(model_name: str, usage: dict):
+def calculate_cost(model_name: str, usage: Dict):
     global embedding_costs, embedding_tokens, gpt_costs, gpt_tokens
 
     if model_name in ModelConfig:
@@ -66,11 +65,11 @@ def get_max_tokens(model: str) -> int:
     return ModelConfig[model]['max_tokens']
 
 
-def count_tokens(prompt: str, model: dict) -> int:
+def count_tokens(prompt: str, model: Dict) -> int:
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(prompt))
 
-def create_embedding(text: str, model: str = "text-embedding-ada-002", connection_params: dict = {}, **kwargs) -> [float]:
+def create_embedding(text: str, model: str = "text-embedding-ada-002", connection_params: Dict = {}, **kwargs) -> [float]:
     params = {
         'input': text if isinstance(text, list) else [text],
     }
@@ -105,12 +104,12 @@ def create_embedding(text: str, model: str = "text-embedding-ada-002", connectio
         return embeddings[0]
 
 def get_completion(
-    messages: List[dict] = [], 
-    functions: List[dict] = [], 
+    messages: List[Dict] = [], 
+    functions: List[Dict] = [], 
     model: str = 'gpt-4', 
-    connection_params: dict = {},
+    connection_params: Dict = {},
     **kwargs
-) -> (str, dict | None):
+) -> (str, Dict | None):
     response = _get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
@@ -141,14 +140,14 @@ def get_completion(
 
 
 def get_streaming_completion(
-    messages: List[dict] = [], 
-    functions: List[dict] = [], 
+    messages: List[Dict] = [], 
+    functions: List[Dict] = [], 
     model: str ='gpt-4', 
-    connection_params: dict = {},
+    connection_params: Dict = {},
     content_stream_callback: Callable[[str], None] | None = None,
     function_stream_callback: Callable[[str], None] | None = None,
     **kwargs
-) -> (str, dict | None):
+) -> (str, Dict | None):
     response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, stream=True, **kwargs)
 
     content = ''
@@ -209,10 +208,10 @@ def get_streaming_completion(
 
 
 def _log_completion(
-            messages: List[dict] = [], 
-            functions: List[dict] = [], 
+            messages: List[Dict] = [], 
+            functions: List[Dict] = [], 
             response_content: str = '', 
-            response_function: dict = None
+            response_function: Dict = None
         ):
     global logger
     if not logger:
@@ -231,12 +230,12 @@ def _log_completion(
 
 
 def _get_completion(
-    messages: List[dict] = [], 
-    functions: List[dict] = [], 
+    messages: List[Dict] = [], 
+    functions: List[Dict] = [], 
     model: str = 'gpt-4', 
-    connection_params: dict = {},
+    connection_params: Dict = {},
     **kwargs
-) -> (str, dict | None):
+) -> (str, Dict | None):
     if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE:
         client = AzureOpenAI(
             api_key=connection_params['api_key'],

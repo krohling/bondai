@@ -3,7 +3,7 @@ import uuid
 import json
 from enum import Enum
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 from dataclasses import dataclass, field
 from bondai.util import load_local_resource
 from bondai.tools import Tool, ResponseQueryTool
@@ -28,7 +28,7 @@ class AgentStep:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     llm_prompt: str | None = field(default=None)
     llm_response: str | None = field(default=None)
-    llm_response_function: dict | None = field(default=None)
+    llm_response_function: Dict | None = field(default=None)
     tool_output: str | None = field(default=None)
     error_message: str | None = field(default=None)
     success: bool = field(default=False)
@@ -102,7 +102,7 @@ class ReactAgent(Agent):
             system_prompt_builder = ReactPromptBuilder(DEFAULT_PROMPT_TEMPLATE)
         self._system_prompt_builder: PromptBuilder = system_prompt_builder
     
-    def save_state(self) -> dict:
+    def save_state(self) -> Dict:
         state = super().save_state()
         state['task_steps'] = self._task_steps
 
@@ -111,7 +111,7 @@ class ReactAgent(Agent):
 
         return state
 
-    def load_state(self, state : dict):
+    def load_state(self, state : Dict):
         super().load_state(state)
         self._task_steps = state['task_steps']
 

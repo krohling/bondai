@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools.tool import Tool
 from duckpy import Client
 
@@ -27,7 +28,7 @@ class DuckDuckGoSearchTool(Tool):
     def __init__(self):
         super(DuckDuckGoSearchTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         query = arguments.get('query')
         count = int(arguments.get('count', '5'))
         page = int(arguments.get('page', '1'))

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import Dict, List, Callable
 
 class LLM(ABC):
 
@@ -9,20 +9,20 @@ class LLM(ABC):
 
     @abstractmethod
     def get_completion(
-        messages: List[dict] = [], 
-        functions: List[dict] = [], 
+        messages: List[Dict] = [], 
+        functions: List[Dict] = [], 
         **kwargs
-    ) -> (str, dict | None):
+    ) -> (str, Dict | None):
         pass
 
     @abstractmethod
     def get_streaming_completion(
-        messages: List[dict] = [], 
-        functions: List[dict] = [], 
+        messages: List[Dict] = [], 
+        functions: List[Dict] = [], 
         content_stream_callback: Callable[[str], None] | None = None,
         function_stream_callback: Callable[[str], None] | None = None,
         **kwargs
-    ) -> (str, dict | None):
+    ) -> (str, Dict | None):
         pass
 
     @abstractmethod

@@ -2,10 +2,9 @@ import uuid
 import json
 from abc import ABC
 from enum import Enum
-from typing import List, Callable
+from typing import Dict, List, Callable
 from bondai.util import EventMixin
 from bondai.tools import Tool
-from bondai.prompt import PromptBuilder, DefaultPromptBuilder
 from bondai.models import LLM
 from bondai.models.openai import (
     OpenAILLM, 
@@ -56,7 +55,7 @@ class Agent(EventMixin, ABC):
     def remove_tool(self, tool_name: str):
         self._tools = [t for t in self._tools if t.name != tool_name]
     
-    def save_state(self) -> dict:
+    def save_state(self) -> Dict:
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot save agent state while it is running.')
         
@@ -67,7 +66,7 @@ class Agent(EventMixin, ABC):
 
         return state
 
-    def load_state(self, state: dict):
+    def load_state(self, state: Dict):
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot load agent state while it is running.')
 
@@ -76,9 +75,9 @@ class Agent(EventMixin, ABC):
                 tool.load_state(state['tools'][tool.name])
 
     def _get_llm_response(self, 
-                        messages: List[dict] = [], 
+                        messages: List[Dict] = [], 
                         content_stream_callback: Callable[[str], None] | None = None
-                    ) -> (str | None, dict | None):
+                    ) -> (str | None, Dict | None):
         llm_functions = list(map(lambda t: t.get_tool_function(), self._tools))
 
         if self._llm.supports_streaming() and (any([t.supports_streaming for t in self._tools]) or content_stream_callback):
@@ -109,7 +108,7 @@ class Agent(EventMixin, ABC):
 
         return llm_response, llm_response_function
     
-    def _execute_tool(self, tool_name: str, tool_arguments: dict = {}):
+    def _execute_tool(self, tool_name: str, tool_arguments: Dict = {}):
         selected_tool = next((t for t in self._tools if t.name == tool_name), None)
         if not selected_tool:
             raise AgentException(f"You attempted to use a tool: '{tool_name}'. This tool does not exist.")

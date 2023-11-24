@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 from bondai.tools import Tool
 from .response_formatter import format_account_response
 from alpaca.trading.client import TradingClient
@@ -18,7 +19,7 @@ class GetAccountTool(Tool):
         super(GetAccountTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION)
         self._trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         response = self._trading_client.get_account()
         return format_account_response(response)
 

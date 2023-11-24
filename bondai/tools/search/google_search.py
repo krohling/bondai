@@ -1,6 +1,7 @@
 import os
 from googleapiclient.discovery import build
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools.tool import Tool
 
 MAX_RESULT_COUNT = 10
@@ -28,7 +29,7 @@ class GoogleSearchTool(Tool):
         self.siterestrict = False
         self.search_engine = build("customsearch", "v1", developerKey=google_api_key)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         query = arguments.get('query')
         count = int(arguments.get('count', '5'))
         page = int(arguments.get('page', '1'))

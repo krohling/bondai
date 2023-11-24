@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Dict, List, Set
 from abc import ABC, abstractmethod
 from .conversation_member import ConversationMember
 
@@ -40,7 +40,7 @@ class TeamConversationConfig(GroupConversationConfig):
 
 class TableConversationConfig(GroupConversationConfig):
 
-    def __init__(self, agent_table: dict):
+    def __init__(self, agent_table: Dict):
         self._agent_table = agent_table
     
     @property

@@ -1,5 +1,6 @@
 import requests
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.util import get_website_text, semantic_search
 from bondai.models import LLM, EmbeddingModel
@@ -38,7 +39,7 @@ class WebsiteQueryTool(Tool):
         self._llm = llm
         self._embedding_model = embedding_model
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         url = arguments['url']
         question = arguments['question']
 

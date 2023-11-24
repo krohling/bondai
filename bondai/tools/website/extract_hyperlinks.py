@@ -1,5 +1,6 @@
 import requests
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.util import get_website_links
 
@@ -17,7 +18,7 @@ class WebsiteExtractHyperlinksTool(Tool):
     def __init__(self):
         super(WebsiteExtractHyperlinksTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         url = arguments['url']
         if url is None:
             raise Exception('url is required')

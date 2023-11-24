@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 
 class InputParameters(BaseModel):
     input: str
@@ -28,14 +29,14 @@ class Tool():
           self.dangerous = dangerous
           self.supports_streaming = supports_streaming
      
-     def get_tool_function(self) -> dict:
+     def get_tool_function(self) -> Dict:
           return {
                "name": self.name,
                "description": self.description,
                "parameters": self.parameters.schema()
           }
 
-     def run(self, arguments: dict) -> str:
+     def run(self, arguments: Dict) -> str:
           if 'input' in arguments:
                return arguments['input']
      
@@ -44,12 +45,12 @@ class Tool():
           # The arguments_buffer is a string buffer containing the latest argument data that has been received.
           pass
 
-     def save_state() -> dict:
+     def save_state() -> Dict:
           # This function is called when the agent is saving state.
           # The state should be returned as a dictionary.
           return {}
 
-     def load_state(state: dict):
+     def load_state(state: Dict):
           # This function is called when the agent is loading state.
           # The state is passed in as a dictionary.
           pass

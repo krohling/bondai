@@ -1,4 +1,5 @@
 from termcolor import cprint
+from typing import Dict
 from bondai.tools import Tool, InputParameters
 
 TOOL_NAME = 'human_tool'
@@ -8,7 +9,7 @@ class HumanTool(Tool):
     def __init__(self):
         super(HumanTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         question = arguments['input']
 
         if question is None:

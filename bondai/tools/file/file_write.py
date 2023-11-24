@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 
 TOOL_NAME = 'file_write'
@@ -18,7 +19,7 @@ class FileWriteTool(Tool):
     def __init__(self):
         super(FileWriteTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         filename = arguments.get('filename')
         text = arguments.get('text')
 

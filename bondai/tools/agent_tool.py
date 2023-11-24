@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.agents import Agent
 from bondai.agents.react import ReactAgent
@@ -26,7 +27,7 @@ class AgentTool(Tool):
             raise Exception("Agent must be a ReactAgent.")
         self._agent = agent
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         task_description = arguments.get('task_description')
         if task_description is None:
             raise Exception("'task_description' is required.")

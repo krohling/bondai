@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 from bondai.tools.tool import Tool
 from .response_formatter import format_positions_response
 from alpaca.trading.client import TradingClient
@@ -18,7 +19,7 @@ class ListPositionsTool(Tool):
         super(ListPositionsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION)
         self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         response = self.trading_client.get_all_positions()
 
         if len(response) > 0:

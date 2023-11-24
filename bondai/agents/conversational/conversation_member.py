@@ -1,10 +1,16 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 import asyncio
 from typing import List, Callable
-from bondai.agents import Agent
-from .agent_message import AgentMessage, USER_MEMBER_NAME
+from .agent_message import AgentMessage, ConversationMessage, AgentMessageList, USER_MEMBER_NAME
 
 DEFAULT_MAX_SEND_ATTEMPTS = 3
+
+class ConversationMemberEventNames(Enum):
+    MESSAGE_RECEIVED: str = 'message_received'
+    MESSAGE_COMPLETED: str = 'message_completed'
+    MESSAGE_ERROR: str = 'message_error'
+    CONVERSATION_EXITED: str = 'agent_exited'
 
 class ConversationMember(ABC):
     def __init__(self, 
@@ -13,6 +19,7 @@ class ConversationMember(ABC):
                 ):
         self._name: str = name
         self._persona: str = persona
+        self._messages: AgentMessageList = AgentMessageList()
 
     @property
     def name(self) -> str:
@@ -22,11 +29,15 @@ class ConversationMember(ABC):
     def persona(self) -> str:
         return self._persona
 
+    @property
+    def messages(self) -> AgentMessageList:
+        return self._messages
+
     @abstractmethod
     def send_message(self, 
-                    message: str, 
+                    message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[Agent] = [], 
+                    group_members: List['ConversationMember'] = [], 
                     group_messages: List[AgentMessage] = [], 
                     max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                     content_stream_callback: Callable[[str], None] | None = None
@@ -34,9 +45,9 @@ class ConversationMember(ABC):
         pass
 
     def send_message_async(self, 
-                        message: str, 
+                        message: str | ConversationMessage, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        group_members: List[Agent] = [], 
+                        group_members: List['ConversationMember'] = [], 
                         group_messages: List[AgentMessage] = [], 
                         max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                         content_stream_callback: Callable[[str], None] | None = None

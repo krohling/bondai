@@ -1,5 +1,6 @@
 import uuid
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.util import semantic_search
 from bondai.models import LLM, EmbeddingModel
@@ -40,7 +41,7 @@ class ResponseQueryTool(Tool):
         self._responses[response_id] = response
         return response_id
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         response_id = arguments['response_id']
         question = arguments['question']
 

@@ -1,5 +1,6 @@
 import os
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from .response_formatter import format_order_response
 from alpaca.trading.client import TradingClient
@@ -36,7 +37,7 @@ class CreateOrderTool(Tool):
         super(CreateOrderTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self._trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         side = arguments.get('side')
         symbol = arguments.get('symbol')
         quantity = arguments.get('quantity')

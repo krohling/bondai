@@ -1,5 +1,6 @@
 import pickle
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from googleapiclient.discovery import build
 
@@ -14,7 +15,7 @@ class Parameters(BaseModel):
     count: int
     thought: str
 
-def get_email_attr(message: dict, attr: str) -> str:
+def get_email_attr(message: Dict, attr: str) -> str:
     return next((h['value'] for h in message['payload']['headers'] if h['name'] == attr), None)
 
 class ListEmailsTool(Tool):
@@ -33,7 +34,7 @@ class ListEmailsTool(Tool):
         else:
             raise Exception('No credentials provided.')
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         page = int(arguments.get('page', '1'))
         count = int(arguments.get('count', DEFAULT_RESULT_COUNT))
         query = arguments.get('query', '')

@@ -1,6 +1,7 @@
 import requests
 import openai
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.models.openai.openai_connection_params import DALLE_CONNECTION_PARAMS
 
@@ -24,7 +25,7 @@ class DalleTool(Tool):
     def __init__(self):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
 
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         description = arguments.get('description')
         filename = arguments.get('filename')
 

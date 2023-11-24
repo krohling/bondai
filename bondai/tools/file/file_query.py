@@ -1,5 +1,6 @@
 import pypdf
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 from bondai.models import LLM, EmbeddingModel
 from bondai.util import semantic_search, is_html, get_html_text
@@ -50,7 +51,7 @@ class FileQueryTool(Tool):
         self._llm = llm
         self._embedding_model = embedding_model
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         filename = arguments.get('filename')
         question = arguments.get('question')
 

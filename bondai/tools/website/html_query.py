@@ -1,5 +1,6 @@
 import requests
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools.tool import Tool
 from bondai.util.web import get_website_html
 from bondai.models import LLM
@@ -30,7 +31,7 @@ class WebsiteHtmlQueryTool(Tool):
         super(WebsiteHtmlQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self._llm = llm
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         url = arguments['url']
         question = arguments['question']
 

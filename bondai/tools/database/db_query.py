@@ -1,7 +1,7 @@
 import os
 import psycopg2
 from pydantic import BaseModel
-from typing import List
+from typing import Dict, List
 from bondai.tools import Tool
 from bondai.models import LLM
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
@@ -74,7 +74,7 @@ class DatabaseQueryTool(Tool):
         self._pg_dbname = pg_dbname
         self._llm = llm
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         question = arguments['question']
 
         if question is None:

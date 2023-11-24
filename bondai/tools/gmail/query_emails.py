@@ -1,7 +1,7 @@
 import pickle
 import base64
 from googleapiclient.discovery import build
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 from bondai.tools import Tool
 from bondai.util import get_html_text
@@ -12,7 +12,7 @@ TOOL_NAME = 'get_email_content'
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about emails. Use the provided information to answer the user's QUESTION at the very end."
 TOOL_DESCRIPTION = "This tool allows to ask a question about the text content of a list of emails including summarization. Simply provide a comma seperated list of email ids in the 'email_ids' parameter and specify your question using the 'question' parameter."
 
-def get_email_attr(message: dict, attr: str) -> str:
+def get_email_attr(message: Dict, attr: str) -> str:
     return next((h['value'] for h in message['payload']['headers'] if h['name'] == attr), None)
 
 def build_prompt(question: str, context: str) -> str:
@@ -23,7 +23,7 @@ IMPORTANT: Answer the following question for the user.
 QUESTION: {question}
 """
 
-def parse_body(message: dict) -> str:
+def parse_body(message: Dict) -> str:
     payload = message['payload']
 
     if 'parts' in payload:
@@ -66,7 +66,7 @@ class QueryEmailsTool(Tool):
         else:
             raise Exception('No credentials provided.')
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         question = arguments.get('question')
         email_ids = arguments.get('email_ids')
 

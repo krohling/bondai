@@ -1,5 +1,6 @@
 import requests
 from pydantic import BaseModel
+from typing import Dict
 from bondai.tools import Tool
 
 TOOL_NAME = 'download_file'
@@ -17,7 +18,7 @@ class DownloadFileTool(Tool):
     def __init__(self):
         super(DownloadFileTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
     
-    def run(self, arguments: dict) -> str:
+    def run(self, arguments: Dict) -> str:
         url = arguments.get('url')
         filename = arguments.get('filename')
 
