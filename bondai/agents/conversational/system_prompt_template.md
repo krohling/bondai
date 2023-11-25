@@ -2,18 +2,18 @@
 # Instructions
 
 {{ instructions }}
-
-
 {%- endif %}
+
+
 # Your Persona
 
 Your Name is {{ name }}.
 {%- if persona %}
 {{ persona }}
-
-
 {%- endif %}
 {%- if tools %}
+
+
 # Tools
 
 You have access to a set of tools that give you capabilities far beyond typical language models.
@@ -30,7 +30,6 @@ You are in a Group Conversation with the following members:
 Name: **{{ member.name }}**
 {%- if member.persona %}Persona: {{ member.persona }}{%- endif %}
 {% endfor %}
-
 {%- endif %}
 {%- if error_message %}
 # Error Message
@@ -39,13 +38,13 @@ The following error occurred in your last response. Please correct it in your ne
 ```
 {{ error_message }}
 ```
-
-
 {%- endif %}
+
+
 # Today's Current Date and Time
 
 {{ datetime }}
 
 # Next Steps #
 
-Now, take a deep breath... and think step by step and come up with the next action that should be taken.
+Now, take a deep breath... and think step by step to come up with the next action that should be taken.

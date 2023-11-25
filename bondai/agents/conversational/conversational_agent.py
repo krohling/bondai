@@ -14,8 +14,7 @@ from bondai.models.openai import (
 from .conversation_tools import (
     SendMessageTool,
     ExitConversationTool,
-    SEND_MESSAGE_TOOL_NAME, 
-    EXIT_CONVERSATION_TOOL_NAME
+    SEND_MESSAGE_TOOL_NAME
 )
 from .conversation_member import (
     ConversationMember, 
@@ -26,6 +25,7 @@ from .agent_message import (
     AgentMessage, 
     ConversationMessage,
     ToolUsageMessage,
+    StatusMessage,
     AgentMessageList, 
     USER_MEMBER_NAME
 )
@@ -147,7 +147,6 @@ class ConversationalAgent(Agent, ConversationMember):
 
         
         starting_cost = get_total_cost()
-        agent_error = None
         error_count = 0
 
         while True:
@@ -159,80 +158,95 @@ class ConversationalAgent(Agent, ConversationMember):
                     conversation_members=group_members, 
                     tools=self._tools,
                     allow_exit=self._allow_exit,
-                    error_message=str(agent_error) if agent_error else None
                 )
+                # print(system_prompt)
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
-                print("********** LLM Messages **********")
-                print(llm_messages)
-                _, llm_response_function = self._get_llm_response(
+                # print("********** LLM Messages **********")
+                # print(llm_messages)
+                llm_response_content, llm_response_function = self._get_llm_response(
                     messages=llm_messages, 
                     content_stream_callback=content_stream_callback,
                     function_stream_callback=function_stream_callback
                 )
-                # print(llm_response_function)
 
-                if llm_response_function:
+                # print("********** Response Function **********")
+                # print(llm_response_function)
+                # print("********** Response Content **********")
+                # print(llm_response_content)
+
+                if (not llm_response_function and llm_response_content) or (llm_response_function and llm_response_function['name'] == SEND_MESSAGE_TOOL_NAME):
+                    if llm_response_function:
+                        response_message = self._execute_tool(SEND_MESSAGE_TOOL_NAME, llm_response_function.get('arguments'))
+                        response_message.sender_name = self.name
+                    else:
+                        recipient_name, message = ConversationalAgent._parse_response_content(llm_response_content)
+                        if not recipient_name or not message:
+                            recipient_name = agent_message.sender_name
+                            message = llm_response_content
+                        response_message = ConversationMessage(
+                            sender_name=self.name,
+                            recipient_name=recipient_name,
+                            message=message
+                        )
+
+                    if len(group_members) > 0:
+                        if not any([member.name.lower() == response_message.recipient_name.lower() for member in group_members]):
+                            raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{response_message.recipient_name}'. Try sending a message to someone else.")
+                    else:
+                        response_message.recipient_name = sender_name
+                    
+                    agent_message.success = True
+                    agent_message.agent_exited = False
+                    agent_message.cost = get_total_cost() - starting_cost
+                    agent_message.completed_at = datetime.now()
+                    self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
+                    
+                    self._messages.add(response_message)
+                    self._status = AgentStatus.IDLE
+                    return response_message
+                elif llm_response_function:
                     tool_name = llm_response_function['name']
                     tool_arguments = llm_response_function.get('arguments')
-                    tool_output = self._execute_tool(tool_name, tool_arguments)
+                    tool_message = ToolUsageMessage(
+                        tool_name=tool_name,
+                        tool_arguments=tool_arguments
+                    )
+                    self._messages.add(tool_message)
+                    self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
+                    tool_starting_cost = get_total_cost()
 
-                    if tool_name in [SEND_MESSAGE_TOOL_NAME, EXIT_CONVERSATION_TOOL_NAME]:
-                        agent_message.success = True
-                        agent_message.agent_exited = tool_name == EXIT_CONVERSATION_TOOL_NAME
-                        agent_message.cost = get_total_cost() - starting_cost
-                        agent_message.completed_at = datetime.now()
-                        self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
+                    try:
+                        tool_output = self._execute_tool(tool_message.tool_name, tool_message.tool_arguments)
+                        error_count = 0
+                        tool_message.success = True
+                        tool_message.completed_at = datetime.now()
+                        tool_message.cost = get_total_cost() - tool_starting_cost
 
-                        if llm_response_function['name'] == SEND_MESSAGE_TOOL_NAME:
-                            response_message = tool_output
-                            if not any([member.name.lower() == response_message.recipient_name.lower() for member in group_members]):
-                                raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{response_message.recipient_name}'. Try sending a message to someone else.")
-                            response_message.sender_name = self.name
-                            self._messages.add(response_message)
-                            self._status = AgentStatus.IDLE
-                            return response_message
-                        elif llm_response_function['name'] == EXIT_CONVERSATION_TOOL_NAME:
+                        exit_conversation = False
+                        if isinstance(tool_output, tuple):
+                            tool_output, exit_conversation = tool_output
+                            tool_message.output = tool_output
+                        else:
+                            tool_message.tool_output = tool_output
+                        
+                        self._trigger_event(ConversationalAgentEventNames.TOOL_COMPLETED, self, tool_message)
+                        if exit_conversation:
                             self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
                             self._status = AgentStatus.IDLE
                             return None
-                    else:
-                        tool_message = ToolUsageMessage(
-                            tool_name=tool_name,
-                            tool_arguments=tool_arguments
-                        )
-                        self._messages.add(tool_message)
-                        self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
-                        tool_starting_cost = get_total_cost()
-
-                        try:
-                            tool_output = self._execute_tool(tool_message.tool_name, tool_message.tool_arguments)
-                            error_count = 0
-                            tool_message.success = True
-                            tool_message.completed_at = datetime.now()
-                            tool_message.cost = get_total_cost() - tool_starting_cost
-
-                            exit_conversation = False
-                            if isinstance(tool_output, tuple):
-                                tool_output, exit_conversation = tool_output
-                                tool_message.output = tool_output
-                            else:
-                                tool_message.tool_output = tool_output
-                            
-                            self._trigger_event(ConversationalAgentEventNames.TOOL_COMPLETED, self, tool_message)
-                            if exit_conversation:
-                                self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
-                                self._status = AgentStatus.IDLE
-                                return None
-                        except Exception as e:
-                            tool_message.error = e
-                            tool_message.success = False
-                            self._trigger_event(ConversationalAgentEventNames.TOOL_ERROR, self, tool_message)
-                            raise e
+                    except Exception as e:
+                        tool_message.error = e
+                        tool_message.success = False
+                        self._trigger_event(ConversationalAgentEventNames.TOOL_ERROR, self, tool_message)
+                        raise e
                 else:
                     raise AgentException("InvalidResponseError: The response does not conform to the required format. A function selection was expected, but none was provided.")
             except Exception as e:
                 error_count += 1
-                agent_error = e
+                self._messages.add(StatusMessage(
+                    role='system',
+                    message=f"Your prevous response resulted in the following error: {str(e)}\nYour must correct this error."
+                ))
                 print(f"Error Count: {error_count}")
                 print(str(e))
                 # traceback.print_exception(type(e), e, e.__traceback__)
@@ -242,41 +256,28 @@ class ConversationalAgent(Agent, ConversationMember):
                     self._trigger_event(ConversationMemberEventNames.MESSAGE_ERROR, self, agent_message)
                     self._status = AgentStatus.IDLE
                     raise e
-                        
-                
 
 
-    def _parse_response(response: str, group_members: List[ConversationMember] = []) -> (str, str, bool):
-        # Check if the response starts with 'EXIT'
-        if response.strip().lower().startswith('exit'):
-            return None, response[5:].strip(), True
+    def _parse_response_content(response: str = []) -> (str, str):
+        parts = response.split(':', 1)
+        if len(parts) < 2:
+            return None, None
+        elif len(parts) > 2:
+            recipient_name = parts[0]
+            message = ':'.join(parts[1:])
         else:
-            # Split the response at the first colon
-            parts = response.split(':', 1)
-            if len(parts) < 2:
-                raise AgentException("InvalidResponseError: The response does not conform to the required format. Expected 'Recipient Name: Message', but did not find a colon ':' separating the recipient name from the message.")
-            elif len(parts) > 2:
-                recipient_name = parts[0]
-                message = ':'.join(parts[1:])
-            else:
-                # The first part is the recipient's names, the second is the message
-                recipient_name, message = parts
-            
-            # Strip any leading or trailing whitespace from the message
-            message = message.strip()
-            # Strip any leading or trailing whitespace from the entire recipient string
-            recipient_name = recipient_name.strip()
-            if ' to ' in recipient_name:
-                recipient_name = recipient_name.split(' to ')[1]
-            
-            # Find the recipient object with a matching name (case insensitive)
-            recipient = next((member for member in group_members if member.name.lower() == recipient_name.lower()), None)
-            if not recipient:
-                # If a recipient is not found, raise an error
-                raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{recipient_name}'. Try sending a message to someone else.")            
-            
-            # Return the list of valid recipient name and the message
-            return recipient_name, message, False
+            # The first part is the recipient's names, the second is the message
+            recipient_name, message = parts
+        
+        # Strip any leading or trailing whitespace from the message
+        message = message.strip()
+        # Strip any leading or trailing whitespace from the entire recipient string
+        recipient_name = recipient_name.strip()
+        if ' to ' in recipient_name:
+            recipient_name = recipient_name.split(' to ')[1]
+        
+        # Return the list of valid recipient name and the message
+        return recipient_name, message
 
 
     def _format_llm_messages(self, system_prompt: str, messages: AgentMessageList) -> List[Dict[str, str]]:

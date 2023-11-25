@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from bondai.tools import Tool
-from typing import Dict
+from typing import Dict, Tuple
 from .agent_message import ConversationMessage
 
 
@@ -37,3 +37,6 @@ class ExitConversationTool(Tool):
             EXIT_CONVERSATION_TOOL_NAME, 
             "Use the exit_conversation tool to exit the conversation once your task has been completed."
         )
+    
+    def run(self, arguments: Dict) -> Tuple[str, bool]:
+        return None, True

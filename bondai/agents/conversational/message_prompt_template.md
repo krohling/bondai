@@ -22,7 +22,7 @@ This tool did not run successfully and returned the following error:
 {{ message.tool_output }}
 ```
 {% endif %}
-{%- elif message.role == 'status' %}
+{%- elif message.role == 'system' %}
 {{ message.message }}
 {%- elif message.role == 'user' or message.role == 'agent' %}
 {% if message.error %}

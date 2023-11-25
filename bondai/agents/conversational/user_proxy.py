@@ -58,18 +58,23 @@ class UserProxy(EventMixin, ConversationMember):
             try:
                 print("Please enter your response.")
                 user_response = input()
-                next_recipient_name, next_message, agent_exited = ConversationalAgent._parse_response(user_response, group_members=group_members)
+                user_exited = user_response.lower() == 'exit'
 
-                if not next_recipient_name:
-                    next_recipient_name = agent_message.sender_name
+                if not user_exited:
+                    next_recipient_name, next_message = ConversationalAgent._parse_response_content(user_response)
+                    
+                    next_recipient_name = next_recipient_name if next_recipient_name else agent_message.sender_name
+                    next_message = next_message if next_message else user_response
+
+                    if len(group_members) > 0 and not any([member.name.lower() == next_recipient_name.lower() for member in group_members]):
+                        raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{next_recipient_name}'. Try sending a message to someone else.")
                 
-                agent_message.success = True
-                agent_message.agent_exited = agent_exited
-                agent_message.cost = 0.0
-                agent_message.completed_at = datetime.now()
-                self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
+                    agent_message.success = True
+                    agent_message.agent_exited = user_exited
+                    agent_message.cost = 0.0
+                    agent_message.completed_at = datetime.now()
+                    self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
 
-                if not agent_exited:
                     response_message = ConversationMessage(
                         sender_name=self.name,
                         recipient_name=next_recipient_name,
@@ -78,10 +83,15 @@ class UserProxy(EventMixin, ConversationMember):
                     self._messages.add(response_message)
                     self._status = AgentStatus.IDLE
                     return response_message
-
-                self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
-                self._status = AgentStatus.IDLE
-                return None
+                else:
+                    agent_message.success = True
+                    agent_message.agent_exited = True
+                    agent_message.cost = 0.0
+                    agent_message.completed_at = datetime.now()
+                    self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
+                    self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
+                    self._status = AgentStatus.IDLE
+                    return None
             except Exception as e:
                 print("The following error occurred while parsing your response:")
                 print(str(e))
