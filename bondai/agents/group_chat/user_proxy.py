@@ -1,10 +1,17 @@
 from datetime import datetime
 from typing import List, Callable
-from bondai.agents import BaseAgent, AgentStatus, AgentException
-from ..messages import AgentMessage, ConversationMessage, USER_MEMBER_NAME
 from bondai.util import EventMixin
-from ..conversation_member import ConversationMember, ConversationMemberEventNames
-from ..agent import Agent
+from bondai.agents import (
+    BaseAgent, 
+    Agent,
+    AgentStatus, 
+    AgentException,
+    AgentMessage,
+    ConversationMessage,
+    ConversationMember,
+    ConversationMemberEventNames,
+    USER_MEMBER_NAME
+)
 
 class UserProxy(EventMixin, ConversationMember):
 

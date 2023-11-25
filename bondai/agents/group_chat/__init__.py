@@ -1,7 +1,8 @@
 from .group_conversation import GroupConversation
 from .user_proxy import UserProxy
 from .group_conversation_config import (
-    GroupConversationConfig, 
+    BaseGroupConversationConfig, 
+    GroupConversationConfig,
     TeamConversationConfig, 
     TableConversationConfig,
     CompositeConversationConfig,
@@ -10,6 +11,7 @@ from .group_conversation_config import (
 __all__ = [
     "UserProxy",
     "GroupConversation",
+    "BaseGroupConversationConfig",
     "GroupConversationConfig",
     "TeamConversationConfig",
     "TableConversationConfig",

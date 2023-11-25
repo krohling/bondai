@@ -15,7 +15,8 @@ from .messages import (
     StatusMessage, 
     ConversationMessage,
     ToolUsageMessage,
-    AgentMessageList
+    AgentMessageList,
+    USER_MEMBER_NAME
 )
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     'StatusMessage',
     'ConversationMessage',
     'ToolUsageMessage',
-    'AgentMessageList'
+    'AgentMessageList',
+    'USER_MEMBER_NAME'
 ]

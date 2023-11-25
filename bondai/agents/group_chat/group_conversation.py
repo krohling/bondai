@@ -2,17 +2,25 @@ import asyncio
 import traceback
 from datetime import datetime
 from typing import Dict, List, Callable
-from bondai.agents import BaseAgent, AgentException
 from bondai.util import EventMixin
-from ..conversation_member import ConversationMember, ConversationMemberEventNames
-from .group_conversation_config import GroupConversationConfig, TeamConversationConfig
-from ..messages import AgentMessageList, ConversationMessage, USER_MEMBER_NAME
+from bondai.agents import (
+    AgentException,
+    ConversationMember, 
+    ConversationMemberEventNames,
+    AgentMessageList,
+    ConversationMessage,
+    USER_MEMBER_NAME
+)
+from .group_conversation_config import (
+    BaseGroupConversationConfig, 
+    TeamConversationConfig
+)
 
 class GroupConversation(EventMixin):
 
     def __init__(self, 
                     agents: List[ConversationMember] | None = None, 
-                    conversation_config: GroupConversationConfig | None = None, 
+                    conversation_config: BaseGroupConversationConfig | None = None, 
                     filter_recipient_messages: bool = False,
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
