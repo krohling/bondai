@@ -1,10 +1,8 @@
 from bondai.models.openai import get_total_cost, OpenAILLM, OpenAIModelNames
 from bondai.tools.file import FileWriteTool
-from bondai.agents.conversational import ConversationalAgent
+from bondai.agents import Agent
 
-agent_a1 = ConversationalAgent(
-    name='Sydney', 
-    persona="You are a helpful AI agent. Your goal is to help the user with their task.",
+agent_a1 = Agent(
     tools=[FileWriteTool()],
 )
 

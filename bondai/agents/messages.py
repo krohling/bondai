@@ -1,6 +1,5 @@
 import uuid
 from abc import ABC
-from enum import Enum
 from typing import List, Dict, Set
 from datetime import datetime
 from dataclasses import dataclass, field

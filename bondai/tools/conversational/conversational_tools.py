@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from bondai.tools import Tool
 from typing import Dict, Tuple
-from .agent_message import ConversationMessage
+from bondai.agents.messages import ConversationMessage
 
 
 SEND_MESSAGE_TOOL_NAME = 'send_message'

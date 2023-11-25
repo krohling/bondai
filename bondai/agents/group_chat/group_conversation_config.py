@@ -1,6 +1,6 @@
 from typing import Dict, List, Set
 from abc import ABC, abstractmethod
-from .conversation_member import ConversationMember
+from ..conversation_member import ConversationMember
 
 class GroupConversationConfig(ABC):
     @property

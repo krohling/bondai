@@ -1,4 +1,4 @@
-from .bland_ai_tool import BlandAITool
+from .bland_ai_tools import BlandAITool
 
 __all__ = [
     'BlandAITool',

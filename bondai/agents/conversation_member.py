@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import asyncio
 from typing import List, Callable
-from .agent_message import AgentMessage, ConversationMessage, AgentMessageList, USER_MEMBER_NAME
+from .messages import AgentMessage, ConversationMessage, AgentMessageList, USER_MEMBER_NAME
 
 DEFAULT_MAX_SEND_ATTEMPTS = 3
 

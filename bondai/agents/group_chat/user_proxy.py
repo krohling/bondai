@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import List, Callable
-from bondai.agents import Agent, AgentStatus, AgentException
-from .agent_message import AgentMessage, ConversationMessage, USER_MEMBER_NAME
+from bondai.agents import BaseAgent, AgentStatus, AgentException
+from ..messages import AgentMessage, ConversationMessage, USER_MEMBER_NAME
 from bondai.util import EventMixin
-from .conversation_member import ConversationMember, ConversationMemberEventNames, DEFAULT_MAX_SEND_ATTEMPTS
-from .conversational_agent import ConversationalAgent
+from ..conversation_member import ConversationMember, ConversationMemberEventNames
+from ..agent import Agent
 
 class UserProxy(EventMixin, ConversationMember):
 
@@ -28,9 +28,9 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[Agent] = [], 
+                    group_members: List[BaseAgent] = [], 
                     group_messages: List[AgentMessage] = [], 
-                    max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
+                    max_send_attempts: int = None, 
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
                 ):
@@ -58,10 +58,10 @@ class UserProxy(EventMixin, ConversationMember):
             try:
                 print("Please enter your response.")
                 user_response = input()
-                user_exited = user_response.lower() == 'exit'
+                user_exited = user_response.strip().lower() == 'exit'
 
                 if not user_exited:
-                    next_recipient_name, next_message = ConversationalAgent._parse_response_content(user_response)
+                    next_recipient_name, next_message = Agent._parse_response_content(user_response)
                     
                     next_recipient_name = next_recipient_name if next_recipient_name else agent_message.sender_name
                     next_message = next_message if next_message else user_response
@@ -99,9 +99,9 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message_async(self, 
                         message: str, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        group_members: List[Agent] = [], 
+                        group_members: List[BaseAgent] = [], 
                         group_messages: List[AgentMessage] = [], 
-                        max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
+                        max_send_attempts: int = None, 
                         content_stream_callback: Callable[[str], None] | None = None
                     ):
         if self._status == AgentStatus.RUNNING:

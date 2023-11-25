@@ -2,11 +2,11 @@ import asyncio
 import traceback
 from datetime import datetime
 from typing import Dict, List, Callable
-from bondai.agents import Agent, AgentException
+from bondai.agents import BaseAgent, AgentException
 from bondai.util import EventMixin
-from .conversation_member import ConversationMember, ConversationMemberEventNames
+from ..conversation_member import ConversationMember, ConversationMemberEventNames
 from .group_conversation_config import GroupConversationConfig, TeamConversationConfig
-from .agent_message import AgentMessageList, ConversationMessage, USER_MEMBER_NAME
+from ..messages import AgentMessageList, ConversationMessage, USER_MEMBER_NAME
 
 class GroupConversation(EventMixin):
 

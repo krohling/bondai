@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict
 from bondai.tools import Tool
-from bondai.agents import Agent
+from bondai.agents import BaseAgent
 from bondai.agents.react import ReactAgent
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
