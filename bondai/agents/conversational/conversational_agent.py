@@ -11,6 +11,12 @@ from bondai.models.openai import (
     OpenAIModelNames,
     get_total_cost
 )
+from .conversation_tools import (
+    SendMessageTool,
+    ExitConversationTool,
+    SEND_MESSAGE_TOOL_NAME, 
+    EXIT_CONVERSATION_TOOL_NAME
+)
 from .conversation_member import (
     ConversationMember, 
     ConversationMemberEventNames, 
@@ -63,10 +69,14 @@ class ConversationalAgent(Agent, ConversationMember):
                 ConversationMemberEventNames.CONVERSATION_EXITED
             ]
         )
+        
         self._instructions: str = instructions
         self._allow_exit: bool = allow_exit
         self._system_prompt_builder = system_prompt_builder
         self._message_prompt_builder = message_prompt_builder
+        self.add_tool(SendMessageTool())
+        if self._allow_exit:
+            self.add_tool(ExitConversationTool())
     
     @property
     def instructions(self) -> str:
@@ -112,7 +122,8 @@ class ConversationalAgent(Agent, ConversationMember):
                     group_members: List[ConversationMember] = [], 
                     group_messages: List[AgentMessage] = [], 
                     max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
-                    content_stream_callback: Callable[[str], None] | None = None
+                    content_stream_callback: Callable[[str], None] | None = None,
+                    function_stream_callback: Callable[[str], None] | None = None
                 ) -> (ConversationMessage | None):
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot send message while agent is in a running state.')        
@@ -134,13 +145,12 @@ class ConversationalAgent(Agent, ConversationMember):
         self._status = AgentStatus.RUNNING
         self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, self, agent_message)
 
-        try_count = 0
-        agent_exited = False
+        
         starting_cost = get_total_cost()
-        agent_error = next_recipient_name = next_message = None
+        agent_error = None
+        error_count = 0
 
         while True:
-            try_count += 1
             try:
                 system_prompt: str = self._system_prompt_builder.build_prompt(
                     name=self.name, 
@@ -152,65 +162,81 @@ class ConversationalAgent(Agent, ConversationMember):
                     error_message=str(agent_error) if agent_error else None
                 )
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
-                # print("********** LLM Messages **********")
-                # print(llm_messages)
-                llm_response, llm_response_function = self._get_llm_response(messages=llm_messages, content_stream_callback=content_stream_callback)
-                print(llm_response_function)
+                print("********** LLM Messages **********")
+                print(llm_messages)
+                _, llm_response_function = self._get_llm_response(
+                    messages=llm_messages, 
+                    content_stream_callback=content_stream_callback,
+                    function_stream_callback=function_stream_callback
+                )
+                # print(llm_response_function)
 
                 if llm_response_function:
-                    tool_message = ToolUsageMessage(
-                        tool_name=llm_response_function['name'],
-                        tool_arguments=llm_response_function.get('arguments')
-                    )
-                    self._messages.add(tool_message)
-                    self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
-                    tool_starting_cost = get_total_cost()
+                    tool_name = llm_response_function['name']
+                    tool_arguments = llm_response_function.get('arguments')
+                    tool_output = self._execute_tool(tool_name, tool_arguments)
 
-                    try:
-                        tool_message.tool_output = self._execute_tool(tool_message.tool_name, tool_message.tool_arguments)
-                        tool_message.success = True
-                    except Exception as e:
-                        tool_message.error = e
-                        tool_message.success = False
-                        self._trigger_event(ConversationalAgentEventNames.TOOL_ERROR, self, tool_message)
-                    finally:
-                        tool_message.completed_at = datetime.now()
-                        tool_message.cost = get_total_cost() - tool_starting_cost
-                        self._trigger_event(ConversationalAgentEventNames.TOOL_COMPLETED, self, tool_message)
-                else:
-                    next_recipient_name, next_message, agent_exited = ConversationalAgent._parse_response(llm_response, group_members=group_members)
+                    if tool_name in [SEND_MESSAGE_TOOL_NAME, EXIT_CONVERSATION_TOOL_NAME]:
+                        agent_message.success = True
+                        agent_message.agent_exited = tool_name == EXIT_CONVERSATION_TOOL_NAME
+                        agent_message.cost = get_total_cost() - starting_cost
+                        agent_message.completed_at = datetime.now()
+                        self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
 
-                    if agent_exited and not self._allow_exit:
-                        raise AgentException("InvalidResponseError: The response does not conform to the required format. Conversation exit is not allowed, but the response starts with 'EXIT'.")
-
-                    if not next_recipient_name and not agent_exited:
-                        raise AgentException("InvalidResponseError: The response does not conform to the required format. If the conversation is not exiting a single recipient is expected, but none was found.")
-                    
-                    agent_message.success = True
-                    agent_message.agent_exited = agent_exited
-                    agent_message.cost = get_total_cost() - starting_cost
-                    agent_message.completed_at = datetime.now()
-                    self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
-
-                    if not agent_exited:
-                        response_message = ConversationMessage(
-                            sender_name=self.name,
-                            recipient_name=next_recipient_name,
-                            message=next_message
+                        if llm_response_function['name'] == SEND_MESSAGE_TOOL_NAME:
+                            response_message = tool_output
+                            if not any([member.name.lower() == response_message.recipient_name.lower() for member in group_members]):
+                                raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{response_message.recipient_name}'. Try sending a message to someone else.")
+                            response_message.sender_name = self.name
+                            self._messages.add(response_message)
+                            self._status = AgentStatus.IDLE
+                            return response_message
+                        elif llm_response_function['name'] == EXIT_CONVERSATION_TOOL_NAME:
+                            self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
+                            self._status = AgentStatus.IDLE
+                            return None
+                    else:
+                        tool_message = ToolUsageMessage(
+                            tool_name=tool_name,
+                            tool_arguments=tool_arguments
                         )
-                        self._messages.add(response_message)
-                        self._status = AgentStatus.IDLE
-                        return response_message
+                        self._messages.add(tool_message)
+                        self._trigger_event(ConversationalAgentEventNames.TOOL_SELECTED, self, tool_message)
+                        tool_starting_cost = get_total_cost()
 
-                    self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
-                    self._status = AgentStatus.IDLE
-                    return None
+                        try:
+                            tool_output = self._execute_tool(tool_message.tool_name, tool_message.tool_arguments)
+                            error_count = 0
+                            tool_message.success = True
+                            tool_message.completed_at = datetime.now()
+                            tool_message.cost = get_total_cost() - tool_starting_cost
+
+                            exit_conversation = False
+                            if isinstance(tool_output, tuple):
+                                tool_output, exit_conversation = tool_output
+                                tool_message.output = tool_output
+                            else:
+                                tool_message.tool_output = tool_output
+                            
+                            self._trigger_event(ConversationalAgentEventNames.TOOL_COMPLETED, self, tool_message)
+                            if exit_conversation:
+                                self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, self, agent_message)
+                                self._status = AgentStatus.IDLE
+                                return None
+                        except Exception as e:
+                            tool_message.error = e
+                            tool_message.success = False
+                            self._trigger_event(ConversationalAgentEventNames.TOOL_ERROR, self, tool_message)
+                            raise e
+                else:
+                    raise AgentException("InvalidResponseError: The response does not conform to the required format. A function selection was expected, but none was provided.")
             except Exception as e:
-                # print(f"Try Count: {try_count}")
-                # print(str(e))
-                # traceback.print_exception(type(e), e, e.__traceback__)
+                error_count += 1
                 agent_error = e
-                if not isinstance(e, AgentException) or try_count >= max_send_attempts:
+                print(f"Error Count: {error_count}")
+                print(str(e))
+                # traceback.print_exception(type(e), e, e.__traceback__)
+                if error_count >= max_send_attempts:
                     agent_message.error = e
                     agent_message.success = False
                     self._trigger_event(ConversationMemberEventNames.MESSAGE_ERROR, self, agent_message)

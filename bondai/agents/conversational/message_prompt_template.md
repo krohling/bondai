@@ -1,4 +1,4 @@
-{%- if message.role == 'tool' %}
+{%- if message.role == 'function' %}
 # Tool Name
 You used the **{{ message.tool_name }}** tool.
 {% if message.tool_arguments %}
@@ -19,7 +19,7 @@ This tool did not run successfully and returned the following error:
 {%- else %}
 # Tool Response:
 ```
-{{ message.response }}
+{{ message.tool_output }}
 ```
 {% endif %}
 {%- elif message.role == 'status' %}

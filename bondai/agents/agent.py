@@ -47,6 +47,10 @@ class Agent(EventMixin, ABC):
     def status(self) -> AgentStatus:
         return self._status
     
+    @property
+    def tools(self) -> List[Tool]:
+        return self._tools
+    
     def add_tool(self, tool: Tool):
         if not any([t.name == tool.name for t in self._tools]):
             self.tools.append(tool)
@@ -75,27 +79,33 @@ class Agent(EventMixin, ABC):
 
     def _get_llm_response(self, 
                         messages: List[Dict] = [], 
-                        content_stream_callback: Callable[[str], None] | None = None
+                        content_stream_callback: Callable[[str], None] | None = None,
+                        function_stream_callback: Callable[[str], None] | None = None,
                     ) -> (str | None, Dict | None):
         llm_functions = list(map(lambda t: t.get_tool_function(), self._tools))
 
         if self._llm.supports_streaming() and (any([t.supports_streaming for t in self._tools]) or content_stream_callback):
-            def function_stream_callback(function_name, arguments_buffer):
+            def tool_function_stream_callback(function_name, arguments_buffer):
                 streaming_tools: [Tool] = [t for t in self._tools if t.name == function_name and t.supports_streaming]
                 if len(streaming_tools) > 0:
                     tool: Tool = streaming_tools[0]
                     tool.handle_stream_update(arguments_buffer)
+                if function_stream_callback:
+                    function_stream_callback(function_name, arguments_buffer)
+                
             
+            llm_response, llm_response_function = self._llm.get_streaming_completion(
+                messages=messages,
+                functions=llm_functions, 
+                function_stream_callback=tool_function_stream_callback,
+                content_stream_callback=content_stream_callback
+            )
+        else:
             llm_response, llm_response_function = self._llm.get_streaming_completion(
                 messages=messages,
                 functions=llm_functions, 
                 function_stream_callback=function_stream_callback,
                 content_stream_callback=content_stream_callback
-            )
-        else:
-            llm_response, llm_response_function = self._llm.get_completion(
-                messages=messages,
-                functions=llm_functions,
             )
 
         return llm_response, llm_response_function
@@ -106,6 +116,9 @@ class Agent(EventMixin, ABC):
             raise AgentException(f"You attempted to use a tool: '{tool_name}'. This tool does not exist.")
 
         try:
-            return selected_tool.run(tool_arguments)
+            output = selected_tool.run(tool_arguments)
+            if not output or (isinstance(output, str) and len(output.strip()) == 0):
+                output = f"Tool '{tool_name}' ran successfully with no output."
+            return output
         except Exception as e:
             raise AgentException(f"The following error occurred using '{tool_name}': {str(e)}")

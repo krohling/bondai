@@ -31,7 +31,8 @@ class UserProxy(EventMixin, ConversationMember):
                     group_members: List[Agent] = [], 
                     group_messages: List[AgentMessage] = [], 
                     max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
-                    content_stream_callback: Callable[[str], None] | None = None
+                    content_stream_callback: Callable[[str], None] | None = None,
+                    function_stream_callback: Callable[[str], None] | None = None
                 ):
         if not message:
             raise AgentException("'message' cannot be empty.")

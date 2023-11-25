@@ -36,7 +36,7 @@ class Tool():
                "parameters": self.parameters.schema()
           }
 
-     def run(self, arguments: Dict) -> str:
+     def run(self, arguments: Dict) -> str | Dict:
           if 'input' in arguments:
                return arguments['input']
      

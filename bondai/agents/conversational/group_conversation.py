@@ -2,7 +2,7 @@ import asyncio
 import traceback
 from datetime import datetime
 from typing import Dict, List, Callable
-from bondai.agents import AgentException
+from bondai.agents import Agent, AgentException
 from bondai.util import EventMixin
 from .conversation_member import ConversationMember, ConversationMemberEventNames
 from .group_conversation_config import GroupConversationConfig, TeamConversationConfig
@@ -13,7 +13,9 @@ class GroupConversation(EventMixin):
     def __init__(self, 
                     agents: List[ConversationMember] | None = None, 
                     conversation_config: GroupConversationConfig | None = None, 
-                    filter_recipient_messages: bool = False
+                    filter_recipient_messages: bool = False,
+                    content_stream_callback: Callable[[str], None] | None = None,
+                    function_stream_callback: Callable[[str], None] | None = None
                 ):
         super().__init__(
             allowed_events=[
@@ -33,6 +35,8 @@ class GroupConversation(EventMixin):
         else:
             raise AgentException("Either 'agents' or 'conversation_config' must be provided")
 
+        self._content_stream_callback: Callable[[str], None] | None = content_stream_callback
+        self._function_stream_callback: Callable[[str], None] | None = function_stream_callback
         self._filter_recipient_messages: bool = filter_recipient_messages
         self._messages: AgentMessageList = AgentMessageList()
 
@@ -97,7 +101,6 @@ class GroupConversation(EventMixin):
                         recipient_name: str, 
                         message: str, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        content_stream_callback: Callable[[str], None] | None = None
                     ) -> str:
         next_message = ConversationMessage(
             message=message, 
@@ -130,7 +133,8 @@ class GroupConversation(EventMixin):
                     message=next_message, 
                     group_members=recipient_reachable_members,
                     group_messages = recipient_messages,
-                    content_stream_callback=content_stream_callback
+                    content_stream_callback=self._content_stream_callback,
+                    function_stream_callback=self._function_stream_callback
                 )
             except AgentException as e:
                 print("Error occurred, rewinding conversation...")
@@ -150,14 +154,12 @@ class GroupConversation(EventMixin):
                             recipient_name: str, 
                             message: str, 
                             sender_name: str=USER_MEMBER_NAME, 
-                            content_stream_callback: Callable[[str], None] | None = None
                         ):
         async def send_message_coroutine():
             return self.send_message(
                 recipient_name=recipient_name,
                 message=message, 
-                sender_name=sender_name,
-                content_stream_callback=content_stream_callback
+                sender_name=sender_name
             )
 
         return asyncio.run(send_message_coroutine())
