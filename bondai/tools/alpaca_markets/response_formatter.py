@@ -1,7 +1,5 @@
-from typing import List
-from alpaca import Order, Account, Position
 
-def format_order_response(response: Order) -> str:
+def format_order_response(response):
     return f"""Order ID: {response.id}
 Status: {response.status}
 Filled At: {response.filled_at}
@@ -19,7 +17,7 @@ Time In Force: {response.time_in_force}
 Limit Price: {response.limit_price}
 Stop Price: {response.stop_price}"""
 
-def format_account_response(response: Account) -> str:
+def format_account_response(response):
     return f"""Cash: {response.cash}
 Currency: {response.currency}
 Buying Power: {response.buying_power}
@@ -36,7 +34,7 @@ Initial Margin: {response.initial_margin}
 Maintenance Margin: {response.maintenance_margin}
 Last Maintenance Margin: {response.last_maintenance_margin}"""
 
-def format_positions_response(response: List[Position]) -> str:
+def format_positions_response(response):
     result = ''
     for position in response:
         result += format_position(position) + '\n\n'
@@ -51,13 +49,13 @@ Unrealized Profit/Loss: {position.unrealized_pl}
 Market Value: {position.market_value}
 Cost Basis: {position.cost_basis}"""
 
-def format_orders_response(response: List[Order]) -> str:
+def format_orders_response(response):
     result = ''
     for order in response:
         result += format_order(order) + '\n\n'
     return result
 
-def format_order(order: Order) -> str:
+def format_order(order):
     return f"""Order ID: {order.id}
 Type: {order.type}
 Symbol: {order.symbol}

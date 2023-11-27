@@ -17,10 +17,12 @@ class ConversationMember(ABC):
     def __init__(self, 
                     name: str,
                     persona: str | None = None,
+                    persona_summary: str | None = None,
                 ):
         self._id: str = str(uuid.uuid4())
         self._name: str = name
         self._persona: str = persona
+        self._persona_summary: str = persona_summary
         self._messages: AgentMessageList = AgentMessageList()
 
     @property
@@ -34,6 +36,10 @@ class ConversationMember(ABC):
     @property
     def persona(self) -> str:
         return self._persona
+    
+    @property
+    def persona_summary(self) -> str:
+        return self._persona_summary
 
     @property
     def messages(self) -> AgentMessageList:

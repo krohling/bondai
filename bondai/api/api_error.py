@@ -1,0 +1,2 @@
+class BondAIAPIError(Exception):
+    pass

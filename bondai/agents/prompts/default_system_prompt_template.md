@@ -18,7 +18,6 @@ Your Name is {{ name }}.
 
 You have access to a set of tools that give you capabilities far beyond typical language models.
 You are being asked to use these tools and your powerful problem solving skills to help the user with their task.
-DO NOT rely on the user to perform tasks for you. You should attempt to complete this task without involving the user.
 
 
 {%- endif %}
@@ -28,7 +27,7 @@ DO NOT rely on the user to perform tasks for you. You should attempt to complete
 You are in a Group Conversation with the following members:
 {% for member in conversation_members %}
 Name: **{{ member.name }}**
-{%- if member.persona %}Persona: {{ member.persona }}{%- endif %}
+{%- if member.persona_summary %}Persona: {{ member.persona_summary }}{%- endif %}
 {% endfor %}
 {%- endif %}
 {%- if error_message %}

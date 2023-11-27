@@ -10,8 +10,9 @@ TOOL_DESCRIPTION = (
 )
 
 class ConversationTool(Tool):
-    def __init__(self, socketio):
+    def __init__(self, agent_id, socketio):
         super(ConversationTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, InputParameters)
+        self.agent_id = agent_id
         self.socketio = socketio
         self.message_arrived_event = threading.Event()
         self.user_message = None
@@ -21,10 +22,13 @@ class ConversationTool(Tool):
         # Set up the event listener once during initialization
         @self.socketio.on('message')
         def handle_message(message):
-            message = json.loads(message)
+            if isinstance(message, str):
+                message = json.loads(message)
+            
             if message.get('event') == 'user_message':
-                self.user_message = message['data']['message']
-                self.message_arrived_event.set()
+                if message['data']['agent_id'] == self.agent_id:
+                    self.user_message = message['data']['message']
+                    self.message_arrived_event.set()
 
     def run(self, arguments):
         # Check for required arguments
@@ -38,8 +42,9 @@ class ConversationTool(Tool):
 
         # Emit message, now that our listener is guaranteed to be active
         message = {
-            'event': 'agent_message',
+            'event': 'conversational_agent_message',
             'data': {
+                'agent_id': self.agent_id,
                 'message': question
             }
         }

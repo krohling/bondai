@@ -1,17 +1,22 @@
 import os
 from googleapiclient.discovery import build
 from pydantic import BaseModel
-from typing import Dict
 from bondai.tools.tool import Tool
 
 MAX_RESULT_COUNT = 10
 DEFAULT_RESULT_COUNT = 5
 TOOL_NAME = 'google_search'
-TOOL_DESCRIPTION = "This tool allows you to search Google. Specify your search string in the 'query' parameter and it will return a list that includes the title and url of matched websites."
-TOOL_DESCRIPTION = f"This tool allows you to retrieve a paginated list of google search results. You must specify your search string in the 'query' parameter. You can specify the number of search results to return by setting the 'count' parameter. The maximum count is {MAX_RESULT_COUNT} and the default is {DEFAULT_RESULT_COUNT}. To paginate through the full list of all search results just increment the 'page' parameter. By default 'page' is set to 1."
+TOOL_DESCRIPTION = (
+    f"This tool allows you to retrieve a paginated list of google search results. "
+    "You must specify your search string in the 'query' parameter. "
+    "You can specify the number of search results to return by setting the 'count' parameter. "
+    "The maximum count is {MAX_RESULT_COUNT} and the default is {DEFAULT_RESULT_COUNT}. "
+    "To paginate through the full list of all search results just increment the 'page' parameter. "
+    "By default 'page' is set to 1."
+)
 
-GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
-GOOGLE_CSE_ID = os.environ.get('GOOGLE_CSE_ID')
+GOOGLE_API_KEY_ENV_VAR = 'GOOGLE_API_KEY'
+GOOGLE_CSE_ID_ENV_VAR = 'GOOGLE_CSE_ID'
 
 class Parameters(BaseModel):
     query: str
@@ -20,16 +25,16 @@ class Parameters(BaseModel):
     thought: str
 
 class GoogleSearchTool(Tool):
-    def __init__(self, 
-                    google_api_key: str = GOOGLE_API_KEY, 
-                    google_cse_id: str = GOOGLE_CSE_ID
-                ):
+    def __init__(self,
+            google_api_key=os.environ.get(GOOGLE_API_KEY_ENV_VAR), 
+            google_cse_id=os.environ.get(GOOGLE_CSE_ID_ENV_VAR)
+        ):
         super(GoogleSearchTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.google_cse_id = google_cse_id
         self.siterestrict = False
         self.search_engine = build("customsearch", "v1", developerKey=google_api_key)
     
-    def run(self, arguments: Dict) -> str:
+    def run(self, arguments):
         query = arguments.get('query')
         count = int(arguments.get('count', '5'))
         page = int(arguments.get('page', '1'))

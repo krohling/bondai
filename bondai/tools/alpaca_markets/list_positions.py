@@ -1,25 +1,21 @@
 import os
-from typing import Dict
 from bondai.tools.tool import Tool
 from .response_formatter import format_positions_response
+from .env_vars import ALPACA_MARKETS_API_KEY_ENV_VAR, ALPACA_MARKETS_SECRET_KEY_ENV_VAR
 from alpaca.trading.client import TradingClient
 
 TOOL_NAME = 'list_positions'
 TOOL_DESCRIPTION = "This tool will list all of your currently open positions."
 
-ALPACA_MARKETS_API_KEY = os.environ.get('ALPACA_MARKETS_API_KEY')
-ALPACA_MARKETS_SECRET_KEY = os.environ.get('ALPACA_MARKETS_SECRET_KEY')
-
 class ListPositionsTool(Tool):
     def __init__(self, 
-                    alpaca_api_key: str = ALPACA_MARKETS_API_KEY, 
-                    alpaca_secret_key: str = ALPACA_MARKETS_SECRET_KEY,
-                    paper: bool = True
-                ):
+                alpaca_api_key=os.environ.get(ALPACA_MARKETS_API_KEY_ENV_VAR), 
+                alpaca_secret_key=os.environ.get(ALPACA_MARKETS_SECRET_KEY_ENV_VAR)
+        ):
         super(ListPositionsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION)
-        self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=paper)
+        self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
     
-    def run(self, arguments: Dict) -> str:
+    def run(self, arguments):
         response = self.trading_client.get_all_positions()
 
         if len(response) > 0:

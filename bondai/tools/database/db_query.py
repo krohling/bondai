@@ -1,9 +1,7 @@
 import os
 import psycopg2
 from pydantic import BaseModel
-from typing import Dict, List
 from bondai.tools import Tool
-from bondai.models import LLM
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 class Parameters(BaseModel):
@@ -20,7 +18,8 @@ TOOL_DESCRIPTION = (
     "Your question will automatically be turned into SQL and the response will contain the resulting data."
 )
 
-PG_URI = os.environ.get('PG_URI')
+PG_URI_ENV_VAR = 'PG_URI'
+
 PG_HOST = os.environ.get('PG_HOST')
 PG_PORT = int(os.environ.get('PG_HOST', '5432'))
 PG_USERNAME = os.environ.get('PG_USERNAME')
@@ -57,24 +56,24 @@ Please respond with a friendly text response to the user's question.
 
 class DatabaseQueryTool(Tool):
     def __init__(self, 
-                 pg_uri: str = PG_URI, 
-                 pg_host: str = PG_HOST, 
-                 pg_port: int = PG_PORT, 
-                 pg_username: str = PG_USERNAME, 
-                 pg_password: str = PG_PASSWORD, 
-                 pg_dbname: str = PG_DBNAME,
-                 llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+                 pg_uri=os.environ.get(PG_URI_ENV_VAR), 
+                 pg_host=PG_HOST, 
+                 pg_port=PG_PORT, 
+                 pg_username=PG_USERNAME, 
+                 pg_password=PG_PASSWORD, 
+                 pg_dbname=PG_DBNAME,
+                 llm=OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
             ):
         super(DatabaseQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
-        self._pg_uri = pg_uri
-        self._pg_host = pg_host
-        self._pg_port = pg_port
-        self._pg_username = pg_username
-        self._pg_password = pg_password
-        self._pg_dbname = pg_dbname
-        self._llm = llm
+        self.pg_uri = pg_uri
+        self.pg_host = pg_host
+        self.pg_port = pg_port
+        self.pg_username = pg_username
+        self.pg_password = pg_password
+        self.pg_dbname = pg_dbname
+        self.llm = llm
     
-    def run(self, arguments: Dict) -> str:
+    def run(self, arguments):
         question = arguments['question']
 
         if question is None:
@@ -87,7 +86,7 @@ class DatabaseQueryTool(Tool):
         attempts = 0
         while True:
             try:
-                query_response, _ = self._llm.get_completion(query_prompt)
+                query_response, _ = self.llm.get_completion(query_prompt)
                 rows, colnames = self.__query_database(query_response)
                 return self.__format_response(rows, colnames)
             except Exception as e:
@@ -95,7 +94,7 @@ class DatabaseQueryTool(Tool):
                 if attempts > MAX_QUERY_RETRIES:
                     raise e
     
-    def __format_response(self, rows: List[str], colnames: List[str]) -> str:
+    def __format_response(self, rows, colnames):
         markdown_output = "| " + " | ".join(colnames) + " |\n"
         markdown_output += "| " + " | ".join(["---"] * len(colnames)) + " |\n"
 
@@ -104,21 +103,21 @@ class DatabaseQueryTool(Tool):
         
         return markdown_output
 
-    def __get_database_connection(self) -> psycopg2.extensions.connection:
-        if self._pg_uri:
+    def __get_database_connection(self):
+        if self.pg_uri:
             # Establish the connection
-            return psycopg2.connect(self._pg_uri, sslmode='require')
+            return psycopg2.connect(self.pg_uri, sslmode='require')
         else:
             # Establish the connection
             return psycopg2.connect(
-                host=self._pg_host,
-                port=self._pg_port,
-                user=self._pg_username,
-                password=self._pg_password,
-                dbname=self._pg_dbname
+                host=self.pg_host,
+                port=self.pg_port,
+                user=self.pg_username,
+                password=self.pg_password,
+                dbname=self.pg_dbname
             )
     
-    def __query_database(self, query: str) -> (List[str], List[str]):
+    def __query_database(self, query):
         connection = None
         cursor = None
         try:
@@ -141,7 +140,7 @@ class DatabaseQueryTool(Tool):
             if connection:
                 connection.close()
     
-    def __get_database_schema(self) -> str:
+    def __get_database_schema(self):
         # Query the schema from information_schema
         rows, _ = self.__query_database((
             "SELECT table_name, column_name, data_type, is_nullable, column_default\n"
@@ -169,9 +168,3 @@ class DatabaseQueryTool(Tool):
             schema_str += "\n"
 
         return schema_str
-
-
-        
-
-
-

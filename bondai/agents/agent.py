@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Callable
 from bondai.util import load_local_resource
-from bondai.prompt import PromptBuilder, JinjaPromptBuilder
+from bondai.prompt import JinjaPromptBuilder
 from bondai.tools import Tool
 from bondai.tools.conversational import (
     SEND_MESSAGE_TOOL_NAME,
@@ -49,9 +49,11 @@ class Agent(BaseAgent, ConversationMember):
     def __init__(self, 
                     name: str = DEFAULT_AGENT_NAME,
                     persona: str | None = DEFAULT_CONVERSATIONAL_PERSONA,
+                    persona_summary: str | None = None,
                     instructions: str | None = DEFAULT_CONVERSATIONAL_INSTRUCTIONS,
-                    system_prompt_builder: PromptBuilder = JinjaPromptBuilder(DEFAULT_SYSTEM_PROMPT_TEMPLATE),
-                    message_prompt_builder: PromptBuilder = JinjaPromptBuilder(DEFAULT_MESSAGE_PROMPT_TEMPLATE),
+                    system_prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_SYSTEM_PROMPT_TEMPLATE),
+                    system_prompt_sections: List[Callable[[], str]] = [],
+                    message_prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_MESSAGE_PROMPT_TEMPLATE),
                     llm: LLM=OpenAILLM(OpenAIModelNames.GPT4_0613),
                     tools: List[Tool] = [],
                     allow_exit: bool=True,
@@ -61,6 +63,7 @@ class Agent(BaseAgent, ConversationMember):
             self,
             name=name,
             persona=persona,
+            persona_summary=persona_summary,
         )
         BaseAgent.__init__(
             self,
@@ -79,6 +82,7 @@ class Agent(BaseAgent, ConversationMember):
         self._allow_exit: bool = allow_exit
         self._system_prompt_builder = system_prompt_builder
         self._message_prompt_builder = message_prompt_builder
+        self._system_prompt_sections = system_prompt_sections
         self.add_tool(SendMessageTool())
         if self._allow_exit:
             self.add_tool(ExitConversationTool())
@@ -156,17 +160,20 @@ class Agent(BaseAgent, ConversationMember):
 
         while True:
             try:
-                system_prompt: str = self._system_prompt_builder.build_prompt(
+                system_prompt_sections = [s() for s in self._system_prompt_sections]
+                system_prompt: str = self._system_prompt_builder(
                     name=self.name, 
                     persona=self.persona, 
                     instructions=self._instructions,
                     conversation_members=group_members, 
                     tools=self._tools,
+                    system_prompt_sections=system_prompt_sections,
                     allow_exit=self._allow_exit,
                 )
-                # print(system_prompt)
+                
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
                 # print("********** LLM Messages **********")
+                # print(self.name)
                 # print(llm_messages)
                 llm_response_content, llm_response_function = self._get_llm_response(
                     messages=llm_messages, 
@@ -294,7 +301,7 @@ class Agent(BaseAgent, ConversationMember):
         ]
 
         for message in messages:
-            content = self._message_prompt_builder.build_prompt(message=message).strip()
+            content = self._message_prompt_builder(message=message).strip()
             if message.role == 'function':
                 llm_messages.append({
                     'role': message.role,

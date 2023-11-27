@@ -37,7 +37,7 @@ class GroupConversationConfig(ABC):
 
 class TeamConversationConfig(BaseGroupConversationConfig):
 
-    def __init__(self, *args: List[List[ConversationMember]]):
+    def __init__(self, *args: List[ConversationMember]):
         self._members: Set[ConversationMember] = set()
         for team in args:
             self._members.update(team)

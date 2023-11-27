@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict
 from bondai.tools.tool import Tool
-from duckpy import Client
+from duckduckgo_search import DDGS
 
 MAX_RESULT_COUNT = 20
 DEFAULT_RESULT_COUNT = 5
@@ -16,13 +16,11 @@ class Parameters(BaseModel):
     thought: str
 
 def search_duckduckgo(query: str, count: int = 10, page: int = 1) -> str:
-    ddg_client = Client()
-    response = ddg_client.search(query, count=count, page=page)
-
-    if len(response) > count:
-        response = response[:count]
-    
-    return '\n'.join([f"[{r.title}]: ({r.url})" for r in response])
+    with DDGS() as ddgs:
+        search_count = count * page
+        response = list(ddgs.text(query, max_results=search_count))
+        response = response[search_count - count:]
+        return '\n'.join([f"[{r['title']}]({r['href']}): {r['body']}" for r in response])
 
 class DuckDuckGoSearchTool(Tool):
     def __init__(self):

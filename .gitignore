@@ -1,5 +1,6 @@
 *.DS_Store
 response_query_storage
+gmail-token.pickle
 
 misc
 ui/.next

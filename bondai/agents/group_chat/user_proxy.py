@@ -57,9 +57,6 @@ class UserProxy(EventMixin, ConversationMember):
 
         self._messages.add(agent_message)
         self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, self, agent_message)
-
-        print(f"{agent_message.sender_name} sent you a message.")
-        print(message.message)
         
         while True:
             try:
