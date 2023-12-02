@@ -1,7 +1,7 @@
 *.DS_Store
 response_query_storage
 gmail-token.pickle
-
+.memory
 misc
 ui/.next
 ui/node_modules

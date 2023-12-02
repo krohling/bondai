@@ -160,16 +160,24 @@ class Agent(BaseAgent, ConversationMember):
 
         while True:
             try:
-                system_prompt_sections = [s() for s in self._system_prompt_sections]
+                prompt_sections = []
+                for s in self._system_prompt_sections:
+                    if callable(s):
+                        prompt_sections.append(s())
+                    else:
+                        prompt_sections.append(s)
+
                 system_prompt: str = self._system_prompt_builder(
                     name=self.name, 
                     persona=self.persona, 
                     instructions=self._instructions,
                     conversation_members=group_members, 
                     tools=self._tools,
-                    system_prompt_sections=system_prompt_sections,
+                    prompt_sections=prompt_sections,
                     allow_exit=self._allow_exit,
                 )
+
+                print(system_prompt)
                 
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
                 # print("********** LLM Messages **********")

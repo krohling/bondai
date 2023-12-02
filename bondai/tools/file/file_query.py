@@ -71,7 +71,7 @@ class FileQueryTool(Tool):
 
         system_prompt_tokens = self._llm.count_tokens(QUERY_SYSTEM_PROMPT)
         prompt_template_tokens = self._llm.count_tokens(build_prompt('', question))
-        max_tokens = self._llm.get_max_tokens() - system_prompt_tokens - prompt_template_tokens - 50
+        max_tokens = self._llm.max_tokens - system_prompt_tokens - prompt_template_tokens - 50
         text = semantic_search(self._embedding_model, question, text, max_tokens)
         prompt = build_prompt(question, text)
         response = self._llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]

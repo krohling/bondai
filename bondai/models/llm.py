@@ -3,6 +3,12 @@ from typing import Dict, List, Callable
 
 class LLM(ABC):
 
+    @property
+    @abstractmethod
+    def max_tokens() -> int:
+        pass
+
+    @property
     @abstractmethod
     def supports_streaming() -> bool:
         return False
@@ -27,8 +33,4 @@ class LLM(ABC):
 
     @abstractmethod
     def count_tokens(prompt: str) -> int:
-        pass
-
-    @abstractmethod
-    def get_max_tokens() -> int:
         pass

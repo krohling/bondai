@@ -8,20 +8,22 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 nltk.download("punkt", quiet=True)
 
 EMBED_BATCH_SIZE = 16
-MAX_EMBED_TOKENS = 250
 MAX_EMBED_WORKERS = 5
 SENTENCE_CONCAT_COUNT = 4
 
-def split_text(embedding_model: str, text: str, max_length: int) -> List[str]:
+def split_text(embedding_model: EmbeddingModel, text: str, max_chunk_length: int=None) -> List[str]:
+    if not max_chunk_length:
+        max_chunk_length = embedding_model.max_tokens
+    
     result = []
     split = nltk.sent_tokenize(text)
     split = concatenate_strings(split, SENTENCE_CONCAT_COUNT)
     for s in split:
-        if embedding_model.count_tokens(s) > max_length:
+        if embedding_model.count_tokens(s) > max_chunk_length:
             split2 = s.split('\n')
             for s2 in split2:
-                if embedding_model.count_tokens(s2) > max_length:
-                    split3 = split_tokens(embedding_model, s2, max_length)
+                if embedding_model.count_tokens(s2) > max_chunk_length:
+                    split3 = split_tokens(embedding_model, s2, max_chunk_length)
                     for s3 in split3:
                         result.append(s3)
                 else:
@@ -56,7 +58,7 @@ def split_tokens(embedding_model: EmbeddingModel, input: str, max_length: int) -
 def semantic_search(embedding_model: EmbeddingModel, query: str, text: str, max_tokens: int) -> str:
     if embedding_model.count_tokens(text) <= max_tokens: return text
 
-    sentences = split_text(embedding_model, text, MAX_EMBED_TOKENS)
+    sentences = split_text(embedding_model, text)
     query_embedding = embedding_model.create_embedding(query)
     query_embedding = np.array(query_embedding).astype('float32')
 

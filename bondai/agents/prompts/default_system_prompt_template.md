@@ -38,7 +38,11 @@ The following error occurred in your last response. Please correct it in your ne
 {{ error_message }}
 ```
 {%- endif %}
-
+{%- if prompt_sections %}
+{% for section in prompt_sections %}
+{{ section }}
+{% endfor %}
+{%- endif %}
 
 # Today's Current Date and Time
 

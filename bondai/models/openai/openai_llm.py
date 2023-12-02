@@ -18,6 +18,11 @@ class OpenAILLM(LLM):
         if ModelConfig[self._model]['model_type'] != OpenAIModelType.LLM:
             raise Exception(f"Model {self._model} is not an LLM model.")
 
+    @property
+    def max_tokens(self) -> int:
+        return get_max_tokens(self._model)
+
+    @property
     def supports_streaming(self) -> bool:
         return True
 
@@ -63,6 +68,3 @@ class OpenAILLM(LLM):
 
     def count_tokens(self, prompt: str) -> int:
         return count_tokens(prompt, self._model)
-
-    def get_max_tokens(self) -> int:
-        return get_max_tokens(self._model)

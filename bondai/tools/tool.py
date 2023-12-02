@@ -6,7 +6,7 @@ class InputParameters(BaseModel):
     thought: str
 
 class EmptyParameters(BaseModel):
-    thought: str
+    pass
 
 class Tool():
      def __init__(self, 

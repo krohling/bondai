@@ -83,6 +83,7 @@ ModelConfig = {
     OpenAIModelNames.TEXT_EMBEDDING_ADA_002.value: {
         'model_type': OpenAIModelType.EMBEDDING,
         'max_tokens': 8190,
-        'price_per_token': 0.0000001
+        'price_per_token': 0.0000001,
+        'embedding_size': 1536,
     },
 }
