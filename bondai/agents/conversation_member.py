@@ -76,5 +76,5 @@ class ConversationMember(ABC):
 
         return asyncio.run(send_message_coroutine())
 
-    def reset_memory(self):
+    def clear_messages(self):
         pass

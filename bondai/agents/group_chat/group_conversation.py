@@ -175,4 +175,4 @@ class GroupConversation(EventMixin):
     def reset_memory(self):
         self._messages.clear()
         for member in self.members:
-            member.reset_memory()
+            member.clear_messages()

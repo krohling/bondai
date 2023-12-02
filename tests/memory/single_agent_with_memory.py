@@ -1,9 +1,9 @@
 from bondai.tools.file import FileWriteTool
 from bondai.agents import Agent
-from bondai.memory import MemoryManager, PersistantMemoryManager
+from bondai.memory import MemoryManager, PersistentMemoryManager
 from util import extract_text_from_directory
 
-memory_manager = PersistantMemoryManager()
+memory_manager = PersistentMemoryManager()
 memory_manager.core_memory.set('user', 'Name is George. Lives in New York. Has a dog named Max.')
 if memory_manager.archival_memory.size == 0:
     memory_manager.archival_memory.insert_bulk(

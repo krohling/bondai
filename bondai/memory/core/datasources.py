@@ -23,7 +23,7 @@ class CoreMemoryDataSource(ABC):
     def set(self, section: str, content: str) -> None:
         pass
 
-class JSONCoreMemoryDataSource(CoreMemoryDataSource):
+class PersistentCoreMemoryDataSource(CoreMemoryDataSource):
     def __init__(self, 
                     file_path: str = './.memory/core-memory.json', 
                     initial_sections: Dict[str, str] = DEFAULT_MEMORY_SECTIONS, 

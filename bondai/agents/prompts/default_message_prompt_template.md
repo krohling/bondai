@@ -32,9 +32,9 @@ This message failed with the following error:
 ```
 Message content:
 ```
-{{ message.sender_name.lower() }} to {{ message.recipient_name.lower() }}: {{ message.message }}
+{{ message.sender_name.lower() }} to {{ message.recipient_name.lower() }}: {{ message.summary or message.message }}
 ```
 {%- else %}
-{{ message.sender_name.lower() }} to {{ message.recipient_name.lower() }}: {{ message.message }}
+{{ message.sender_name.lower() }} to {{ message.recipient_name.lower() }}: {{ message.summary or message.message }}
 {%- endif %}
 {%- endif %}

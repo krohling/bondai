@@ -13,8 +13,8 @@ class AgentMessage(ABC):
     timestamp: datetime = field(default_factory=lambda: datetime.now())
 
 @dataclass
-class StatusMessage(AgentMessage):
-    role: str = field(default='status')
+class SystemMessage(AgentMessage):
+    role: str = field(default='system')
     message: str | None = field(default=None)
 
 @dataclass
@@ -23,6 +23,7 @@ class ConversationMessage(AgentMessage):
     sender_name: str | None = field(default=None)
     recipient_name: str | None = field(default=None)
     message: str | None = field(default=None)
+    message_summary: str | None = field(default=None)
     success: bool = field(default=False)
     error: Exception | None = field(default=None)
     agent_exited: bool = field(default=False)
@@ -35,6 +36,7 @@ class ToolUsageMessage(AgentMessage):
     tool_name: str | None = field(default=None)
     tool_arguments: Dict | None = field(default=None)
     tool_output: str | None = field(default=None)
+    tool_output_summary: str | None = field(default=None)
     success: bool = field(default=False)
     error: Exception | None = field(default=None)
     agent_exited: bool = field(default=False)

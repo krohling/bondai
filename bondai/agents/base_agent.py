@@ -1,4 +1,5 @@
 import uuid
+import json
 import inspect
 from abc import ABC
 from enum import Enum
@@ -22,6 +23,9 @@ class BudgetExceededException(AgentException):
     pass
 
 class MaxStepsExceededException(AgentException):
+    pass
+
+class ContextLengthExceededException(AgentException):
     pass
 
 class BaseAgent(EventMixin, ABC):
@@ -78,11 +82,22 @@ class BaseAgent(EventMixin, ABC):
             if tool.name in state['tools']:
                 tool.load_state(state['tools'][tool.name])
 
+    def _count_request_tokens(self, llm_messages: List[Dict[str, str]]) -> int:
+        message_tokens = self._llm.count_tokens(json.dumps(llm_messages))
+        functions = list(map(lambda t: t.get_tool_function(), self._tools))
+        functions_tokens = self._llm.count_tokens(json.dumps(functions))
+
+        return message_tokens + functions_tokens
+
     def _get_llm_response(self, 
                         messages: List[Dict] = [], 
                         content_stream_callback: Callable[[str], None] | None = None,
                         function_stream_callback: Callable[[str], None] | None = None,
                     ) -> (str | None, Dict | None):
+        request_tokens = self._count_request_tokens(messages)
+        if request_tokens > self._llm.max_tokens:
+            raise ContextLengthExceededException(f'Context length ({request_tokens}) exceeds maximum tokens allowed by LLM: {self._llm.max_tokens}')
+        
         llm_functions = list(map(lambda t: t.get_tool_function(), self._tools))
 
         if self._llm.supports_streaming and (any([t.supports_streaming for t in self._tools]) or content_stream_callback):

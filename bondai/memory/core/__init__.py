@@ -1,9 +1,9 @@
-from .datasources import CoreMemoryDataSource, JSONCoreMemoryDataSource
+from .datasources import CoreMemoryDataSource, PersistentCoreMemoryDataSource
 from .tools import CoreMemoryAppendTool, CoreMemoryReplaceTool
 
 __all__ = [
     'CoreMemoryDataSource',
-    'JSONCoreMemoryDataSource',
+    'PersistentCoreMemoryDataSource',
     'CoreMemoryAppendTool',
     'CoreMemoryReplaceTool',
 ]

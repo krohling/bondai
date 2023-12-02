@@ -27,7 +27,7 @@ class ArchivalMemoryDataSource(ABC):
         pass
 
 
-class JSONArchivalMemoryDataSource(ArchivalMemoryDataSource):
+class PersistentArchivalMemoryDataSource(ArchivalMemoryDataSource):
     def __init__(self, 
                     file_path: str = './.memory/archival-memory.json', 
                     embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002),

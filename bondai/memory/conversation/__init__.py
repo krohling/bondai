@@ -1,9 +1,9 @@
-from .datasources import ConversationMemoryDataSource, JSONConversationMemoryDataSource
+from .datasources import ConversationMemoryDataSource, PersistentConversationMemoryDataSource
 from .tools import ConversationMemorySearchTool, ConversationMemorySearchDateTool
 
 __all__ = [
     'ConversationMemoryDataSource',
-    'JSONConversationMemoryDataSource',
+    'PersistentConversationMemoryDataSource',
     'ConversationMemorySearchTool',
     'ConversationMemorySearchDateTool',
 ]

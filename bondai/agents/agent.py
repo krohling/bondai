@@ -16,7 +16,12 @@ from bondai.models.openai import (
     OpenAIModelNames,
     get_total_cost
 )
-from .base_agent import BaseAgent, AgentStatus, AgentException
+from .base_agent import (
+    BaseAgent, 
+    AgentStatus, 
+    AgentException,
+    ContextLengthExceededException
+)
 from .prompts import (
     DEFAULT_AGENT_NAME,
     DEFAULT_CONVERSATIONAL_PERSONA,
@@ -30,7 +35,7 @@ from .messages import (
     AgentMessage, 
     ConversationMessage,
     ToolUsageMessage,
-    StatusMessage,
+    SystemMessage,
     AgentMessageList, 
     USER_MEMBER_NAME
 )
@@ -54,10 +59,13 @@ class Agent(BaseAgent, ConversationMember):
                     system_prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_SYSTEM_PROMPT_TEMPLATE),
                     system_prompt_sections: List[Callable[[], str]] = [],
                     message_prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_MESSAGE_PROMPT_TEMPLATE),
-                    llm: LLM=OpenAILLM(OpenAIModelNames.GPT4_0613),
+                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613),
                     tools: List[Tool] = [],
                     allow_exit: bool=True,
-                    quiet: bool=True
+                    quiet: bool=True,
+                    enable_conversation: bool = True,
+                    max_context_length: int = None,
+                    max_context_pressure_ratio: float = 0.8,
                 ):
         ConversationMember.__init__(
             self,
@@ -83,7 +91,11 @@ class Agent(BaseAgent, ConversationMember):
         self._system_prompt_builder = system_prompt_builder
         self._message_prompt_builder = message_prompt_builder
         self._system_prompt_sections = system_prompt_sections
-        self.add_tool(SendMessageTool())
+        self._max_context_pressure_ratio = max_context_pressure_ratio
+        self._max_context_length = max_context_length if max_context_length else (self._llm.max_tokens*0.9)
+
+        if enable_conversation:
+            self.add_tool(SendMessageTool())
         if self._allow_exit:
             self.add_tool(ExitConversationTool())
     
@@ -180,6 +192,11 @@ class Agent(BaseAgent, ConversationMember):
                 print(system_prompt)
                 
                 llm_messages = self._format_llm_messages(system_prompt, AgentMessageList(self._messages + group_messages))
+
+                context_pressure_ratio = float(self._count_request_tokens(llm_messages)) / float(self._max_context_length)
+                if context_pressure_ratio > self._max_context_pressure_ratio:
+                    pass
+
                 # print("********** LLM Messages **********")
                 # print(self.name)
                 # print(llm_messages)
@@ -261,10 +278,12 @@ class Agent(BaseAgent, ConversationMember):
                         raise e
                 else:
                     raise AgentException("InvalidResponseError: The response does not conform to the required format. A function selection was expected, but none was provided.")
+            except ContextLengthExceededException:
+                # Forcably reduce context length
+                pass
             except Exception as e:
                 error_count += 1
-                self._messages.add(StatusMessage(
-                    role='system',
+                self._messages.add(SystemMessage(
                     message=f"Your prevous response resulted in the following error: {str(e)}\nYour must correct this error."
                 ))
                 # print(f"Error Count: {error_count}")
@@ -299,8 +318,7 @@ class Agent(BaseAgent, ConversationMember):
         # Return the list of valid recipient name and the message
         return recipient_name, message
 
-
-    def _format_llm_messages(self, system_prompt: str, messages: AgentMessageList) -> List[Dict[str, str]]:
+    def _format_llm_messages(self, system_prompt: str, messages: List[AgentMessage]) -> List[Dict[str, str]]:
         llm_messages = [
             {
                 'role': 'system',
@@ -324,7 +342,7 @@ class Agent(BaseAgent, ConversationMember):
 
         return llm_messages
 
-    def reset_memory(self):
+    def clear_messages(self):
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot reset memory while agent is in a running state.')
         self._messages.clear()

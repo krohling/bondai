@@ -16,7 +16,7 @@ class ConversationMemoryDataSource(ABC):
         pass
 
 
-class JSONConversationMemoryDataSource(ConversationMemoryDataSource):
+class PersistentConversationMemoryDataSource(ConversationMemoryDataSource):
     def __init__(self, file_path: str = './.memory/conversation-memory.json', page_size = 10):
         self._file_path = file_path
         self._page_size = page_size

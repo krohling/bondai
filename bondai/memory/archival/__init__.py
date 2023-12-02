@@ -1,9 +1,9 @@
-from .datasources import ArchivalMemoryDataSource, JSONArchivalMemoryDataSource
+from .datasources import ArchivalMemoryDataSource, PersistentArchivalMemoryDataSource
 from .tools import ArchivalMemoryInsertTool, ArchivalMemorySearchTool
 
 __all__ = [
     'ArchivalMemoryDataSource',
-    'JSONArchivalMemoryDataSource',
+    'PersistentArchivalMemoryDataSource',
     'ArchivalMemoryInsertTool',
     'ArchivalMemorySearchTool',
 ]

@@ -5,7 +5,7 @@ from bondai.util import load_local_resource
 from .archival.datasources import (
     ArchivalMemoryDataSource, 
     InMemoryArchivalMemoryDataSource,
-    JSONArchivalMemoryDataSource
+    PersistentArchivalMemoryDataSource
 )
 from .archival.tools import (
     ArchivalMemoryInsertTool, 
@@ -14,7 +14,7 @@ from .archival.tools import (
 from .conversation.datasources import (
     ConversationMemoryDataSource, 
     InMemoryConversationMemoryDataSource,
-    JSONConversationMemoryDataSource
+    PersistentConversationMemoryDataSource
 )
 from .conversation.tools import (
     ConversationMemorySearchTool, 
@@ -23,7 +23,7 @@ from .conversation.tools import (
 from .core.datasources import (
     CoreMemoryDataSource, 
     InMemoryCoreMemoryDataSource,
-    JSONCoreMemoryDataSource
+    PersistentCoreMemoryDataSource
 )
 from .core.tools import (
     CoreMemoryAppendTool, 
@@ -35,9 +35,9 @@ DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('prompts', 
 class MemoryManager:
     def __init__(
         self, 
-        core_memory_datasource: CoreMemoryDataSource = InMemoryCoreMemoryDataSource(), 
-        conversation_memory_datasource: ConversationMemoryDataSource = InMemoryConversationMemoryDataSource(), 
-        archival_memory_datasource: ArchivalMemoryDataSource = InMemoryArchivalMemoryDataSource(),
+        core_memory_datasource: CoreMemoryDataSource | None = InMemoryCoreMemoryDataSource(), 
+        conversation_memory_datasource: ConversationMemoryDataSource | None = InMemoryConversationMemoryDataSource(), 
+        archival_memory_datasource: ArchivalMemoryDataSource | None = InMemoryArchivalMemoryDataSource(),
         prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
     ):
         self._core_memory_datasource = core_memory_datasource
@@ -87,17 +87,30 @@ class MemoryManager:
             archival_memory_datasource=self._archival_memory_datasource,
         )
 
-class PersistantMemoryManager(MemoryManager):
+class PersistentMemoryManager(MemoryManager):
     def __init__(
         self, 
-        core_memory_datasource: CoreMemoryDataSource = JSONCoreMemoryDataSource(), 
-        conversation_memory_datasource: ConversationMemoryDataSource = JSONConversationMemoryDataSource(), 
-        archival_memory_datasource: ArchivalMemoryDataSource = JSONArchivalMemoryDataSource(),
+        core_memory_datasource: CoreMemoryDataSource | None = PersistentCoreMemoryDataSource(), 
+        conversation_memory_datasource: ConversationMemoryDataSource | None = PersistentConversationMemoryDataSource(), 
+        archival_memory_datasource: ArchivalMemoryDataSource | None = PersistentArchivalMemoryDataSource(),
         prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
     ):
         super().__init__(
             core_memory_datasource=core_memory_datasource,
             conversation_memory_datasource=conversation_memory_datasource,
             archival_memory_datasource=archival_memory_datasource,
+            prompt_builder=prompt_builder
+        )
+
+class ConversationalMemoryManager(MemoryManager):
+    def __init__(
+        self, 
+        conversation_memory_datasource: ConversationMemoryDataSource = InMemoryConversationMemoryDataSource(), 
+        prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
+    ):
+        super().__init__(
+            core_memory_datasource=None,
+            conversation_memory_datasource=conversation_memory_datasource,
+            archival_memory_datasource=None,
             prompt_builder=prompt_builder
         )

@@ -12,7 +12,7 @@ from .conversation_member import (
 )
 from .messages import (
     AgentMessage, 
-    StatusMessage, 
+    SystemMessage, 
     ConversationMessage,
     ToolUsageMessage,
     AgentMessageList,
@@ -29,7 +29,7 @@ __all__ = [
     'ConversationMember',
     'ConversationMemberEventNames',
     'AgentMessage',
-    'StatusMessage',
+    'SystemMessage',
     'ConversationMessage',
     'ToolUsageMessage',
     'AgentMessageList',

@@ -1,8 +1,8 @@
-from .memory_manager import MemoryManager, PersistantMemoryManager
+from .memory_manager import MemoryManager, PersistentMemoryManager
 from .archival.datasources import (
     ArchivalMemoryDataSource, 
     InMemoryArchivalMemoryDataSource,
-    JSONArchivalMemoryDataSource
+    PersistentArchivalMemoryDataSource
 )
 from .archival.tools import (
     ArchivalMemoryInsertTool, 
@@ -11,7 +11,7 @@ from .archival.tools import (
 from .conversation.datasources import (
     ConversationMemoryDataSource, 
     InMemoryConversationMemoryDataSource,
-    JSONConversationMemoryDataSource
+    PersistentConversationMemoryDataSource
 )
 from .conversation.tools import (
     ConversationMemorySearchTool, 
@@ -20,7 +20,7 @@ from .conversation.tools import (
 from .core.datasources import (
     CoreMemoryDataSource, 
     InMemoryCoreMemoryDataSource,
-    JSONCoreMemoryDataSource
+    PersistentCoreMemoryDataSource
 )
 from .core.tools import (
     CoreMemoryAppendTool, 
@@ -29,19 +29,19 @@ from .core.tools import (
 
 __all__ = [
     'MemoryManager',
-    'PersistantMemoryManager',
+    'PersistentMemoryManager',
     'CoreMemoryDataSource',
-    'JSONCoreMemoryDataSource',
+    'PersistentCoreMemoryDataSource',
     'InMemoryCoreMemoryDataSource',
     'CoreMemoryAppendTool',
     'CoreMemoryReplaceTool',
     'ArchivalMemoryDataSource',
-    'JSONArchivalMemoryDataSource',
+    'PersistentArchivalMemoryDataSource',
     'InMemoryArchivalMemoryDataSource',
     'ArchivalMemoryInsertTool',
     'ArchivalMemorySearchTool',
     'ConversationMemoryDataSource',
-    'JSONConversationMemoryDataSource',
+    'PersistentConversationMemoryDataSource',
     'InMemoryConversationMemoryDataSource',
     'ConversationMemorySearchTool',
     'ConversationMemorySearchDateTool',
