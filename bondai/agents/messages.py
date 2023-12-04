@@ -2,9 +2,13 @@ import uuid
 from abc import ABC
 from typing import List, Dict, Set
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 
 USER_MEMBER_NAME = 'user'
+DEFAULT_MEMORY_WARNING_MESSAGE = (
+    "Warning: the conversation history will soon reach its maximum length and be trimmed. "
+    "Make sure to save any important information from the conversation to your memory before it is removed."
+)
 
 @dataclass
 class AgentMessage(ABC):
@@ -18,6 +22,10 @@ class SystemMessage(AgentMessage):
     message: str | None = field(default=None)
 
 @dataclass
+class SummaryMessage(SystemMessage):
+    children: [AgentMessage] = field(default=None)
+
+@dataclass
 class ConversationMessage(AgentMessage):
     role: str = field(default='user')
     sender_name: str | None = field(default=None)
@@ -26,7 +34,7 @@ class ConversationMessage(AgentMessage):
     message_summary: str | None = field(default=None)
     success: bool = field(default=False)
     error: Exception | None = field(default=None)
-    agent_exited: bool = field(default=False)
+    conversation_exited: bool = field(default=False)
     cost: float | None = field(default=None)
     completed_at: datetime | None = field(default=None)
 
@@ -39,10 +47,29 @@ class ToolUsageMessage(AgentMessage):
     tool_output_summary: str | None = field(default=None)
     success: bool = field(default=False)
     error: Exception | None = field(default=None)
-    agent_exited: bool = field(default=False)
+    agent_halted: bool = field(default=False)
     cost: float | None = field(default=None)
     completed_at: datetime | None = field(default=None)
 
+def custom_serialization(value):
+    """
+    Serialize special types like datetime, Exception, and nested AgentMessage objects.
+    """
+    if isinstance(value, datetime):
+        return value.isoformat()
+    elif isinstance(value, Exception):
+        return str(value)
+    elif is_dataclass(value) and not isinstance(value, type):
+        return message_to_dict(value)
+    return value
+
+def message_to_dict(message: AgentMessage) -> Dict:
+    """
+    Convert an AgentMessage object to a dictionary with custom serialization.
+    """
+    message_dict = {k: custom_serialization(v) for k, v in message.__dict__.items()}
+    message_dict['type'] = type(message).__name__  # Add the type for deserialization
+    return message_dict
 
 class AgentMessageList:
     
@@ -97,3 +124,39 @@ class AgentMessageList:
 
     def __len__(self):
         return len(self._items)
+
+    def to_dict(self) -> List[Dict]:
+        """
+        Convert the AgentMessageList to a list of dictionaries for serialization.
+        """
+        return [message_to_dict(message) for message in self._items]
+
+    @classmethod
+    def from_dict(cls, data: List[Dict]) -> 'AgentMessageList':
+        """
+        Create an AgentMessageList from a list of dictionaries.
+        """
+        list_instance = cls()
+        for item in data:
+            item_type = item['type']
+            del item['type']
+            if item_type == 'ConversationMessage':
+                message = ConversationMessage(**item)
+            elif item_type == 'ToolUsageMessage':
+                message = ToolUsageMessage(**item)
+            elif item_type == 'SystemMessage':
+                message = SystemMessage(**item)
+            elif item_type == 'SummaryMessage':
+                message = SummaryMessage(**item)
+            elif item_type == 'MemoryWarningMessage':
+                message = MemoryWarningMessage(**item)
+            else:
+                raise ValueError(f"Unknown message type: {item_type}")
+            
+            if 'timestamp' in item:
+                message.timestamp = datetime.fromisoformat(item['timestamp'])
+            if 'completed_at' in item and item['completed_at']:
+                message.completed_at = datetime.fromisoformat(item['completed_at'])
+            list_instance.add(message)
+        
+        return list_instance

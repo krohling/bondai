@@ -4,15 +4,17 @@ from bondai.memory import MemoryManager, PersistentMemoryManager
 from util import extract_text_from_directory
 
 memory_manager = PersistentMemoryManager()
-memory_manager.core_memory.set('user', 'Name is George. Lives in New York. Has a dog named Max.')
+# memory_manager = MemoryManager()
+# memory_manager.core_memory.set('user', 'Name is George. Lives in New York. Has a dog named Max.')
 if memory_manager.archival_memory.size == 0:
     memory_manager.archival_memory.insert_bulk(
         extract_text_from_directory('./tests/memory/documents')
     )
 
 agent = Agent(
-    tools=[FileWriteTool()] + memory_manager.tools,
-    system_prompt_sections=[memory_manager]
+    tools=[FileWriteTool()],
+    memory_manager=memory_manager,
+    max_context_length=2048
 )
 
 message = "Start the conversation by sending the first message. You can exit any time by typing 'exit'."

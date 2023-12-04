@@ -2,14 +2,14 @@ from datetime import datetime
 from typing import List, Callable
 from bondai.util import EventMixin
 from bondai.agents import (
-    BaseAgent, 
-    Agent,
+    BaseAgent,
     AgentStatus, 
     AgentException,
     AgentMessage,
     ConversationMessage,
     ConversationMember,
     ConversationMemberEventNames,
+    parse_response_content_message,
     USER_MEMBER_NAME
 )
 
@@ -65,7 +65,7 @@ class UserProxy(EventMixin, ConversationMember):
                 user_exited = user_response.strip().lower() == 'exit'
 
                 if not user_exited:
-                    next_recipient_name, next_message = Agent._parse_response_content(user_response)
+                    next_recipient_name, next_message = parse_response_content_message(user_response)
                     
                     next_recipient_name = next_recipient_name if next_recipient_name else agent_message.sender_name
                     next_message = next_message if next_message else user_response
@@ -74,7 +74,7 @@ class UserProxy(EventMixin, ConversationMember):
                         raise AgentException(f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{next_recipient_name}'. Try sending a message to someone else.")
                 
                     agent_message.success = True
-                    agent_message.agent_exited = user_exited
+                    agent_message.conversation_exited = user_exited
                     agent_message.cost = 0.0
                     agent_message.completed_at = datetime.now()
                     self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
@@ -89,7 +89,7 @@ class UserProxy(EventMixin, ConversationMember):
                     return response_message
                 else:
                     agent_message.success = True
-                    agent_message.agent_exited = True
+                    agent_message.conversation_exited = True
                     agent_message.cost = 0.0
                     agent_message.completed_at = datetime.now()
                     self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)

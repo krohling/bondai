@@ -27,7 +27,7 @@ class SendMessageTool(Tool):
         return ConversationMessage(
             recipient_name=arguments['recipient_name'],
             message=arguments['message'],
-        )
+        ), True
 
 EXIT_CONVERSATION_TOOL_NAME = 'exit_conversation'
 

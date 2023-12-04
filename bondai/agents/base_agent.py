@@ -1,6 +1,5 @@
 import uuid
 import json
-import inspect
 from abc import ABC
 from enum import Enum
 from typing import Dict, List, Callable
@@ -11,22 +10,12 @@ from bondai.models.openai import (
     OpenAILLM, 
     OpenAIModelNames,
 )
-
-class AgentStatus(Enum):
-    RUNNING = 1
-    IDLE = 2
-
-class AgentException(Exception):
-    pass
-
-class BudgetExceededException(AgentException):
-    pass
-
-class MaxStepsExceededException(AgentException):
-    pass
-
-class ContextLengthExceededException(AgentException):
-    pass
+from .util import (
+    AgentStatus,
+    AgentException, 
+    ContextLengthExceededException,
+    count_request_tokens
+)
 
 class BaseAgent(EventMixin, ABC):
 
@@ -82,27 +71,25 @@ class BaseAgent(EventMixin, ABC):
             if tool.name in state['tools']:
                 tool.load_state(state['tools'][tool.name])
 
-    def _count_request_tokens(self, llm_messages: List[Dict[str, str]]) -> int:
-        message_tokens = self._llm.count_tokens(json.dumps(llm_messages))
-        functions = list(map(lambda t: t.get_tool_function(), self._tools))
-        functions_tokens = self._llm.count_tokens(json.dumps(functions))
-
-        return message_tokens + functions_tokens
-
     def _get_llm_response(self, 
                         messages: List[Dict] = [], 
+                        tools: List[Tool] = [],
                         content_stream_callback: Callable[[str], None] | None = None,
                         function_stream_callback: Callable[[str], None] | None = None,
                     ) -> (str | None, Dict | None):
-        request_tokens = self._count_request_tokens(messages)
+        request_tokens = count_request_tokens(
+            llm=self._llm,
+            messages=messages,
+            tools=tools
+        )
         if request_tokens > self._llm.max_tokens:
             raise ContextLengthExceededException(f'Context length ({request_tokens}) exceeds maximum tokens allowed by LLM: {self._llm.max_tokens}')
         
-        llm_functions = list(map(lambda t: t.get_tool_function(), self._tools))
+        llm_functions = list(map(lambda t: t.get_tool_function(), tools))
 
-        if self._llm.supports_streaming and (any([t.supports_streaming for t in self._tools]) or content_stream_callback):
+        if self._llm.supports_streaming and (any([t.supports_streaming for t in tools]) or content_stream_callback):
             def tool_function_stream_callback(function_name, arguments_buffer):
-                streaming_tools: [Tool] = [t for t in self._tools if t.name == function_name and t.supports_streaming]
+                streaming_tools: [Tool] = [t for t in tools if t.name == function_name and t.supports_streaming]
                 if len(streaming_tools) > 0:
                     tool: Tool = streaming_tools[0]
                     tool.handle_stream_update(arguments_buffer)
@@ -126,64 +113,4 @@ class BaseAgent(EventMixin, ABC):
 
         return llm_response, llm_response_function
 
-    def _execute_tool(self, tool_name: str, tool_arguments: Dict = {}):
-        selected_tool = next((t for t in self._tools if t.name == tool_name), None)
-        if not selected_tool:
-            raise AgentException(f"You attempted to use a tool: '{tool_name}'. This tool does not exist.")
-
-        try:
-            errors = BaseAgent._validate_tool_params(selected_tool.run, tool_arguments)
-            if len(errors) > 0:
-                raise AgentException(f"The following errors occurred using '{tool_name}': {', '.join(errors)}")
-
-            if BaseAgent._supports_unpacking(selected_tool.run):
-                output = selected_tool.run(**tool_arguments)
-            else:
-                output = selected_tool.run(tool_arguments)
-            
-            if not output or (isinstance(output, str) and len(output.strip()) == 0):
-                output = f"Tool '{tool_name}' ran successfully with no output."
-            return output
-        except Exception as e:
-            raise AgentException(f"The following error occurred using '{tool_name}': {str(e)}")
-
-    def _validate_tool_params(func, params):
-        """
-        Validates if the provided params dictionary contains all required parameters
-        for the given function.
-
-        :param func: The function to validate parameters for.
-        :param params: A dictionary of parameters to be passed to the function.
-        :return: List of error messages for any missing parameters.
-        """
-        errors = []
-        sig = inspect.signature(func)
-        func_params = set(sig.parameters)
-
-        # Checking for missing required parameters
-        for name, param in sig.parameters.items():
-            if param.default is inspect.Parameter.empty and name not in params and name != 'arguments':
-                errors.append(f"Missing required parameter: '{name}'")
-
-        # Checking for extra parameters not in function signature
-        for param in params:
-            if param not in func_params:
-                errors.append(f"Parameter '{param}' is not a valid parameter.")
-
-        return errors
     
-    def _supports_unpacking(func):
-        """
-        Checks if the given method has two parameters, where the first is 'self' 
-        and the second is 'arguments'.
-
-        :param func: The method to check.
-        :return: True if the method has 'self' and 'arguments' as its parameters, False otherwise.
-        """
-        sig = inspect.signature(func)
-        parameters = list(sig.parameters.values())
-
-        # Check if there are two parameters and they are 'self' and 'arguments'
-        return not (len(parameters) == 2 and 
-                parameters[0].name == 'self' and 
-                parameters[1].name == 'arguments')

@@ -90,15 +90,12 @@ class MemoryManager:
 class PersistentMemoryManager(MemoryManager):
     def __init__(
         self, 
-        core_memory_datasource: CoreMemoryDataSource | None = PersistentCoreMemoryDataSource(), 
-        conversation_memory_datasource: ConversationMemoryDataSource | None = PersistentConversationMemoryDataSource(), 
-        archival_memory_datasource: ArchivalMemoryDataSource | None = PersistentArchivalMemoryDataSource(),
         prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
     ):
         super().__init__(
-            core_memory_datasource=core_memory_datasource,
-            conversation_memory_datasource=conversation_memory_datasource,
-            archival_memory_datasource=archival_memory_datasource,
+            core_memory_datasource=PersistentCoreMemoryDataSource(),
+            conversation_memory_datasource=PersistentConversationMemoryDataSource(),
+            archival_memory_datasource=PersistentArchivalMemoryDataSource(),
             prompt_builder=prompt_builder
         )
 

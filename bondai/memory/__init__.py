@@ -1,4 +1,8 @@
-from .memory_manager import MemoryManager, PersistentMemoryManager
+from .memory_manager import (
+    MemoryManager, 
+    PersistentMemoryManager, 
+    ConversationalMemoryManager
+)
 from .archival.datasources import (
     ArchivalMemoryDataSource, 
     InMemoryArchivalMemoryDataSource,
@@ -30,6 +34,7 @@ from .core.tools import (
 __all__ = [
     'MemoryManager',
     'PersistentMemoryManager',
+    'ConversationalMemoryManager',
     'CoreMemoryDataSource',
     'PersistentCoreMemoryDataSource',
     'InMemoryCoreMemoryDataSource',
