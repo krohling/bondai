@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import Dict
 from bondai.tools import Tool
 from bondai.agents import Agent
-from bondai.agents.react import ReactAgent
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 TOOL_NAME = 'agent_tool'
@@ -19,12 +18,10 @@ class Parameters(BaseModel):
     thought: str
 
 class AgentTool(Tool):
-    def __init__(self, agent: ReactAgent):
+    def __init__(self, agent: Agent):
         super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         if agent is None:
             raise Exception("Agent is required.")
-        if not isinstance(agent, ReactAgent):
-            raise Exception("Agent must be a ReactAgent.")
         self._agent = agent
     
     def run(self, arguments: Dict) -> str:

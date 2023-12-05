@@ -25,7 +25,7 @@ class SystemMessage(AgentMessage):
 class SummaryMessage(AgentMessage):
     role: str = field(default='user')
     message: str | None = field(default=None)
-    children: [AgentMessage] = field(default=None)
+    children: List[AgentMessage] = field(default=None)
 
 @dataclass
 class ConversationMessage(AgentMessage):
@@ -154,8 +154,8 @@ class AgentMessageList:
                 message = SystemMessage(**item)
             elif item_type == 'SummaryMessage':
                 message = SummaryMessage(**item)
-            elif item_type == 'MemoryWarningMessage':
-                message = MemoryWarningMessage(**item)
+            # elif item_type == 'MemoryWarningMessage':
+            #     message = MemoryWarningMessage(**item)
             else:
                 raise ValueError(f"Unknown message type: {item_type}")
             

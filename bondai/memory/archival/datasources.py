@@ -34,9 +34,12 @@ class ArchivalMemoryDataSource(ABC):
 class PersistentArchivalMemoryDataSource(ArchivalMemoryDataSource):
     def __init__(self, 
                     file_path: str = './.memory/archival-memory.json', 
-                    embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002),
+                    embedding_model: EmbeddingModel | None = None,
                     page_size = 10
                 ):
+        if embedding_model is None:
+            embedding_model = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)
+        
         self._file_path = file_path
         self._embedding_model = embedding_model
         self._page_size = page_size
@@ -93,9 +96,12 @@ class PersistentArchivalMemoryDataSource(ArchivalMemoryDataSource):
 
 class InMemoryArchivalMemoryDataSource(ArchivalMemoryDataSource):
     def __init__(self, 
-                    embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002),
+                    embedding_model: EmbeddingModel | None = None,
                     page_size = 10
                 ):
+        if embedding_model is None:
+            embedding_model = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)
+        
         self._embedding_model = embedding_model
         self._page_size = page_size
         self._data = []

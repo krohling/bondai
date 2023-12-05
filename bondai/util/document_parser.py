@@ -1,8 +1,9 @@
 import os
 import PyPDF2
 import docx
+from typing import Dict
 
-def extract_text_from_directory(directory):
+def extract_text_from_directory(directory: str) -> Dict[str, str]:
     extracted_texts = {}
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)

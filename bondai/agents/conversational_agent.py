@@ -53,13 +53,13 @@ DEFAULT_SYSTEM_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('pro
 class ConversationalAgent(Agent, ConversationMember):
 
     def __init__(self, 
-                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613),
-                    tools: List[Tool] = [],
+                    llm: LLM | None = None,
+                    tools: List[Tool] | None = None,
                     name: str = DEFAULT_AGENT_NAME,
                     persona: str | None = None,
                     persona_summary: str | None = None,
                     instructions: str | None = DEFAULT_CONVERSATIONAL_INSTRUCTIONS,
-                    system_prompt_sections: List[Callable[[], str]] = [],
+                    system_prompt_sections: List[Callable[[], str]] | None = None,
                     system_prompt_builder: Callable[..., str] = None,
                     message_prompt_builder: Callable[..., str] = None,
                     memory_manager : MemoryManager | None = None,
@@ -70,6 +70,13 @@ class ConversationalAgent(Agent, ConversationMember):
                     enable_exit_conversation: bool=True,
                     quiet: bool=True,
                 ):
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT4_0613)
+        if tools is None:
+            tools = []
+        if system_prompt_sections is None:
+            system_prompt_sections = []
+        
         ConversationMember.__init__(
             self,
             name=name,
@@ -99,7 +106,6 @@ class ConversationalAgent(Agent, ConversationMember):
                 ConversationMemberEventNames.CONVERSATION_EXITED
             ]
         )
-
         self._instructions: str = instructions
         self._enable_exit_conversation: bool = enable_exit_conversation
         self._enable_conversation = enable_conversation
@@ -115,12 +121,17 @@ class ConversationalAgent(Agent, ConversationMember):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[ConversationMember] = [], 
-                    group_messages: List[AgentMessage] = [], 
+                    group_members: List[ConversationMember] | None = None, 
+                    group_messages: List[AgentMessage] | None = None, 
                     max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
                 ) -> (ConversationMessage | None):
+        if group_members is None:
+            group_members = []
+        if group_messages is None:
+            group_messages = []
+        
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot send message while agent is in a running state.')        
         if not message:

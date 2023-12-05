@@ -7,7 +7,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.common.exceptions import APIError
 
-TOOL_NAME = 'create_order'
+TOOL_NAME = 'create_investment_order'
 TOOL_DESCRIPTION = (
     "This tool allows you to create an Order to buy or sell a stock. "
     "When using this tool, you must specify either 'buy' or 'sell' for the 'side' parameter. "

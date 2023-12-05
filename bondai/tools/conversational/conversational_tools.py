@@ -14,7 +14,7 @@ class SendMessageTool(Tool):
     def __init__(self):
         super().__init__(
             SEND_MESSAGE_TOOL_NAME,
-            "Use the send_message tool to send messages to other members of the conversation.", 
+            "Use the send_message tool to send messages to other members of the conversation including agents and the user.", 
             SendMessageToolParameters
         )
 

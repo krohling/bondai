@@ -1,3 +1,4 @@
+from termcolor import cprint
 from datetime import datetime
 from typing import List, Callable
 from bondai.util import EventMixin
@@ -35,14 +36,17 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[Agent] = [], 
-                    group_messages: List[AgentMessage] = [], 
+                    group_members: List[Agent] | None = None, 
+                    group_messages: List[AgentMessage] | None = None,
                     max_send_attempts: int = None, 
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
                 ):
         if not message:
             raise AgentException("'message' cannot be empty.")
+        
+        if group_members is None:
+            group_members = []
         
         if isinstance(message, ConversationMessage):
             agent_message = message
@@ -57,10 +61,11 @@ class UserProxy(EventMixin, ConversationMember):
 
         self._messages.add(agent_message)
         self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, self, agent_message)
+
+        cprint("\n" + agent_message.message + "\n", "white")
         
         while True:
             try:
-                print("Please enter your response.")
                 user_response = input()
                 user_exited = user_response.strip().lower() == 'exit'
 
@@ -103,13 +108,18 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message_async(self, 
                         message: str, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        group_members: List[Agent] = [], 
-                        group_messages: List[AgentMessage] = [], 
+                        group_members: List[Agent] | None = None, 
+                        group_messages: List[AgentMessage] | None = None, 
                         max_send_attempts: int = None, 
                         content_stream_callback: Callable[[str], None] | None = None
                     ):
         if self._status == AgentStatus.RUNNING:
             raise Exception('Cannot send message while agent is in a running state.')
+        
+        if group_members is None:
+            group_members = []
+        if group_messages is None:
+            group_messages = []
         
         return super().send_message_async(
             message, 

@@ -78,7 +78,9 @@ class GroupConversation(EventMixin):
             )
     
     def _on_member_message_received(self, member: ConversationMember, message: ConversationMessage):
-        print(f"{message.sender_name} to {message.recipient_name}: {message.message}")
+        # print(f"{message.sender_name} to {message.recipient_name}: {message.message}")
+        with open("./.debug/group_conversation.txt", "a") as f:
+            f.write(f"{message.sender_name} to {message.recipient_name}: {message.message}\n")
         self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, member, message)
     
     def _on_member_message_error(self, member: ConversationMember, message: ConversationMessage):

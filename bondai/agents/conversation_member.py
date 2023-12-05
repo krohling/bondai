@@ -49,8 +49,8 @@ class ConversationMember(ABC):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List['ConversationMember'] = [], 
-                    group_messages: List[AgentMessage] = [], 
+                    group_members: List['ConversationMember'] | None = None, 
+                    group_messages: List[AgentMessage] | None = None, 
                     max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                     content_stream_callback: Callable[[str], None] | None = None
                 ) -> (str, str, bool):
@@ -59,11 +59,16 @@ class ConversationMember(ABC):
     def send_message_async(self, 
                         message: str | ConversationMessage, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        group_members: List['ConversationMember'] = [], 
-                        group_messages: List[AgentMessage] = [], 
+                        group_members: List['ConversationMember'] | None = None, 
+                        group_messages: List[AgentMessage] | None = None,
                         max_send_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                         content_stream_callback: Callable[[str], None] | None = None
                     ):
+        if group_members is None:
+            group_members = []
+        if group_messages is None:
+            group_messages = []
+
         async def send_message_coroutine():
             return self.send_message(
                 message, 

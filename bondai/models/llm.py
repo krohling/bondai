@@ -15,16 +15,16 @@ class LLM(ABC):
 
     @abstractmethod
     def get_completion(
-        messages: List[Dict] = [], 
-        functions: List[Dict] = [], 
+        messages: List[Dict] | None = None, 
+        functions: List[Dict] | None = None, 
         **kwargs
     ) -> (str, Dict | None):
         pass
 
     @abstractmethod
     def get_streaming_completion(
-        messages: List[Dict] = [], 
-        functions: List[Dict] = [], 
+        messages: List[Dict] | None = None, 
+        functions: List[Dict] | None = None, 
         content_stream_callback: Callable[[str], None] | None = None,
         function_stream_callback: Callable[[str], None] | None = None,
         **kwargs

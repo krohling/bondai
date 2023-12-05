@@ -104,12 +104,19 @@ def create_embedding(text: str, model: str = "text-embedding-ada-002", connectio
         return embeddings[0]
 
 def get_completion(
-    messages: List[Dict] = [], 
-    functions: List[Dict] = [], 
+    messages: List[Dict] | None = None, 
+    functions: List[Dict] | None = None, 
     model: str = 'gpt-4', 
-    connection_params: Dict = {},
+    connection_params: Dict | None = None,
     **kwargs
 ) -> (str, Dict | None):
+    if messages is None:
+        messages = []
+    if functions is None:
+        functions = []
+    if connection_params is None:
+        connection_params = {}
+
     response = _get_completion(messages=messages, functions=functions, model=model, connection_params=connection_params, **kwargs)
 
     function = None
@@ -140,14 +147,21 @@ def get_completion(
 
 
 def get_streaming_completion(
-    messages: List[Dict] = [], 
-    functions: List[Dict] = [], 
+    messages: List[Dict] | None = None, 
+    functions: List[Dict] | None = None, 
     model: str ='gpt-4', 
-    connection_params: Dict = {},
+    connection_params: Dict | None = None,
     content_stream_callback: Callable[[str], None] | None = None,
     function_stream_callback: Callable[[str], None] | None = None,
     **kwargs
 ) -> (str, Dict | None):
+    if messages is None:
+        messages = []
+    if functions is None:
+        functions = []
+    if connection_params is None:
+        connection_params = {}
+
     response = _get_completion(messages, functions=functions, model=model, connection_params=connection_params, stream=True, **kwargs)
 
     content = ''
@@ -208,11 +222,18 @@ def get_streaming_completion(
 
 
 def _log_completion(
-            messages: List[Dict] = [], 
-            functions: List[Dict] = [], 
-            response_content: str = '', 
-            response_function: Dict = None
+            messages: List[Dict] | None = None, 
+            functions: List[Dict] | None = None, 
+            response_content: str | None = None, 
+            response_function: Dict | None = None
         ):
+    if messages is None:
+        messages = []
+    if functions is None:
+        functions = []
+    if response_content is None:
+        response_content = ''
+    
     global logger
     if not logger:
         return
@@ -230,12 +251,19 @@ def _log_completion(
 
 
 def _get_completion(
-    messages: List[Dict] = [], 
-    functions: List[Dict] = [], 
+    messages: List[Dict] | None = None, 
+    functions: List[Dict] | None = None, 
     model: str = 'gpt-4', 
-    connection_params: Dict = {},
+    connection_params: Dict | None = None,
     **kwargs
 ) -> (str, Dict | None):
+    if messages is None:
+        messages = []
+    if functions is None:
+        functions = []
+    if connection_params is None:
+        connection_params = {}
+    
     params = { 
         'messages': messages,
         'temperature': DEFAULT_TEMPERATURE,

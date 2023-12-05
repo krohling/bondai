@@ -44,11 +44,11 @@ DEFAULT_MESSAGE_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('pr
 class Agent(EventMixin, ABC):
 
     def __init__(self, 
-                llm: LLM = OpenAILLM(OpenAIModelNames.GPT4_0613), 
-                tools: List[Tool] = [],
+                llm: LLM | None = None, 
+                tools: List[Tool] | None = None,
                 quiet: bool = True,
-                allowed_events: List[str] = [],
-                system_prompt_sections: List[Callable[[], str]] = [],
+                allowed_events: List[str] | None = None,
+                system_prompt_sections: List[Callable[[], str]] | None = None,
                 system_prompt_builder: Callable[..., str] = None,
                 message_prompt_builder: Callable[..., str] = None,
                 memory_manager : MemoryManager | None = None,
@@ -57,6 +57,15 @@ class Agent(EventMixin, ABC):
                 enable_context_compression: bool = False,
             ):
         super().__init__(allowed_events=allowed_events)
+
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT4_0613)
+        if tools is None:
+            tools = []
+        if allowed_events is None:
+            allowed_events = []
+        if system_prompt_sections is None:
+            system_prompt_sections = []
         
         self._id: str = str(uuid.uuid4())
         self._status: AgentStatus = AgentStatus.IDLE
@@ -124,17 +133,24 @@ class Agent(EventMixin, ABC):
     
     def _is_context_pressure_too_high(self, 
                                     llm_messages: List[Dict[str, str]],
-                                    tools: List[Tool] = [],
+                                    tools: List[Tool] | None = None,
                                 ) -> float:
+        if tools is None:
+            tools = []
         context_pressure_ratio = float(count_request_tokens(self._llm, llm_messages, tools)) / float(self._max_context_length)
         return context_pressure_ratio > self._max_context_pressure_ratio
 
     def _get_llm_response(self, 
-                        messages: List[Dict] = [], 
-                        tools: List[Tool] = [],
+                        messages: List[Dict] | None = None, 
+                        tools: List[Tool] | None = None,
                         content_stream_callback: Callable[[str], None] | None = None,
                         function_stream_callback: Callable[[str], None] | None = None,
                     ) -> (str | None, Dict | None):
+        if messages is None:
+            messages = []
+        if tools is None:
+            tools = []
+        
         request_tokens = count_request_tokens(
             llm=self._llm,
             messages=messages,
@@ -199,11 +215,16 @@ class Agent(EventMixin, ABC):
             max_steps: int = None,
             max_tool_errors: int = 3,
             return_conversational_responses: bool = False,
-            addition_context_messages: List[AgentMessage] = [],
-            conversation_members: List[ConversationMember] = [],
+            addition_context_messages: List[AgentMessage] | None = None,
+            conversation_members: List[ConversationMember] | None = None,
             content_stream_callback: Callable[[str], None] | None = None,
             function_stream_callback: Callable[[str], None] | None = None
         ):
+        if addition_context_messages is None:
+            addition_context_messages = []
+        if conversation_members is None:
+            conversation_members = []
+
         error_count = 0
         step_count = 0
         last_error_message = None
@@ -237,8 +258,18 @@ class Agent(EventMixin, ABC):
                 content_stream_callback=content_stream_callback,
                 function_stream_callback=function_stream_callback
             )
+            print(llm_response_content)
 
             last_error_message = None
+            if llm_response_function and any([m.name == llm_response_function.get("tool_name") for m in conversation_members]):
+                message = f"""MessageSendFailure: You attempted to send a message to {llm_response_function.get('tool_name')} but this message failed.
+                To send a message to {llm_response_function.get('tool_name')} you must use this format in your response:
+
+                ```
+                {llm_response_function.get('tool_name')}: Include your message here.)
+                ```
+                """
+                local_messages.append(SystemMessage(message=message))
             if llm_response_function:
                 self._trigger_event(AgentEventNames.TOOL_SELECTED, self, llm_response_function)
                 tool_message = self._handle_llm_function(
@@ -272,12 +303,19 @@ class Agent(EventMixin, ABC):
     
     def _build_llm_context(self, 
                 messages: AgentMessageList, 
-                tools: List[Tool] = [],
+                tools: List[Tool] | None = None,
                 last_error_message: str | None = None,
-                conversation_members: List[ConversationMember] = [],
-                truncate_context = True,
-                prompt_vars = {},
+                conversation_members: List[ConversationMember] | None = None,
+                truncate_context: bool = True,
+                prompt_vars: Dict | None = None,
             ) -> (str | None, Dict | None):
+        if tools is None:
+            tools = []
+        if conversation_members is None:
+            conversation_members = []
+        if prompt_vars is None:
+            prompt_vars = {}
+
         prompt_sections = []
         for s in self._system_prompt_sections:
             if callable(s):
@@ -304,8 +342,6 @@ class Agent(EventMixin, ABC):
         if truncate_context:
             reduced_messages = AgentMessageList(messages)
             while self._is_context_pressure_too_high(llm_context, tools) and len(reduced_messages) > 0:
-                print("Truncating Message: ")
-                print(reduced_messages[0])
                 reduced_messages.remove(reduced_messages[0])
                 llm_context = format_llm_messages(system_prompt, reduced_messages, self._message_prompt_builder)
         
@@ -313,11 +349,18 @@ class Agent(EventMixin, ABC):
     
 
     def _compress_llm_context(self, 
-                            tools: List[Tool] = [],
+                            tools: List[Tool] | None = None,
                             last_error_message: str | None = None,
-                            conversation_members: List[ConversationMember] = [],
-                            additional_context_messages: List[AgentMessage] = [],
+                            conversation_members: List[ConversationMember] | None = None,
+                            additional_context_messages: List[AgentMessage] | None = None,
                         ) -> List[AgentMessage]:
+        if tools is None:
+            tools = []
+        if conversation_members is None:
+            conversation_members = []
+        if additional_context_messages is None:
+            additional_context_messages = []
+
         all_context_messages = AgentMessageList(self._messages+additional_context_messages)
 
         llm_context = self._build_llm_context(
@@ -391,13 +434,18 @@ class Agent(EventMixin, ABC):
         )
         tool_starting_cost = get_total_cost()
 
-        try:
+        with open(f"./.debug/agent_{self.name}.txt", "a") as f:
+            f.write(f"{tool_message.tool_name}({tool_message.tool_arguments})\n")
 
+        try:
+            print("***********")
+            print(f"Executing Tool: {tool_message.tool_name}({tool_message.tool_arguments})")
             tool_output = execute_tool(
                 tool_name=tool_message.tool_name, 
                 tool_arguments=tool_message.tool_arguments,
                 tools=tools,
             )
+            print(f"Tool Output: {tool_output}")
 
             agent_halted = False
             if isinstance(tool_output, tuple):
@@ -406,7 +454,7 @@ class Agent(EventMixin, ABC):
             tool_message.agent_halted = agent_halted
             tool_message.tool_output = tool_output
             tool_message.success = True
-        except AgentException as e:
+        except Exception as e:
             # traceback.print_exc()
             tool_message.error = e
         

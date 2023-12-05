@@ -32,10 +32,15 @@ class Parameters(BaseModel):
 
 class WebsiteQueryTool(Tool):
     def __init__(self, 
-                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K), 
-                    embedding_model: EmbeddingModel = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)
+                    llm: LLM | None = None, 
+                    embedding_model: EmbeddingModel | None = None
                 ):
         super(WebsiteQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+        if embedding_model is None:
+            embedding_model = OpenAIEmbeddingModel(OpenAIModelNames.TEXT_EMBEDDING_ADA_002)
+
         self._llm = llm
         self._embedding_model = embedding_model
     

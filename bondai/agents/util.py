@@ -32,8 +32,10 @@ class AgentEventNames(Enum):
 def count_request_tokens(
                         llm: LLM,
                         messages: List[Dict[str, str]],
-                        tools: List[Tool] = []
+                        tools: List[Tool] | None = None
                     ) -> int:
+    if tools is None:
+        tools = []
     message_tokens = llm.count_tokens(json.dumps(messages))
     functions = list(map(lambda t: t.get_tool_function(), tools))
     functions_tokens = llm.count_tokens(json.dumps(functions))

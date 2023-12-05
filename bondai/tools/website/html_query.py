@@ -27,8 +27,11 @@ class Parameters(BaseModel):
     thought: str
 
 class WebsiteHtmlQueryTool(Tool):
-    def __init__(self, llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)):
+    def __init__(self, llm: LLM | None = None):
         super(WebsiteHtmlQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+        
         self._llm = llm
     
     def run(self, arguments: Dict) -> str:

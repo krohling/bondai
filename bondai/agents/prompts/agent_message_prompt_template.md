@@ -1,4 +1,7 @@
 {%- if message_type == "ToolUsageMessage" %}
+# Message Timestamp
+{{ message.timestamp }}
+
 # Tool Name
 You used the **{{ message.tool_name }}** tool.
 # Tool Arguments
@@ -25,6 +28,9 @@ This tool did not run successfully and returned the following error:
 ```
 {% endif %}
 {%- elif message_type == "SystemMessage" %}
+# Message Timestamp
+{{ message.timestamp }}
+
 {{ message.message }}
 {%- elif message_type == "SummaryMessage" %}
 The following is a summary of the previous conversation content. It has been summarized to save memory space:

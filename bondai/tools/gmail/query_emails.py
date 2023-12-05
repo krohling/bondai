@@ -52,9 +52,12 @@ class QueryEmailsTool(Tool):
     def __init__(self, 
                     credentials: str | None = None, 
                     credentials_filename: str | None = 'gmail-token.pickle', 
-                    llm: LLM = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+                    llm: LLM | None = None
                 ):
         super(QueryEmailsTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
+        
         self.llm = llm
         if credentials:
             self.service = build('gmail', 'v1', credentials=credentials)

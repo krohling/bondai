@@ -23,11 +23,16 @@ from bondai.models.openai import (
     enable_logging,
     OPENAI_CONNECTION_TYPE,
 )
+from bondai.memory import (
+    MemoryManager, 
+    PersistentCoreMemoryDataSource, 
+    InMemoryCoreMemoryDataSource
+)
 from .personas import (
-    user_liaison, 
-    team_leader, 
-    strategic_planner,
-    ALL_PERSONAS
+    adversarial_agent as adversarial_agent_profile,
+    coordination_agent as coordination_agent_profile,
+    task_processing_agent as task_processing_agent_profile,
+    user_liaison as user_liaison_profile,
 )
 
 if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get('OPENAI_API_KEY'):
@@ -46,15 +51,12 @@ cprint(f"Loading BondAI...", 'white')
 
 parser = argparse.ArgumentParser(description="BondAI CLI tool options")
 
+# --server with optional port
 parser.add_argument('--server', 
                     nargs='?', 
                     const='2663', 
                     metavar='server_port',
                     help='Starts the BondAI web server. If no port is specified, defaults to 5000.')
-
-parser.add_argument('--enable-dangerous', 
-                    action='store_true', 
-                    help='Allows potentially dangerous Tools to be loaded (i.e. ShellTool and PythonREPLTool)')
 
 # --enable-prompt-logging with optional log_dir
 parser.add_argument('--enable-prompt-logging', 
@@ -62,11 +64,6 @@ parser.add_argument('--enable-prompt-logging',
                     const='logs', 
                     metavar='log_dir',
                     help='Turns on prompt logging which will write all prompt inputs into the specified directory. Defaults to "logs" if no directory provided.')
-
-# --load-tools with specified Python file
-parser.add_argument('--load-tools', 
-                    metavar='my_tools.py', 
-                    help='Specify a Python file to load tools from. The file should have a function named get_tools() that returns a list of Tools.')
 
  # --quiet
 parser.add_argument('--quiet', 
@@ -87,51 +84,83 @@ if args.enable_prompt_logging:
 
 def build_group_conversation(llm : LLM, user_proxy: ConversationMember) -> GroupConversation:
     user_liaison_agent = ConversationalAgent(
-        name=user_liaison.NAME,
-        persona=user_liaison.PERSONA,
-        persona_summary=user_liaison.PERSONA_SUMMARY,
-        tools=user_liaison.TOOLS,
         llm=llm,
+        name=user_liaison_profile.NAME,
+        persona=user_liaison_profile.PERSONA,
+        persona_summary=user_liaison_profile.PERSONA_SUMMARY,
+        instructions=user_liaison_profile.INSTRUCTIONS,
+        tools=user_liaison_profile.TOOLS,
+        memory_manager=MemoryManager(
+            # core_memory_datasource=PersistentCoreMemoryDataSource(
+            #     file_path="./.memory/user_liason_core_memory.json",
+            #     sections={
+            #         "user": "User's Name is unknown.",
+            #         "task": "Task details unknown",
+            #     }
+            # )
+        )
     )
-    team_leader_agent = ConversationalAgent(
-        name=team_leader.NAME,
-        persona=team_leader.PERSONA,
-        persona_summary=team_leader.PERSONA_SUMMARY,
-        tools=team_leader.TOOLS,
+    coordination_agent = ConversationalAgent(
         llm=llm,
-    )
-    strategic_planner_agent = ConversationalAgent(
-        name=strategic_planner.NAME,
-        persona=strategic_planner.PERSONA,
-        persona_summary=strategic_planner.PERSONA_SUMMARY,
-        tools=strategic_planner.TOOLS,
-        llm=llm,
-    )
-    
-    team_1 = [user_proxy, user_liaison_agent]
-    team_2 = [user_liaison_agent, team_leader_agent, strategic_planner_agent]
-    team_3 = [team_leader_agent]
-    for persona in ALL_PERSONAS:
-        if persona.NAME != user_liaison.NAME:
-            print(f"Adding {persona.NAME} to team 3")
-            print(persona.TOOLS)
-            agent = ConversationalAgent(
-                name=persona.NAME,
-                persona=persona.PERSONA,
-                persona_summary=persona.PERSONA_SUMMARY,
-                tools=persona.TOOLS,
-                llm=llm,
+        name=coordination_agent_profile.NAME,
+        persona=coordination_agent_profile.PERSONA,
+        persona_summary=coordination_agent_profile.PERSONA_SUMMARY,
+        tools=coordination_agent_profile.TOOLS,
+        enable_exit_conversation=False,
+        memory_manager=MemoryManager(
+            core_memory_datasource=InMemoryCoreMemoryDataSource(
+                sections={
+                    "task": "Task details unknown",
+                    "agents": "Agent details unknown"
+                }
             )
-            team_3.append(agent)
+        )
+    )
+    task_processing_agent = ConversationalAgent(
+        llm=llm,
+        name=task_processing_agent_profile.NAME,
+        persona=task_processing_agent_profile.PERSONA,
+        persona_summary=task_processing_agent_profile.PERSONA_SUMMARY,
+        tools=task_processing_agent_profile.TOOLS,
+        enable_exit_conversation=False,
+        memory_manager=MemoryManager(
+            core_memory_datasource=InMemoryCoreMemoryDataSource(
+                sections={
+                    "task": "Task details unknown",
+                    "feedback": "No feedback received"
+                }
+            )
+        )
+    )
+    adversarial_agent = ConversationalAgent(
+        llm=llm,
+        name=adversarial_agent_profile.NAME,
+        persona=adversarial_agent_profile.PERSONA,
+        persona_summary=adversarial_agent_profile.PERSONA_SUMMARY,
+        tools=adversarial_agent_profile.TOOLS,
+        enable_exit_conversation=False,
+        memory_manager=MemoryManager(
+            core_memory_datasource=InMemoryCoreMemoryDataSource(
+                sections={
+                    "task": "Task details unknown",
+                    "agents": "Agent details unknown"
+                }
+            )
+        )
+    )
 
     return GroupConversation(
-        conversation_config = TeamConversationConfig(team_1, team_2, team_3)
+        conversation_config = TeamConversationConfig(
+            [user_proxy, user_liaison_agent],
+            [user_liaison_agent, coordination_agent, adversarial_agent], 
+            [coordination_agent, adversarial_agent, task_processing_agent]
+        )
     )
 
 
 def run_cli():
     try:
-        llm=OpenAILLM(OpenAIModelNames.GPT4_TURBO_1106)
+        llm=OpenAILLM(OpenAIModelNames.GPT4_0613)
         if args.server:
             port = int(args.server)
             # user_proxy = UserProxy()
@@ -150,15 +179,17 @@ def run_cli():
             #     cprint(f"\n\nStopping BondAI server...\n", 'red')
         else:
             try:
-                message = "Please introduce yourself to the user."
                 user_proxy = UserProxy()
                 group_conversation = build_group_conversation(
                     user_proxy=user_proxy,
                     llm=llm
                 )
+                cprint("******************ENTERING CHAT******************", 'white')
+                cprint("You are entering a chat with Ava. You can exit any time by typing 'exit'.", "white")
+                intro_message = "The user has just logged in. Please introduce yourself in a friendly manner."
                 group_conversation.send_message(
-                    recipient_name=user_liaison.NAME,
-                    message=message,
+                    recipient_name=user_liaison_profile.NAME,
+                    message=intro_message,
                 )
             except KeyboardInterrupt:
                 cprint(f"\n\nStopping BondAI CLI...\n", 'red')

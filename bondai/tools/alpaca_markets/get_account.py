@@ -4,7 +4,7 @@ from .response_formatter import format_account_response
 from .env_vars import ALPACA_MARKETS_API_KEY_ENV_VAR, ALPACA_MARKETS_SECRET_KEY_ENV_VAR
 from alpaca.trading.client import TradingClient
 
-TOOL_NAME = 'get_account_info'
+TOOL_NAME = 'get_investment_account_info'
 TOOL_DESCRIPTION = "This tool will provide information about your investment account including your cash balance."
 
 class GetAccountTool(Tool):

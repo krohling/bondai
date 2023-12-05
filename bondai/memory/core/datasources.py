@@ -26,12 +26,14 @@ class CoreMemoryDataSource(ABC):
 class PersistentCoreMemoryDataSource(CoreMemoryDataSource):
     def __init__(self, 
                     file_path: str = './.memory/core-memory.json', 
-                    initial_sections: Dict[str, str] = DEFAULT_MEMORY_SECTIONS, 
+                    sections: Dict[str, str] | None = None, 
                     max_section_size: int = 1024
                 ):
+        if sections is None:
+            sections = DEFAULT_MEMORY_SECTIONS.copy()
         self._file_path = file_path
         self._max_section_size = max_section_size
-        self._data = self._load_data(initial_sections)
+        self._data = self._load_data(sections)
 
     def _load_data(self, initial_sections: Dict[str, str] = None):
         try:
@@ -60,9 +62,14 @@ class PersistentCoreMemoryDataSource(CoreMemoryDataSource):
 
 
 class InMemoryCoreMemoryDataSource(CoreMemoryDataSource):
-    def __init__(self, initial_sections: Dict[str, str] = DEFAULT_MEMORY_SECTIONS, max_section_size: int = 1024):
+    def __init__(self, 
+                    sections: Dict[str, str] | None = None, 
+                    max_section_size: int = 1024
+                ):
+        if sections is None:
+            sections = DEFAULT_MEMORY_SECTIONS.copy()
         self._max_section_size = max_section_size
-        self._data = initial_sections.copy()
+        self._data = sections.copy()
 
     @property
     def sections(self) -> List[str]:

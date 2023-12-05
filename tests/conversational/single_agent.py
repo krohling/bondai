@@ -1,8 +1,9 @@
 from bondai.models.openai import get_total_cost, OpenAILLM, OpenAIModelNames
 from bondai.tools.file import FileWriteTool
 from bondai.agents import ConversationalAgent
+from bondai.util.caching import PersistentLLMCache
 
-llm = OpenAILLM(OpenAIModelNames.GPT4_TURBO_1106)
+llm = OpenAILLM(OpenAIModelNames.GPT4_TURBO_1106, cache=PersistentLLMCache())
 agent = ConversationalAgent(
     llm=llm,
     tools=[FileWriteTool()],

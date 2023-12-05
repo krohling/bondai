@@ -4,8 +4,8 @@ from .response_formatter import format_positions_response
 from .env_vars import ALPACA_MARKETS_API_KEY_ENV_VAR, ALPACA_MARKETS_SECRET_KEY_ENV_VAR
 from alpaca.trading.client import TradingClient
 
-TOOL_NAME = 'list_positions'
-TOOL_DESCRIPTION = "This tool will list all of your currently open positions."
+TOOL_NAME = 'list_investment_positions'
+TOOL_DESCRIPTION = "This tool will list all of your currently open investment positions."
 
 class ListPositionsTool(Tool):
     def __init__(self, 

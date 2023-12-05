@@ -1,0 +1,2 @@
+file_read({'filename': 'metformin.md', 'thought': 'I need to review the report for quality assurance. I will check for completeness, accuracy, and clarity of information. I will also ensure that the report follows the agreed structure and that all sources are properly cited.'})
+file_read({'filename': 'metformin.md', 'thought': 'I need to review the report created by Cortex for quality assurance.'})

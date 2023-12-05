@@ -1,6 +1,5 @@
-
 from pydantic import BaseModel
-from typing import Dict, Tuple
+from typing import Dict
 from bondai.tools import Tool
 from .datasources import CoreMemoryDataSource
 
@@ -13,7 +12,7 @@ CORE_MEMORY_APPEND_TOOL_DESCRIPTION = (
 )
 
 class CoreMemoryAppendParameters(BaseModel):
-    name: str
+    section: str
     content: str
 
 class CoreMemoryAppendTool(Tool):
@@ -44,7 +43,7 @@ CORE_MEMORY_REPLACE_TOOL_DESCRIPTION = (
 )
 
 class CoreMemoryReplaceParameters(BaseModel):
-    name: str
+    section: str
     old_content: str
     new_content: str
 
@@ -58,6 +57,7 @@ class CoreMemoryReplaceTool(Tool):
         self._datasource = datasource
 
     def run(self, section: str, old_content: str, new_content: str):
+        section = section.replace('<', ' ').replace('>', ' ')
         if not section in self._datasource.sections:
             raise ValueError(f"Section {section} does not exist.")
         

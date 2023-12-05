@@ -35,9 +35,9 @@ DEFAULT_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('prompts', 
 class MemoryManager:
     def __init__(
         self, 
-        core_memory_datasource: CoreMemoryDataSource | None = InMemoryCoreMemoryDataSource(), 
-        conversation_memory_datasource: ConversationMemoryDataSource | None = InMemoryConversationMemoryDataSource(), 
-        archival_memory_datasource: ArchivalMemoryDataSource | None = InMemoryArchivalMemoryDataSource(),
+        core_memory_datasource: CoreMemoryDataSource | None = None, 
+        conversation_memory_datasource: ConversationMemoryDataSource | None = None, 
+        archival_memory_datasource: ArchivalMemoryDataSource | None = None,
         prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
     ):
         self._core_memory_datasource = core_memory_datasource
@@ -90,8 +90,10 @@ class MemoryManager:
 class PersistentMemoryManager(MemoryManager):
     def __init__(
         self, 
-        prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
+        prompt_builder: Callable[..., str] | None = None,
     ):
+        if prompt_builder is None:
+            prompt_builder = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE)
         super().__init__(
             core_memory_datasource=PersistentCoreMemoryDataSource(),
             conversation_memory_datasource=PersistentConversationMemoryDataSource(),
@@ -102,9 +104,13 @@ class PersistentMemoryManager(MemoryManager):
 class ConversationalMemoryManager(MemoryManager):
     def __init__(
         self, 
-        conversation_memory_datasource: ConversationMemoryDataSource = InMemoryConversationMemoryDataSource(), 
-        prompt_builder: Callable[..., str] = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE),
+        conversation_memory_datasource: ConversationMemoryDataSource | None = None, 
+        prompt_builder: Callable[..., str] | None = None,
     ):
+        if conversation_memory_datasource is None:
+            conversation_memory_datasource = InMemoryConversationMemoryDataSource()
+        if prompt_builder is None:
+            prompt_builder = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE)
         super().__init__(
             core_memory_datasource=None,
             conversation_memory_datasource=conversation_memory_datasource,
