@@ -1,19 +1,10 @@
 from datetime import datetime
 from bondai.models.openai import get_total_cost
-from bondai.tools.file import FileWriteTool
+from bondai.tools.vision import ImageAnalysisTool
 from bondai.agents import ConversationalAgent
-from bondai.memory import MemoryManager
-from util import extract_text_from_directory
-
-memory_manager = MemoryManager()
-memory_manager.core_memory.set('user', 'Name is George. Lives in New York. Has a dog named Max.')
-memory_manager.archival_memory.insert_bulk(
-    extract_text_from_directory('./tests/memory/documents')
-)
 
 agent = ConversationalAgent(
-    tools=[FileWriteTool()],
-    memory_manager=memory_manager
+    tools=[ImageAnalysisTool()]
 )
 
 message = "Start the conversation by sending the first message. You can exit any time by typing 'exit'."
