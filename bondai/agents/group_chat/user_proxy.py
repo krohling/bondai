@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Callable
 from bondai.util import EventMixin
 from bondai.agents import (
-    BaseAgent,
+    Agent,
     AgentStatus, 
     AgentException,
     AgentMessage,
@@ -35,7 +35,7 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[BaseAgent] = [], 
+                    group_members: List[Agent] = [], 
                     group_messages: List[AgentMessage] = [], 
                     max_send_attempts: int = None, 
                     content_stream_callback: Callable[[str], None] | None = None,
@@ -103,7 +103,7 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message_async(self, 
                         message: str, 
                         sender_name: str = USER_MEMBER_NAME, 
-                        group_members: List[BaseAgent] = [], 
+                        group_members: List[Agent] = [], 
                         group_messages: List[AgentMessage] = [], 
                         max_send_attempts: int = None, 
                         content_stream_callback: Callable[[str], None] | None = None

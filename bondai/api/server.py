@@ -5,7 +5,7 @@ from flask_cors import CORS
 from flask_restful import Api
 from flask_socketio import SocketIO
 from typing import Callable
-from bondai.agents import Agent, AgentStatus
+from bondai.agents import ConversationalAgent, AgentStatus
 from bondai.tools import Tool
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 # from .agent_wrapper import AgentWrapper

@@ -25,6 +25,7 @@ class SendMessageTool(Tool):
             raise ValueError('message is required')
 
         return ConversationMessage(
+            role='assistant',
             recipient_name=arguments['recipient_name'],
             message=arguments['message'],
         ), True

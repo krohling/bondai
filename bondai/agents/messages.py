@@ -22,7 +22,9 @@ class SystemMessage(AgentMessage):
     message: str | None = field(default=None)
 
 @dataclass
-class SummaryMessage(SystemMessage):
+class SummaryMessage(AgentMessage):
+    role: str = field(default='user')
+    message: str | None = field(default=None)
     children: [AgentMessage] = field(default=None)
 
 @dataclass
@@ -67,8 +69,12 @@ def message_to_dict(message: AgentMessage) -> Dict:
     """
     Convert an AgentMessage object to a dictionary with custom serialization.
     """
-    message_dict = {k: custom_serialization(v) for k, v in message.__dict__.items()}
+
+    message_dict = {k: custom_serialization(v) for k, v in message.__dict__.items() if k != 'children'}
     message_dict['type'] = type(message).__name__  # Add the type for deserialization
+    if 'children' in message.__dict__:
+        message_dict['children'] = [message_to_dict(child) for child in message.children]
+
     return message_dict
 
 class AgentMessageList:

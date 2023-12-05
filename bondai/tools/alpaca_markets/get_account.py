@@ -14,8 +14,6 @@ class GetAccountTool(Tool):
         ):
         super(GetAccountTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION)
         self.trading_client = TradingClient(alpaca_api_key, alpaca_secret_key, paper=True)
-        print("*************")
-        print(self.trading_client)
     
     def run(self, arguments):
         response = self.trading_client.get_account()

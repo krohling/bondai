@@ -6,10 +6,11 @@ from bondai.prompt import PromptBuilder, JinjaPromptBuilder
 from bondai.util import load_local_resource
 from bondai.agents.messages import (
     AgentMessage,
-    SystemMessage,
+    ConversationMessage,
     ToolUsageMessage
 )
 
+MIN_SUMMARIZABLE_LENGTH = 250
 DEFAULT_SUMMARY_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('prompts', 'message_summarizer_prompt_template.md'))
 
 def summarize_messages(
@@ -21,8 +22,11 @@ def summarize_messages(
     ) -> List[AgentMessage]:
     summarizable_messages = [
         m for m in messages
-        if (isinstance(m, SystemMessage) or isinstance(m, ToolUsageMessage)) and not m.summary
+        if (isinstance(m, ConversationMessage) and not m.message_summary and len(m.message) > MIN_SUMMARIZABLE_LENGTH) 
+            or (isinstance(m, ToolUsageMessage) and not m.tool_output_summary and len(m.tool_output) > MIN_SUMMARIZABLE_LENGTH)
     ]
+
+    print(f"Summarizing {len(summarizable_messages)} messages...")
 
     # Creating a thread pool executor to parallelize summary generation
     with ThreadPoolExecutor() as executor:
@@ -69,6 +73,7 @@ def _summarize_message(
         previous_messages=previous_message_prompts,
         max_words=max_summary_words
     )
+    
     summary, _ = llm.get_completion(
         messages=[
             {
@@ -77,5 +82,15 @@ def _summarize_message(
             }
         ]
     )
-    message.summary = summary
+
+    # print("************")
+    # print(f"Message: {message_prompt}")
+    # print(f"Summary: {summary}")
+    # print("************")
+    if isinstance(message, ConversationMessage):
+        print("Updating message summary...")
+        message.message_summary = summary
+    elif isinstance(message, ToolUsageMessage):
+        message.tool_output_summary = summary
+    # print(message)
 

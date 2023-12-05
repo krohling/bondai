@@ -45,6 +45,6 @@ class ArchivalMemorySearchTool(Tool):
         )
         self._datasource = datasource
 
-    def run(self, query: str, page: int) -> str:
+    def run(self, query: str, page: int = 0) -> str:
         results = self._datasource.search(query, page)
         return '\n'.join(results)

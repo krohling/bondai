@@ -1,5 +1,6 @@
 import json
 import inspect
+import traceback
 from enum import Enum
 from typing import List, Dict, Callable
 from bondai.models import LLM
@@ -21,6 +22,12 @@ class MaxStepsExceededException(AgentException):
 
 class ContextLengthExceededException(AgentException):
     pass
+
+class AgentEventNames(Enum):
+    CONTEXT_COMPRESSION_REQUESTED: str = 'context_compression_requested'
+    TOOL_SELECTED: str = 'tool_selected'
+    TOOL_ERROR: str = 'tool_error'
+    TOOL_COMPLETED: str = 'tool_completed'
 
 def count_request_tokens(
                         llm: LLM,
@@ -55,7 +62,8 @@ def execute_tool(
             output = f"Tool '{tool_name}' ran successfully with no output."
         return output
     except Exception as e:
-        print(e)
+        # print(e)
+        # traceback.print_exc()
         raise AgentException(f"The following error occurred using '{tool_name}': {str(e)}")
 
 def validate_tool_params(func, params):
@@ -114,7 +122,10 @@ def format_llm_messages(system_prompt: str,
     ]
 
     for message in messages:
-        content = message_prompt_builder(message=message).strip()
+        content = message_prompt_builder(
+            message=message, 
+            message_type=message.__class__.__name__
+        ).strip()
         if message.role == 'function':
             llm_messages.append({
                 'role': message.role,

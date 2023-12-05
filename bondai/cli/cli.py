@@ -7,7 +7,7 @@ from bondai.util import ModelLogger
 # from bondai.api import BondAIAPIServer
 from bondai.models import LLM
 from bondai.agents import (
-    Agent, 
+    ConversationalAgent, 
     ConversationMember, 
     BudgetExceededException
 )
@@ -86,21 +86,21 @@ if args.enable_prompt_logging:
     cprint(f"Prompt logging is enabled. Logs will be written to: {log_dir}", "yellow")
 
 def build_group_conversation(llm : LLM, user_proxy: ConversationMember) -> GroupConversation:
-    user_liaison_agent = Agent(
+    user_liaison_agent = ConversationalAgent(
         name=user_liaison.NAME,
         persona=user_liaison.PERSONA,
         persona_summary=user_liaison.PERSONA_SUMMARY,
         tools=user_liaison.TOOLS,
         llm=llm,
     )
-    team_leader_agent = Agent(
+    team_leader_agent = ConversationalAgent(
         name=team_leader.NAME,
         persona=team_leader.PERSONA,
         persona_summary=team_leader.PERSONA_SUMMARY,
         tools=team_leader.TOOLS,
         llm=llm,
     )
-    strategic_planner_agent = Agent(
+    strategic_planner_agent = ConversationalAgent(
         name=strategic_planner.NAME,
         persona=strategic_planner.PERSONA,
         persona_summary=strategic_planner.PERSONA_SUMMARY,
@@ -115,7 +115,7 @@ def build_group_conversation(llm : LLM, user_proxy: ConversationMember) -> Group
         if persona.NAME != user_liaison.NAME:
             print(f"Adding {persona.NAME} to team 3")
             print(persona.TOOLS)
-            agent = Agent(
+            agent = ConversationalAgent(
                 name=persona.NAME,
                 persona=persona.PERSONA,
                 persona_summary=persona.PERSONA_SUMMARY,

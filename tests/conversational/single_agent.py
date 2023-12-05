@@ -1,7 +1,10 @@
+from bondai.models.openai import get_total_cost, OpenAILLM, OpenAIModelNames
 from bondai.tools.file import FileWriteTool
-from bondai.agents import Agent
+from bondai.agents import ConversationalAgent
 
-agent_a1 = Agent(
+llm = OpenAILLM(OpenAIModelNames.GPT4_TURBO_1106)
+agent = ConversationalAgent(
+    llm=llm,
     tools=[FileWriteTool()],
 )
 
@@ -10,9 +13,11 @@ while True:
     user_input = input(message+ '\n')
     if user_input.lower() == 'exit':
         break
-    response = agent_a1.send_message(user_input)
+    response = agent.send_message(user_input)
     if response:
         message = response.message
     else:
         print("The agent has exited the conversation.")
         break
+
+print (f"Total Cost: {get_total_cost()}")

@@ -39,5 +39,6 @@ def summarize_conversation(
     # Return the summary wrapped in an SummaryMessage
     return SummaryMessage(
         message=summary,
-        children=messages.copy()
+        children=list(messages),
+        timestamp=messages[-1].timestamp,
     )

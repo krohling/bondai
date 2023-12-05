@@ -37,8 +37,8 @@ CONVERSATION_MEMORY_SEARCH_DATE_TOOL_DESCRIPTION = (
 )
 
 class ConversationMemorySearchDateParameters(BaseModel):
-    query: str
-    page: int = 0
+    start_date: str
+    end_date: str
 
 class ConversationMemorySearchDateTool(Tool):
     def __init__(self, datasource: ConversationMemoryDataSource):

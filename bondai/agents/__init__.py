@@ -1,5 +1,5 @@
+from .conversational_agent import ConversationalAgent
 from .agent import Agent, DEFAULT_MESSAGE_PROMPT_TEMPLATE
-from .base_agent import BaseAgent
 from .conversation_member import (
     ConversationMember, 
     ConversationMemberEventNames
@@ -21,8 +21,8 @@ from .util import (
 )
 
 __all__ = [
+    'ConversationalAgent',
     'Agent',
-    'BaseAgent',
     'parse_response_content_message',
     'DEFAULT_MESSAGE_PROMPT_TEMPLATE',
     'AgentStatus',

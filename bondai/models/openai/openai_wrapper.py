@@ -236,25 +236,26 @@ def _get_completion(
     connection_params: Dict = {},
     **kwargs
 ) -> (str, Dict | None):
-    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE:
+    params = { 
+        'messages': messages,
+        'temperature': DEFAULT_TEMPERATURE,
+    }
+
+    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE.value:
         client = AzureOpenAI(
             api_key=connection_params['api_key'],
             api_version=connection_params['api_version'],
             azure_endpoint=connection_params['azure_endpoint'],
             azure_deployment=connection_params['azure_deployment'],
         )
+        params['model'] = connection_params['azure_deployment']
     else:
         client = OpenAI(**connection_params)
-    
-    params = { 
-        'messages': messages,
-        'temperature': DEFAULT_TEMPERATURE,
-        'model': model
-    }
+        params['model'] = model
 
     if len(functions) > 0:
         params['functions'] = functions
-    
+
     return client.chat.completions.create(
         **params,
         **kwargs
