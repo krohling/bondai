@@ -11,14 +11,16 @@ from bondai.models.openai import (
 )
 
 TOOL_NAME = 'website_query'
-QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a website. Use the provided information to answer the user's QUESTION at the very end."
 TOOL_DESCRIPTION = "This tool allows to ask a question about the text content of any website including summarization. Just specify the url of the website using the 'url' parameter and specify your question using the 'question' parameter."
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 }
 
 def build_prompt(question: str, context: str) -> str:
-    return f"""{context}
+    return f"""You are a helpful question and answer assistant designed to answer questions about a website. Use the provided information to answer the user's QUESTION at the very end.
+
+CONTEXT:    
+{context}
 
 
 IMPORTANT: Using the information provided above, answer the following question for the user.
@@ -60,7 +62,14 @@ class WebsiteQueryTool(Tool):
 
         text = semantic_search(self._embedding_model, question, text, 16000)
         prompt = build_prompt(question, text)
-        response = self._llm.get_completion(prompt, QUERY_SYSTEM_PROMPT)[0]
 
+        messages = [
+            {
+                'role': 'system',
+                'content': prompt
+            }
+        ]
+
+        response, _ = self._llm.get_completion(messages=messages)
         return response
 

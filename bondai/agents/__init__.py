@@ -10,10 +10,12 @@ from .messages import (
     ConversationMessage,
     ToolUsageMessage,
     AgentMessageList,
+    message_to_dict,
     USER_MEMBER_NAME
 )
 from .util import (
     AgentStatus, 
+    AgentEventNames,
     AgentException,
     BudgetExceededException,
     MaxStepsExceededException,
@@ -26,6 +28,7 @@ __all__ = [
     'parse_response_content_message',
     'DEFAULT_MESSAGE_PROMPT_TEMPLATE',
     'AgentStatus',
+    'AgentEventNames',
     'AgentException',
     'BudgetExceededException',
     'MaxStepsExceededException',
@@ -36,5 +39,6 @@ __all__ = [
     'ConversationMessage',
     'ToolUsageMessage',
     'AgentMessageList',
+    'message_to_dict',
     'USER_MEMBER_NAME'
 ]

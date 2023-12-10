@@ -4,16 +4,17 @@ import os
 import argparse
 from termcolor import cprint
 from bondai.util import ModelLogger
-# from bondai.api import BondAIAPIServer
+from bondai.api import BondAIAPIServer
 from bondai.models import LLM
+from bondai.tools import AgentTool
 from bondai.agents import (
+    Agent,
+    AgentEventNames,
     ConversationalAgent, 
-    ConversationMember, 
     BudgetExceededException
 )
 from bondai.agents.group_chat import (
     GroupConversation, 
-    TeamConversationConfig, 
     UserProxy
 )
 from bondai.models.openai import (
@@ -28,11 +29,9 @@ from bondai.memory import (
     PersistentCoreMemoryDataSource, 
     InMemoryCoreMemoryDataSource
 )
+from .default_tools import load_all_tools
 from .personas import (
-    adversarial_agent as adversarial_agent_profile,
-    coordination_agent as coordination_agent_profile,
-    task_processing_agent as task_processing_agent_profile,
-    user_liaison as user_liaison_profile,
+    user_liaison_agent as user_liaison_profile,
 )
 
 if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get('OPENAI_API_KEY'):
@@ -44,10 +43,6 @@ if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get(
         import openai
         openai.api_key = user_input
 
-
-
-
-cprint(f"Loading BondAI...", 'white')
 
 parser = argparse.ArgumentParser(description="BondAI CLI tool options")
 
@@ -82,110 +77,76 @@ if args.enable_prompt_logging:
     enable_logging(ModelLogger(log_dir))
     cprint(f"Prompt logging is enabled. Logs will be written to: {log_dir}", "yellow")
 
-def build_group_conversation(llm : LLM, user_proxy: ConversationMember) -> GroupConversation:
+def build_agents(llm : LLM) -> GroupConversation:
+    task_execution_agent = Agent(
+        llm=llm,
+        tools=load_all_tools(),
+        max_tool_retries=5,
+        memory_manager=MemoryManager(
+            core_memory_datasource=InMemoryCoreMemoryDataSource(
+                sections={
+                    "task": "No information is stored about the current task."
+                },
+                max_section_size=10000
+            )
+        )
+    )
+    
     user_liaison_agent = ConversationalAgent(
         llm=llm,
         name=user_liaison_profile.NAME,
         persona=user_liaison_profile.PERSONA,
         persona_summary=user_liaison_profile.PERSONA_SUMMARY,
         instructions=user_liaison_profile.INSTRUCTIONS,
-        tools=user_liaison_profile.TOOLS,
+        tools=[AgentTool(task_execution_agent)],
         memory_manager=MemoryManager(
-            # core_memory_datasource=PersistentCoreMemoryDataSource(
-            #     file_path="./.memory/user_liason_core_memory.json",
-            #     sections={
-            #         "user": "User's Name is unknown.",
-            #         "task": "Task details unknown",
-            #     }
-            # )
-        )
-    )
-    coordination_agent = ConversationalAgent(
-        llm=llm,
-        name=coordination_agent_profile.NAME,
-        persona=coordination_agent_profile.PERSONA,
-        persona_summary=coordination_agent_profile.PERSONA_SUMMARY,
-        tools=coordination_agent_profile.TOOLS,
-        enable_exit_conversation=False,
-        memory_manager=MemoryManager(
-            core_memory_datasource=InMemoryCoreMemoryDataSource(
+            core_memory_datasource=PersistentCoreMemoryDataSource(
+                file_path="./.memory/user_liason_core_memory.json",
                 sections={
-                    "task": "Task details unknown",
-                    "agents": "Agent details unknown"
-                }
-            )
-        )
-    )
-    task_processing_agent = ConversationalAgent(
-        llm=llm,
-        name=task_processing_agent_profile.NAME,
-        persona=task_processing_agent_profile.PERSONA,
-        persona_summary=task_processing_agent_profile.PERSONA_SUMMARY,
-        tools=task_processing_agent_profile.TOOLS,
-        enable_exit_conversation=False,
-        memory_manager=MemoryManager(
-            core_memory_datasource=InMemoryCoreMemoryDataSource(
-                sections={
-                    "task": "Task details unknown",
-                    "feedback": "No feedback received"
-                }
-            )
-        )
-    )
-    adversarial_agent = ConversationalAgent(
-        llm=llm,
-        name=adversarial_agent_profile.NAME,
-        persona=adversarial_agent_profile.PERSONA,
-        persona_summary=adversarial_agent_profile.PERSONA_SUMMARY,
-        tools=adversarial_agent_profile.TOOLS,
-        enable_exit_conversation=False,
-        memory_manager=MemoryManager(
-            core_memory_datasource=InMemoryCoreMemoryDataSource(
-                sections={
-                    "task": "Task details unknown",
-                    "agents": "Agent details unknown"
+                    "user": "No information is stored about the user."
                 }
             )
         )
     )
 
-    return GroupConversation(
-        conversation_config = TeamConversationConfig(
-            [user_proxy, user_liaison_agent],
-            [user_liaison_agent, coordination_agent, adversarial_agent], 
-            [coordination_agent, adversarial_agent, task_processing_agent]
-        )
-    )
+    return task_execution_agent, user_liaison_agent
 
 
 def run_cli():
+    cprint(f"Loading BondAI...", 'white')
     try:
         llm=OpenAILLM(OpenAIModelNames.GPT4_0613)
         if args.server:
             port = int(args.server)
-            # user_proxy = UserProxy()
-            # group_conversation = build_group_conversation(
-            #     user_proxy=user_proxy,
-            #     llm=llm
-            # )
-            # server = BondAIAPIServer(
-            #     group_conversation=group_conversation, 
-            #     port=port
-            # )
+            server = BondAIAPIServer(
+                port=port,
+                agent_builder=lambda: build_agents(llm)
+            )
 
-            # try:
-            #     server.run()
-            # except KeyboardInterrupt:
-            #     cprint(f"\n\nStopping BondAI server...\n", 'red')
+            try:
+                server.run()
+            except KeyboardInterrupt:
+                cprint(f"\n\nStopping BondAI server...\n", 'red')
         else:
             try:
                 user_proxy = UserProxy()
-                group_conversation = build_group_conversation(
-                    user_proxy=user_proxy,
-                    llm=llm
+                task_execution_agent, user_liaison_agent = build_agents(llm)
+                group_conversation = GroupConversation(
+                    conversation_members=[user_proxy, user_liaison_agent]
                 )
+                
+                @task_execution_agent.on(AgentEventNames.TOOL_SELECTED)
+                def tool_selected(agent, tool_message):
+                    if not args.quiet:
+                        if tool_message.tool_arguments and 'thought' in tool_message.tool_arguments:
+                            message = f"Using tool {tool_message.tool_name}: {tool_message.tool_arguments['thought']}"
+                        else:
+                            message = f"Using tool {tool_message.tool_name}..."
+                        cprint(message, 'green')
+
+
                 cprint("******************ENTERING CHAT******************", 'white')
-                cprint("You are entering a chat with Ava. You can exit any time by typing 'exit'.", "white")
+                cprint("You are entering a chat with BondAI...\nYou can exit any time by typing 'exit'.", "white")
                 intro_message = "The user has just logged in. Please introduce yourself in a friendly manner."
                 group_conversation.send_message(
                     recipient_name=user_liaison_profile.NAME,

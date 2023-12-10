@@ -1,37 +1,29 @@
 import json
 import requests
 from socketio import Client
+from bondai.util import EventMixin
+from bondai.agents import (
+    AgentEventNames, 
+    ConversationMemberEventNames
+)
 
-class BondAIAPIClient:
+class BondAIAPIClient(EventMixin):
     def __init__(self, base_url='http://127.0.0.1:2663'):
+        EventMixin.__init__(
+            self, 
+            allowed_events=[
+                "agent_message",
+                AgentEventNames.TOOL_SELECTED,
+                AgentEventNames.TOOL_COMPLETED,
+                AgentEventNames.TOOL_ERROR,
+                ConversationMemberEventNames.MESSAGE_RECEIVED,
+                ConversationMemberEventNames.MESSAGE_COMPLETED,
+                ConversationMemberEventNames.MESSAGE_ERROR,
+                ConversationMemberEventNames.CONVERSATION_EXITED
+            ]
+        )
         self.base_url = base_url
         self.ws_client = None
-        self._events = {
-            'conversational_agent_started': [],
-            'conversational_agent_message': [],
-            'conversational_agent_completed': [],
-            'task_agent_started': [],
-            'task_agent_step_started': [],
-            'task_agent_step_tool_selected': [],
-            'task_agent_step_completed': [],
-            'task_agent_completed': [],
-        }
-    
-    def on(self, event_name):
-        """Register a callback to an event."""
-        if event_name not in self._events:
-            raise ValueError(f"Unsupported event '{event_name}'")
-
-        def decorator(callback):
-            self._events[event_name].append(callback)
-            return callback
-        
-        return decorator
-
-    def _trigger_event(self, event_name, agent_id, *args, **kwargs):
-        """Trigger the specified event."""
-        for callback in self._events.get(event_name, []):
-            callback(agent_id, *args, **kwargs)
     
     def connect_ws(self):
         if self.ws_client:
@@ -42,26 +34,11 @@ class BondAIAPIClient:
         @self.ws_client.on('message')
         def on_message(message):
             message = json.loads(message)
-            print(message)
             event = message.get('event')
             agent_id = message['data']['agent_id']
+            agent_message = message['data']['message']
 
-            if event == 'conversational_agent_started':
-                self._trigger_event(event, agent_id)
-            elif event == 'conversational_agent_message':
-                self._trigger_event(event, agent_id, message['data']['message'])
-            elif event == 'conversational_agent_completed':
-                self._trigger_event(event, agent_id)
-            elif event == 'task_agent_started':
-                self._trigger_event(event, agent_id)
-            elif event == 'task_agent_completed':
-                self._trigger_event(event, agent_id)
-            elif event == 'task_agent_step_started':
-                self._trigger_event(event, agent_id)
-            elif event == 'task_agent_step_tool_selected':
-                self._trigger_event(event, agent_id, message['data']['step'])
-            elif event == 'task_agent_step_completed':
-                self._trigger_event(event, agent_id, message['data']['step'])
+            self._trigger_event(event, agent_id, message=agent_message)
 
     def disconnect_ws(self):
         if self.ws_client:
@@ -75,14 +52,9 @@ class BondAIAPIClient:
         if not self.is_ws_connected():
             self.connect_ws()
         message = {"event": event, "data": data}
+        print(message)
         message_bytes = json.dumps(message).encode('utf-8')
         self.ws_client.send(message_bytes)
-    
-    def send_user_message(self, agent_id, message):
-        self.send_ws_message("user_message", {
-            "agent_id": agent_id,
-            "message": message
-        })
 
     def _request(self, method, endpoint, data=None):
         url = f"{self.base_url}{endpoint}"
@@ -104,6 +76,10 @@ class BondAIAPIClient:
     def create_agent(self):
         return self._request('POST', '/agents')
     
+    def send_message(self, agent_id, message):
+        data = { "message": message }
+        return self._request('POST', f'/agents/{agent_id}/messages', data)
+    
     def list_agents(self):
         return self._request('GET', '/agents')
     
@@ -122,16 +98,6 @@ class BondAIAPIClient:
     
     def remove_agent_tool(self, agent_id, tool_name):
         return self._request('DELETE', f'/agents/{agent_id}/tools/{tool_name}')
-    
-    def start_agent(self, agent_id, task=None, task_budget=None, max_steps=None):
-        data = {}
-        if task:
-            data['task'] = task
-        if task_budget:
-            data['task_budget'] = task_budget
-        if max_steps:
-            data['max_steps'] = max_steps
-        return self._request('POST', f'/agents/{agent_id}/start', data)
     
     def stop_agent(self, agent_id):
         return self._request('POST', f'/agents/{agent_id}/stop')

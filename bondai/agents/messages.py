@@ -34,6 +34,7 @@ class ConversationMessage(AgentMessage):
     recipient_name: str | None = field(default=None)
     message: str | None = field(default=None)
     message_summary: str | None = field(default=None)
+    require_response: bool = field(default=True)
     success: bool = field(default=False)
     error: Exception | None = field(default=None)
     conversation_exited: bool = field(default=False)

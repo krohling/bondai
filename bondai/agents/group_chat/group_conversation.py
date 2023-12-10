@@ -1,10 +1,12 @@
+import uuid
 import asyncio
 import traceback
 from datetime import datetime
 from typing import Dict, List, Callable
-from bondai.util import EventMixin
+from bondai.util import EventMixin, Runnable
 from bondai.agents import (
     AgentException,
+    AgentStatus,
     ConversationMember, 
     ConversationMemberEventNames,
     AgentMessageList,
@@ -16,10 +18,10 @@ from .group_conversation_config import (
     TeamConversationConfig
 )
 
-class GroupConversation(EventMixin):
+class GroupConversation(EventMixin, Runnable):
 
     def __init__(self, 
-                    agents: List[ConversationMember] | None = None, 
+                    conversation_members: List[ConversationMember] | None = None, 
                     conversation_config: BaseGroupConversationConfig | None = None, 
                     filter_recipient_messages: bool = False,
                     content_stream_callback: Callable[[str], None] | None = None,
@@ -33,16 +35,18 @@ class GroupConversation(EventMixin):
                 ConversationMemberEventNames.CONVERSATION_EXITED
             ]
         )
-        if agents and conversation_config:
-            raise AgentException("Only one of 'agents' or 'conversation_configs' must be provided")
+        if conversation_members and conversation_config:
+            raise AgentException("Only one of 'conversation_members' or 'conversation_configs' must be provided")
 
         if conversation_config:
             self._conversation_config = conversation_config
-        elif agents:
-            self._conversation_config = TeamConversationConfig(agents)
+        elif conversation_members:
+            self._conversation_config = TeamConversationConfig(conversation_members)
         else:
-            raise AgentException("Either 'agents' or 'conversation_config' must be provided")
+            raise AgentException("Either 'conversation_members' or 'conversation_config' must be provided")
 
+        self._id: str = str(uuid.uuid4())
+        self._status: AgentStatus = AgentStatus.IDLE
         self._content_stream_callback: Callable[[str], None] | None = content_stream_callback
         self._function_stream_callback: Callable[[str], None] | None = function_stream_callback
         self._filter_recipient_messages: bool = filter_recipient_messages
@@ -50,6 +54,14 @@ class GroupConversation(EventMixin):
 
         self._init_member_events()
     
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def status(self) -> AgentStatus:
+        return self._status
+
     @property
     def members(self) -> List[ConversationMember]:
         return self._conversation_config.members
@@ -97,6 +109,9 @@ class GroupConversation(EventMixin):
     
 
     def save_state(self) -> Dict:
+        if self._status == AgentStatus.RUNNING:
+            raise AgentException('Cannot save group conversation state while it is running.')
+        
         state = {}
         for member in self.members:
             state[member.id] = member.save_state()
@@ -104,61 +119,112 @@ class GroupConversation(EventMixin):
         return state
 
     def load_state(self, state: Dict):
+        if self._status == AgentStatus.RUNNING:
+            raise AgentException('Cannot load group conversation state while it is running.')
+        
         for member in self.members:
             member.load_state(state[member.id])
+
+    def send_message_async(self, 
+                    recipient_name: str, 
+                    message: str, 
+                    sender_name: str = USER_MEMBER_NAME, 
+                    require_response: bool = True
+                ):
+        """Runs the agent's task in a separate thread."""
+        if self._status == AgentStatus.RUNNING:
+            raise AgentException('Cannot send message while agent is in a running state.')        
+        if not message:
+            raise AgentException("'message' cannot be empty.")
+        
+        args = (
+            recipient_name,
+            message,
+            sender_name,
+            require_response
+        )
+
+        self._start_execution_thread(self.send_message, args=args)
 
     def send_message(self, 
                         recipient_name: str, 
                         message: str, 
                         sender_name: str = USER_MEMBER_NAME, 
+                        require_response: bool = True
                     ) -> str:
-        next_message = ConversationMessage(
-            message=message, 
-            sender_name=sender_name, 
-            recipient_name=recipient_name
-        )
+        if self._status == AgentStatus.RUNNING:
+            raise AgentException('Cannot send message while agent is in a running state.')        
+        if not message:
+            raise AgentException("'message' cannot be empty.")
 
-        while next_message:
-            if next_message.sender_name.lower() == USER_MEMBER_NAME.lower():
-                sender_reachable_members = self.members
-            else:
-                sender_reachable_members = self._conversation_config.get_reachable_members(member_name=next_message.sender_name)
+        previous_message = None
+        if isinstance(message, ConversationMessage):
+            next_message = message
+        elif isinstance(message, str):
+            if not sender_name:
+                raise AgentException("sender_name cannot be empty.")
+            if not recipient_name:
+                raise AgentException("recipient_name cannot be empty.")
             
-            recipient = next((m for m in sender_reachable_members if m.name.lower() == next_message.recipient_name.lower()), None)
-            if not recipient:
-                raise AgentException(f"Recipient {next_message.recipient_name} not found")
+            next_message = ConversationMessage(
+                sender_name=sender_name,
+                recipient_name=recipient_name,
+                message=message,
+                require_response=require_response
+            )
+        else:
+            raise AgentException("'message' must be an instance of ConversationMessage or a string.")
 
-            recipient_reachable_members = self._conversation_config.get_reachable_members(member=recipient)
+        try:
+            self._status = AgentStatus.RUNNING
+            while next_message:
+                if next_message.sender_name.lower() == USER_MEMBER_NAME.lower():
+                    sender_reachable_members = self.members
+                else:
+                    sender_reachable_members = self._conversation_config.get_reachable_members(member_name=next_message.sender_name)
+                
+                recipient = next((m for m in sender_reachable_members if m.name.lower() == next_message.recipient_name.lower()), None)
+                if not recipient:
+                    raise AgentException(f"Recipient {next_message.recipient_name} not found")
 
-            if self._filter_recipient_messages:
-                recipient_messages = AgentMessageList([
-                    message for message in self._messages 
-                        if message.recipient_name.lower() == recipient.name.lower() or message.sender_name.lower() == recipient.name.lower()
-                ])
-            else:
-                recipient_messages = self._messages
+                recipient_reachable_members = self._conversation_config.get_reachable_members(member=recipient)
 
-            try:
-                next_message  = recipient.send_message(
-                    message=next_message, 
-                    group_members=recipient_reachable_members,
-                    group_messages = recipient_messages,
-                    content_stream_callback=self._content_stream_callback,
-                    function_stream_callback=self._function_stream_callback
-                )
-            except AgentException as e:
-                print("Error occurred, rewinding conversation...")
-                print(e)
-                # The recipient agent has errored out. We will rewind the conversation and try again.
-                previous_message = self._messages[-2] if len(self._messages) > 1 else self._messages[-1]
-                self.remove_messages_after(previous_message.timestamp)
-                next_message = ConversationMessage(
-                    message=previous_message.message,
-                    sender_name=previous_message.sender_name,
-                    recipient_name=previous_message.recipient_name
-                )
+                if self._filter_recipient_messages:
+                    recipient_messages = AgentMessageList([
+                        m for m in self._messages 
+                            if m.recipient_name.lower() == recipient.name.lower() or m.sender_name.lower() == recipient.name.lower()
+                    ])
+                else:
+                    recipient_messages = self._messages
 
-        self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, next_message)
+                try:
+                    if next_message.require_response:
+                        previous_message = next_message
+                        next_message = recipient.send_message(
+                            message=next_message, 
+                            group_members=recipient_reachable_members,
+                            group_messages = recipient_messages,
+                            content_stream_callback=self._content_stream_callback,
+                            function_stream_callback=self._function_stream_callback
+                        )
+                    else:
+                        recipient.send_message(message=next_message)
+                        next_message = previous_message
+                except AgentException as e:
+                    print("Error occurred, rewinding conversation...")
+                    print(e)
+                    # The recipient agent has errored out. We will rewind the conversation and try again.
+                    previous_message = self._messages[-2] if len(self._messages) > 1 else self._messages[-1]
+                    self.remove_messages_after(previous_message.timestamp)
+                    next_message = ConversationMessage(
+                        message=previous_message.message,
+                        sender_name=previous_message.sender_name,
+                        recipient_name=previous_message.recipient_name
+                    )
+
+            self._trigger_event(ConversationMemberEventNames.CONVERSATION_EXITED, next_message)
+        finally:
+            self._status = AgentStatus.IDLE
 
     def send_message_async(self, 
                             recipient_name: str, 

@@ -53,7 +53,7 @@ The content of the message should be relevant to the recipient's role and capabi
 **Example 1**
 
 ```
-{{ name }} to Atlas: User has requested data analysis on recent sales trends. Please advise on task allocation.
+{{ name }} to Cortx: User has requested data analysis on recent sales trends. Please advise on task allocation.
 ```
 
 **Example 2**
@@ -71,7 +71,7 @@ The content of the message should be relevant to the recipient's role and capabi
 **Example 4**
 
 ```
-{{ name }} to Atlas: Review of Cortex's sales report completed. Minor discrepancies found in data interpretation. Suggest reevaluation.
+{{ name }} to Vega: Review of Cortex's sales report completed. Minor discrepancies found in data interpretation. Suggest reevaluation.
 ```
 
 **Valid Recipients**

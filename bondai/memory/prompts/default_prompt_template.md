@@ -9,7 +9,7 @@ Your core memory unit is held inside the initial system instructions, and is alw
 {%- if core_memory_datasource.sections %}
 Your core memory has the following sections:
 {% for section in core_memory_datasource.sections %}
-<{{ section }}><{{ section }}/>
+<{{ section }}/>
 {% endfor %}
 {%- endif %}
 {%- endif %}

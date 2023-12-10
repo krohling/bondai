@@ -1,8 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict
 from bondai.tools import Tool
-from bondai.agents import Agent
-from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 TOOL_NAME = 'agent_tool'
 TOOL_DESCRIPTION = (
@@ -15,20 +12,27 @@ TOOL_DESCRIPTION = (
 
 class Parameters(BaseModel):
     task_description: str
-    thought: str
 
 class AgentTool(Tool):
-    def __init__(self, agent: Agent):
+
+    def __init__(self, agent):
         super(AgentTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         if agent is None:
             raise Exception("Agent is required.")
         self._agent = agent
     
-    def run(self, arguments: Dict) -> str:
-        task_description = arguments.get('task_description')
-        if task_description is None:
-            raise Exception("'task_description' is required.")
+    def run(self, task_description: str) -> str:
+        from bondai.agents import ToolUsageMessage
+        result = self._agent.run(task=task_description)
+        self._agent.clear_messages()
+
+        if isinstance(result, ToolUsageMessage):
+            if result.success:
+                return result.tool_output
+            else:
+                return f"Tool failed with the following error: {result.error}"
         
-        result = self._agent.run(task_description).output
-        self._agent.reset_memory()
         return result
+
+    def stop(self):
+        self._agent.stop()

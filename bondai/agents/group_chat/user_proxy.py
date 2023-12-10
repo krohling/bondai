@@ -36,9 +36,10 @@ class UserProxy(EventMixin, ConversationMember):
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
-                    group_members: List[Agent] | None = None, 
-                    group_messages: List[AgentMessage] | None = None,
-                    max_send_attempts: int = None, 
+                    group_members: List | None = None, 
+                    group_messages: List[AgentMessage] | None = None, 
+                    max_attempts: int = None, 
+                    require_response: bool = True,
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
                 ):
@@ -56,13 +57,21 @@ class UserProxy(EventMixin, ConversationMember):
             agent_message = ConversationMessage(
                 sender_name=sender_name,
                 recipient_name=self.name,
-                message=message
+                message=message,
+                require_response=require_response
             )
 
         self._messages.add(agent_message)
         self._trigger_event(ConversationMemberEventNames.MESSAGE_RECEIVED, self, agent_message)
 
         cprint("\n" + agent_message.message + "\n", "white")
+
+        if not agent_message.require_response:
+            agent_message.success = True
+            agent_message.cost = 0.0
+            agent_message.completed_at = datetime.now()
+            self._trigger_event(ConversationMemberEventNames.MESSAGE_COMPLETED, self, agent_message)
+            return
         
         while True:
             try:

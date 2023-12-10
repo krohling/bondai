@@ -2,7 +2,6 @@ import os
 import traceback
 import json
 from datetime import datetime
-from enum import Enum
 from typing import Dict, List, Callable
 from bondai.util import load_local_resource
 from bondai.tools import Tool
@@ -22,6 +21,7 @@ from bondai.models.openai import (
 )
 from .agent import (
     Agent, 
+    DEFAULT_MAX_TOOL_RETRIES,
     AgentStatus, 
     AgentException,
 )
@@ -63,6 +63,7 @@ class ConversationalAgent(Agent, ConversationMember):
                     system_prompt_builder: Callable[..., str] = None,
                     message_prompt_builder: Callable[..., str] = None,
                     memory_manager : MemoryManager | None = None,
+                    max_tool_retries : int = DEFAULT_MAX_TOOL_RETRIES,
                     max_context_length: int = None,
                     max_context_pressure_ratio: float = 0.8,
                     enable_context_compression: bool = False,
@@ -94,7 +95,9 @@ class ConversationalAgent(Agent, ConversationMember):
             memory_manager=memory_manager,
             max_context_length=max_context_length,
             max_context_pressure_ratio=max_context_pressure_ratio,
+            max_tool_retries=max_tool_retries,
             enable_context_compression=enable_context_compression,
+            enable_final_answer_tool=False,
             allowed_events=[
                 AgentEventNames.CONTEXT_COMPRESSION_REQUESTED,
                 AgentEventNames.TOOL_SELECTED,
@@ -118,12 +121,42 @@ class ConversationalAgent(Agent, ConversationMember):
     def instructions(self) -> str:
         return self._instructions
 
+    def send_message_async(self, 
+                    message: str | ConversationMessage, 
+                    sender_name: str = USER_MEMBER_NAME, 
+                    group_members: List[ConversationMember] | None = None, 
+                    group_messages: List[AgentMessage] | None = None, 
+                    max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
+                    require_response: bool = True,
+                    content_stream_callback: Callable[[str], None] | None = None,
+                    function_stream_callback: Callable[[str], None] | None = None
+                ):
+        """Runs the agent's task in a separate thread."""
+        if self._status == AgentStatus.RUNNING:
+            raise AgentException('Cannot send message while agent is in a running state.')        
+        if not message:
+            raise AgentException("'message' cannot be empty.")
+        
+        args = (
+            message,
+            sender_name,
+            group_members,
+            group_messages,
+            max_attempts,
+            require_response,
+            content_stream_callback,
+            function_stream_callback
+        )
+
+        self._start_execution_thread(self.send_message, args=args)
+    
     def send_message(self, 
                     message: str | ConversationMessage, 
                     sender_name: str = USER_MEMBER_NAME, 
                     group_members: List[ConversationMember] | None = None, 
                     group_messages: List[AgentMessage] | None = None, 
                     max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
+                    require_response: bool = True,
                     content_stream_callback: Callable[[str], None] | None = None,
                     function_stream_callback: Callable[[str], None] | None = None
                 ) -> (ConversationMessage | None):
@@ -145,7 +178,8 @@ class ConversationalAgent(Agent, ConversationMember):
             agent_message = ConversationMessage(
                 sender_name=sender_name,
                 recipient_name=self.name,
-                message=message
+                message=message,
+                require_response=require_response
             )
         else:
             raise AgentException("'message' must be an instance of ConversationMessage or a string.")
@@ -177,11 +211,23 @@ class ConversationalAgent(Agent, ConversationMember):
             if len(group_members) > 0 and not any([member.name.lower() == recipient_name.lower() for member in group_members]):
                 return f"InvalidResponseError: The response does not conform to the required format. You do not have the ability to send messages to '{recipient_name}'. Try sending a message to someone else."
         
-        while True:
+        if not agent_message.require_response:
+            complete_agent_message(success=True)
+            return
+        
+        while not self._force_stop:
             try:
                 attempts += 1
                 if attempts > max_attempts:
                     raise AgentException("The maximum number of attempts has been exceeded.")
+
+                prompt_vars = {
+                    "name": self.name,
+                    "persona": self.persona,
+                    "instructions": self.instructions,
+                    "conversation_enabled": self._enable_conversation,
+                    "allow_exit": self._enable_exit_conversation,
+                }
 
                 tool_result = self._run_tool_loop(
                     addition_context_messages=group_messages,
@@ -190,7 +236,8 @@ class ConversationalAgent(Agent, ConversationMember):
                     starting_cost=starting_cost,
                     return_conversational_responses=True,
                     content_stream_callback=content_stream_callback,
-                    function_stream_callback=function_stream_callback
+                    function_stream_callback=function_stream_callback,
+                    prompt_vars=prompt_vars
                 )
 
                 response_message: ConversationMessage | None = None
@@ -237,18 +284,24 @@ class ConversationalAgent(Agent, ConversationMember):
             finally:
                 self._status = AgentStatus.IDLE
     
+    def to_dict(self) -> Dict:
+        data = super().to_dict()
+        data['name'] = self._name
+        data['persona'] = self._persona
+        data['persona_summary'] = self._persona_summary
+        data['instructions'] = self.instructions
+        data['allow_exit'] = self._enable_exit_conversation
+        data['quiet'] = self._quiet
+        data['enable_conversation'] = self._enable_conversation
+        data['max_context_length'] = self._max_context_length
+        data['max_context_pressure_ratio'] = self._max_context_pressure_ratio
+        data['messages'] = self.messages.to_dict()
+        return data
+
+
     def save_state(self, file_path: str = None) -> Dict:
         state = super().save_state()
-        state['name'] = self._name
-        state['persona'] = self._persona
-        state['persona_summary'] = self._persona_summary
-        state['instructions'] = self.instructions
-        state['allow_exit'] = self._enable_exit_conversation
-        state['quiet'] = self._quiet
-        state['enable_conversation'] = self._enable_conversation
-        state['max_context_length'] = self._max_context_length
-        state['max_context_pressure_ratio'] = self._max_context_pressure_ratio
-        state['messages'] = self.messages.to_dict()
+        state.update(self.to_dict())
 
         if file_path:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)

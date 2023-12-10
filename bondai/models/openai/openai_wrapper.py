@@ -74,17 +74,16 @@ def create_embedding(text: str, model: str = "text-embedding-ada-002", connectio
         'input': text if isinstance(text, list) else [text],
     }
 
-    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE:
+    if connection_params.get('api_type', '') == OpenAIConnectionType.AZURE.value:
         client = AzureOpenAI(
             api_key=connection_params['api_key'],
             api_version=connection_params['api_version'],
-            azure_endpoint=connection_params['azure_endpoint'],
+            azure_endpoint=connection_params['azure_endpoint']
         )
         params['model'] = connection_params['azure_deployment']
     else:
         client = OpenAI(**connection_params)
         params['model'] = model
-    
     
     response = client.embeddings.create(
         **params,
@@ -98,6 +97,7 @@ def create_embedding(text: str, model: str = "text-embedding-ada-002", connectio
     })
 
     embeddings = [d.embedding for d in response.data]
+
     if len(embeddings) > 0:
         return embeddings
     else:

@@ -69,7 +69,6 @@ class ListEmailsTool(Tool):
                 msg_subj = get_email_attr(message, 'Subject')
                 output += f"Id: {msg_id}\nDate: {msg_received}\nFrom: {msg_from}\nSubject: {msg_subj}\n\n"
             
-            print(output)
             return output
         else:
             return '0 messages were found.'

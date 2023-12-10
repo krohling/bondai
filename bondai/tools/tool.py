@@ -54,4 +54,8 @@ class Tool():
           # This function is called when the agent is loading state.
           # The state is passed in as a dictionary.
           pass
+
+     def stop(self):
+          # This function is called when the agent is being forcibly stopped.
+          pass
     
