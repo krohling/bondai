@@ -16,6 +16,8 @@ class BondAIAPIClient(EventMixin):
                 AgentEventNames.TOOL_SELECTED,
                 AgentEventNames.TOOL_COMPLETED,
                 AgentEventNames.TOOL_ERROR,
+                AgentEventNames.STREAMING_CONTENT_UPDATED,
+                AgentEventNames.STREAMING_FUNCTION_UPDATED,
                 ConversationMemberEventNames.MESSAGE_RECEIVED,
                 ConversationMemberEventNames.MESSAGE_COMPLETED,
                 ConversationMemberEventNames.MESSAGE_ERROR,
@@ -36,9 +38,17 @@ class BondAIAPIClient(EventMixin):
             message = json.loads(message)
             event = message.get('event')
             agent_id = message['data']['agent_id']
-            agent_message = message['data']['message']
 
-            self._trigger_event(event, agent_id, message=agent_message)
+            if event == 'streaming_content_updated':
+                content_buffer = message['data']['content_buffer']
+                self._trigger_event(event, agent_id, content_buffer=content_buffer)
+            elif event == 'streaming_function_updated':
+                function_name = message['data']['function_name']
+                arguments_buffer = message['data']['arguments_buffer']
+                self._trigger_event(event, agent_id, function_name=function_name, arguments_buffer=arguments_buffer)
+            else:
+                agent_message = message['data']['message']
+                self._trigger_event(event, agent_id, message=agent_message)
 
     def disconnect_ws(self):
         if self.ws_client:

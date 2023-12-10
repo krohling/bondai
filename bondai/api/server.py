@@ -14,7 +14,6 @@ from bondai.agents.group_chat import GroupConversation
 from bondai.agents import (
     Agent,
     AgentEventNames, 
-    AgentMessage,
     ConversationalAgent, 
     ConversationMemberEventNames,
     message_to_dict,
@@ -95,12 +94,12 @@ class BondAIAPIServer:
                 )
                 
     
-    def _send_message(self, event: ConversationMemberEventNames, agent: ConversationalAgent, message: AgentMessage):
+    def _send_message(self, event: ConversationMemberEventNames, agent: ConversationalAgent, **kwargs):
         data = {
             'event': event.value,
             'data': {
                 'agent_id': agent.id,
-                'message': message_to_dict(message)
+                **kwargs
             }
         }
         payload = json.dumps(data)
@@ -109,33 +108,50 @@ class BondAIAPIServer:
     def _setup_conversation_events(self, conversational_agent: ConversationalAgent):
         conversational_agent.on(
             ConversationMemberEventNames.MESSAGE_RECEIVED, 
-            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_RECEIVED, agent, message)
+            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_RECEIVED, agent, message=message_to_dict(message))
         )
         conversational_agent.on(
             ConversationMemberEventNames.MESSAGE_COMPLETED, 
-            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_COMPLETED, agent, message)
+            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_COMPLETED, agent, message=message_to_dict(message))
         )
         conversational_agent.on(
             ConversationMemberEventNames.MESSAGE_ERROR, 
-            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_ERROR, agent, message)
+            lambda agent, message: self._send_message(ConversationMemberEventNames.MESSAGE_ERROR, agent, message=message_to_dict(message))
         )
         conversational_agent.on(
             ConversationMemberEventNames.CONVERSATION_EXITED, 
-            lambda agent, message: self._send_message(ConversationMemberEventNames.CONVERSATION_EXITED, agent, message)
+            lambda agent, message: self._send_message(ConversationMemberEventNames.CONVERSATION_EXITED, agent, message=message_to_dict(message))
+        )
+        conversational_agent.on(
+            AgentEventNames.STREAMING_CONTENT_UPDATED, 
+            lambda agent, content_buffer: self._send_message(
+                AgentEventNames.STREAMING_CONTENT_UPDATED, 
+                agent, 
+                content_buffer=content_buffer
+            )
+        )
+        conversational_agent.on(
+            AgentEventNames.STREAMING_FUNCTION_UPDATED, 
+            lambda agent, function_name, arguments_buffer: self._send_message(
+                AgentEventNames.STREAMING_FUNCTION_UPDATED, 
+                agent, 
+                function_name=function_name, 
+                arguments_buffer=arguments_buffer
+            )
         )
     
     def _setup_execution_events(self, conversational_agent: ConversationalAgent, task_execution_agent: Agent):
         task_execution_agent.on(
             AgentEventNames.TOOL_SELECTED,
-            lambda agent, message: self._send_message(AgentEventNames.TOOL_SELECTED, conversational_agent, message)
+            lambda agent, message: self._send_message(AgentEventNames.TOOL_SELECTED, conversational_agent, message=message_to_dict(message))
         )
         task_execution_agent.on(
             AgentEventNames.TOOL_COMPLETED,
-            lambda agent, message: self._send_message(AgentEventNames.TOOL_COMPLETED, conversational_agent, message)
+            lambda agent, message: self._send_message(AgentEventNames.TOOL_COMPLETED, conversational_agent, message=message_to_dict(message))
         )
         task_execution_agent.on(
             AgentEventNames.TOOL_ERROR,
-            lambda agent, message: self._send_message(AgentEventNames.TOOL_ERROR, conversational_agent, message)
+            lambda agent, message: self._send_message(AgentEventNames.TOOL_ERROR, conversational_agent, message=message_to_dict(message))
         )
         
 

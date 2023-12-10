@@ -47,18 +47,18 @@ DEFAULT_MESSAGE_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('pr
 
 
 class FinalAnswerParameters(BaseModel):
-    task_results: str
+    results: str
 
 class FinalAnswerTool(Tool):
     def __init__(self):
         super().__init__(
             'final_answer', 
-            "Use the final_answer tool once you have completed your TASK. Provide a highly detailed description of the results of your task in the 'task_results' parameter.",
+            "Use the final_answer tool once you have completed your TASK. Provide a highly detailed description of the results of your task in the 'results' parameter.",
             FinalAnswerParameters
         )
     
-    def run(self, task_results: str) -> Tuple[str, bool]:
-        return task_results, True
+    def run(self, results: str) -> Tuple[str, bool]:
+        return results, True
 
 class Agent(EventMixin, Runnable):
 
@@ -83,6 +83,8 @@ class Agent(EventMixin, Runnable):
                 AgentEventNames.TOOL_SELECTED,
                 AgentEventNames.TOOL_COMPLETED,
                 AgentEventNames.TOOL_ERROR,
+                AgentEventNames.STREAMING_CONTENT_UPDATED,
+                AgentEventNames.STREAMING_FUNCTION_UPDATED,
                 AgentEventNames.CONTEXT_COMPRESSION_REQUESTED
             ]
         EventMixin.__init__(self, allowed_events=allowed_events)
@@ -197,21 +199,26 @@ class Agent(EventMixin, Runnable):
         
         llm_functions = list(map(lambda t: t.get_tool_function(), tools))
 
-        if self._llm.supports_streaming and (any([t.supports_streaming for t in tools]) or content_stream_callback):
-            def tool_function_stream_callback(function_name, arguments_buffer):
+        if self._llm.supports_streaming: # and (any([t.supports_streaming for t in tools]) or content_stream_callback):
+            def _function_stream_callback(function_name, arguments_buffer):
                 streaming_tools: [Tool] = [t for t in tools if t.name == function_name and t.supports_streaming]
                 if len(streaming_tools) > 0:
                     tool: Tool = streaming_tools[0]
                     tool.handle_stream_update(arguments_buffer)
                 if function_stream_callback:
                     function_stream_callback(function_name, arguments_buffer)
-                
+                self._trigger_event(AgentEventNames.STREAMING_FUNCTION_UPDATED, self, function_name, arguments_buffer)
+            
+            def _content_stream_callback(content_buffer):
+                if content_stream_callback:
+                    content_stream_callback(content_buffer)
+                self._trigger_event(AgentEventNames.STREAMING_CONTENT_UPDATED, self, content_buffer)
             
             llm_response, llm_response_function = self._llm.get_streaming_completion(
                 messages=messages,
                 functions=llm_functions, 
-                function_stream_callback=tool_function_stream_callback,
-                content_stream_callback=content_stream_callback
+                function_stream_callback=_function_stream_callback,
+                content_stream_callback=_content_stream_callback
             )
         else:
             llm_response, llm_response_function = self._llm.get_completion(
@@ -227,8 +234,6 @@ class Agent(EventMixin, Runnable):
                 task: str,
                 max_steps: int = None, 
                 max_budget: float = None,
-                content_stream_callback: Callable[[str], None] | None = None,
-                function_stream_callback: Callable[[str], None] | None = None
             ) -> ToolUsageMessage | str:
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot start agent while it is in a running state.')
@@ -240,8 +245,6 @@ class Agent(EventMixin, Runnable):
                 starting_cost=get_total_cost(),
                 max_budget=max_budget,
                 max_steps=max_steps,
-                content_stream_callback=content_stream_callback,
-                function_stream_callback=function_stream_callback
             )
         finally:
             self._status = AgentStatus.IDLE
@@ -250,14 +253,12 @@ class Agent(EventMixin, Runnable):
                     task: str,
                     max_steps: int = None, 
                     max_budget: float = None,
-                    content_stream_callback: Callable[[str], None] | None = None,
-                    function_stream_callback: Callable[[str], None] | None = None
                 ):
         """Runs the agent's task in a separate thread."""
         if self._status == AgentStatus.RUNNING:
             raise AgentException('Cannot start agent while it is in a running state.')
         
-        args = (task, max_steps, max_budget, content_stream_callback, function_stream_callback)
+        args = (task, max_steps, max_budget)
         self._start_execution_thread(target=self.run, args=args)
     
     def stop(self, timeout=10):

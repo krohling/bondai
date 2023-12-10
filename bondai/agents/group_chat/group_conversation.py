@@ -24,8 +24,6 @@ class GroupConversation(EventMixin, Runnable):
                     conversation_members: List[ConversationMember] | None = None, 
                     conversation_config: BaseGroupConversationConfig | None = None, 
                     filter_recipient_messages: bool = False,
-                    content_stream_callback: Callable[[str], None] | None = None,
-                    function_stream_callback: Callable[[str], None] | None = None
                 ):
         super().__init__(
             allowed_events=[
@@ -47,8 +45,6 @@ class GroupConversation(EventMixin, Runnable):
 
         self._id: str = str(uuid.uuid4())
         self._status: AgentStatus = AgentStatus.IDLE
-        self._content_stream_callback: Callable[[str], None] | None = content_stream_callback
-        self._function_stream_callback: Callable[[str], None] | None = function_stream_callback
         self._filter_recipient_messages: bool = filter_recipient_messages
         self._messages: AgentMessageList = AgentMessageList()
 
@@ -204,8 +200,6 @@ class GroupConversation(EventMixin, Runnable):
                             message=next_message, 
                             group_members=recipient_reachable_members,
                             group_messages = recipient_messages,
-                            content_stream_callback=self._content_stream_callback,
-                            function_stream_callback=self._function_stream_callback
                         )
                     else:
                         recipient.send_message(message=next_message)

@@ -100,3 +100,13 @@ user to BondAI: Can you summarize ai news from the past week?
 user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
 user to BondAI: Hi, can you summarize ai news from the past week?
 user to BondAI: This is great. Can you save it to a file named ai_news.md?
+user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
+user to BondAI: Hi, can you summarize AI news from the last week?
+user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
+user to BondAI: Hi, can you summarize ai news from the last week?
+user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
+user to BondAI: Hi, can you summarize ai news from the last week?
+user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
+user to BondAI: Please summarize ai news from the last week.
+user to BondAI: The user has just logged in. Please introduce yourself in a friendly manner.
+user to BondAI: Please summarize ai news from the last week

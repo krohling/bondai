@@ -28,6 +28,8 @@ class AgentEventNames(Enum):
     TOOL_SELECTED: str = 'tool_selected'
     TOOL_ERROR: str = 'tool_error'
     TOOL_COMPLETED: str = 'tool_completed'
+    STREAMING_CONTENT_UPDATED: str = 'streaming_content_updated'
+    STREAMING_FUNCTION_UPDATED: str = 'streaming_function_updated'
 
 def count_request_tokens(
                         llm: LLM,

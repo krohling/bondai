@@ -103,6 +103,8 @@ class ConversationalAgent(Agent, ConversationMember):
                 AgentEventNames.TOOL_SELECTED,
                 AgentEventNames.TOOL_ERROR,
                 AgentEventNames.TOOL_COMPLETED,
+                AgentEventNames.STREAMING_CONTENT_UPDATED,
+                AgentEventNames.STREAMING_FUNCTION_UPDATED,
                 ConversationMemberEventNames.MESSAGE_RECEIVED,
                 ConversationMemberEventNames.MESSAGE_ERROR,
                 ConversationMemberEventNames.MESSAGE_COMPLETED,
@@ -128,8 +130,6 @@ class ConversationalAgent(Agent, ConversationMember):
                     group_messages: List[AgentMessage] | None = None, 
                     max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                     require_response: bool = True,
-                    content_stream_callback: Callable[[str], None] | None = None,
-                    function_stream_callback: Callable[[str], None] | None = None
                 ):
         """Runs the agent's task in a separate thread."""
         if self._status == AgentStatus.RUNNING:
@@ -144,8 +144,6 @@ class ConversationalAgent(Agent, ConversationMember):
             group_messages,
             max_attempts,
             require_response,
-            content_stream_callback,
-            function_stream_callback
         )
 
         self._start_execution_thread(self.send_message, args=args)
@@ -157,8 +155,6 @@ class ConversationalAgent(Agent, ConversationMember):
                     group_messages: List[AgentMessage] | None = None, 
                     max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS, 
                     require_response: bool = True,
-                    content_stream_callback: Callable[[str], None] | None = None,
-                    function_stream_callback: Callable[[str], None] | None = None
                 ) -> (ConversationMessage | None):
         if group_members is None:
             group_members = []
@@ -235,8 +231,6 @@ class ConversationalAgent(Agent, ConversationMember):
                     conversation_members=group_members,
                     starting_cost=starting_cost,
                     return_conversational_responses=True,
-                    content_stream_callback=content_stream_callback,
-                    function_stream_callback=function_stream_callback,
                     prompt_vars=prompt_vars
                 )
 
