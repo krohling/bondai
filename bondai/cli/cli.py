@@ -129,7 +129,7 @@ def run_cli():
                 cprint(f"\n\nStopping BondAI server...\n", 'red')
         else:
             try:
-                user_proxy = UserProxy()
+                user_proxy = UserProxy(parse_recipients=False)
                 task_execution_agent, user_liaison_agent = build_agents(llm)
                 group_conversation = GroupConversation(
                     conversation_members=[user_proxy, user_liaison_agent]

@@ -246,7 +246,7 @@ class ConversationalAgent(Agent, ConversationMember):
                         response_message = tool_result.tool_output
             
 
-                if isinstance(tool_result, str):
+                if isinstance(tool_result, str) and self._enable_conversation:
                     recipient_name, message = parse_response_content_message(tool_result)
                     if not recipient_name or not message:
                         recipient_name = agent_message.sender_name

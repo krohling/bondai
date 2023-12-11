@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Dict, List, Tuple, Callable
 from bondai.util import EventMixin, Runnable, load_local_resource
-from bondai.tools import Tool
+from bondai.tools import Tool, ResponseQueryTool
 from bondai.models import LLM
 from bondai.memory import MemoryManager
 from bondai.prompt import JinjaPromptBuilder
@@ -42,6 +42,7 @@ from .util import (
 
 
 DEFAULT_MAX_TOOL_RETRIES = 3
+DEFAULT_MAX_TOOL_RESPONSE_TOKENS = 2000
 DEFAULT_SYSTEM_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('prompts', 'react_agent_system_prompt_template.md'))
 DEFAULT_MESSAGE_PROMPT_TEMPLATE = load_local_resource(__file__, os.path.join('prompts', 'agent_message_prompt_template.md'))
 
@@ -74,6 +75,7 @@ class Agent(EventMixin, Runnable):
                 max_context_length: int = None,
                 max_context_pressure_ratio: float = 0.8,
                 max_tool_retries: int = DEFAULT_MAX_TOOL_RETRIES,
+                max_tool_response_tokens = DEFAULT_MAX_TOOL_RESPONSE_TOKENS,
                 enable_context_compression: bool = False,
                 enable_final_answer_tool: bool = True
             ):
@@ -109,6 +111,7 @@ class Agent(EventMixin, Runnable):
         self._max_context_length = max_context_length if max_context_length else (self._llm.max_tokens*0.95)
         self._max_context_pressure_ratio = max_context_pressure_ratio
         self._max_tool_retries = max_tool_retries
+        self._max_tool_response_tokens = max_tool_response_tokens
         self._enable_context_compression = enable_context_compression
         if self._memory_manager:
             self._tools.extend(self._memory_manager.tools)
@@ -296,6 +299,7 @@ class Agent(EventMixin, Runnable):
         last_error_message = None
         local_messages = []
         self._force_stop = False
+        response_query_tool = ResponseQueryTool()
 
         def append_message(message):
             if isinstance(message, SystemMessage):
@@ -315,6 +319,9 @@ class Agent(EventMixin, Runnable):
                 raise BudgetExceededException()
             if max_steps and step_count > max_steps:
                 raise MaxStepsExceededException()
+            
+            if len(response_query_tool.responses) > 0 and response_query_tool not in tools:
+                tools.append(response_query_tool)
 
             if self._enable_context_compression:
                 self._compress_llm_context(
@@ -345,7 +352,7 @@ class Agent(EventMixin, Runnable):
             last_error_message = None
             if llm_response_function and any([m.name == llm_response_function.get("tool_name") for m in conversation_members]):
                 message = f"""MessageSendFailure: You attempted to send a message to {llm_response_function.get('tool_name')} but this message failed.
-                To send a message to {llm_response_function.get('tool_name')} you must use this format in your response:
+                To send a message to {llm_response_function.get('tool_name')} you must use the 'send_message' tool or use this format in your response:
 
                 ```
                 {llm_response_function.get('tool_name')}: Include your message here.)
@@ -358,10 +365,14 @@ class Agent(EventMixin, Runnable):
                     tool_arguments=llm_response_function.get('arguments') or {}
                 )
                 self._trigger_event(AgentEventNames.TOOL_SELECTED, self, tool_message)
-                tool_message = self._handle_llm_function(
+                self._handle_llm_function(
                     tool_message=tool_message, 
                     tools=tools
                 )
+
+                if isinstance(tool_message.tool_output, str) and self._llm.count_tokens(tool_message.tool_output) > self._max_tool_response_tokens:
+                    response_id = response_query_tool.add_response(tool_message.tool_output)
+                    tool_message.tool_output = f"The result from this tool was greater than {self._max_tool_response_tokens} tokens and could not be displayed. However, you can use the response_query tool to ask questions about the content of this response. Just use response_id = {response_id}."
                 
                 append_message(tool_message)
                 if tool_message.success:
@@ -521,23 +532,18 @@ class Agent(EventMixin, Runnable):
                         print("Warning: Context compression failed to relieve pressure.")
 
 
-    def _handle_llm_function(self, tool_message: ToolUsageMessage, tools: List[Tool]) -> ToolUsageMessage:
+    def _handle_llm_function(self, tool_message: ToolUsageMessage, tools: List[Tool]):
         tool_starting_cost = get_total_cost()
 
         with open(f"./.debug/agent_.txt", "a") as f:
             f.write(f"{tool_message.tool_name}({tool_message.tool_arguments})\n")
 
         try:
-            # print("***********")
-            # print(f"Executing Tool: {tool_message.tool_name}({tool_message.tool_arguments})")
             tool_output = execute_tool(
                 tool_name=tool_message.tool_name, 
                 tool_arguments=tool_message.tool_arguments,
                 tools=tools,
             )
-            with open(f"./.debug/agent_.txt", "a") as f:
-                f.write(f"Output: {tool_output}\n")
-            # print(f"Tool Output: {tool_output}")
 
             agent_halted = False
             if isinstance(tool_output, tuple):
@@ -552,4 +558,3 @@ class Agent(EventMixin, Runnable):
         
         tool_message.completed_at = datetime.now()
         tool_message.cost = get_total_cost() - tool_starting_cost
-        return tool_message

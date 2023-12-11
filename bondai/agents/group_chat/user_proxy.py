@@ -16,7 +16,7 @@ from bondai.agents import (
 
 class UserProxy(EventMixin, ConversationMember):
 
-    def __init__(self, persona: str | None = None):
+    def __init__(self, persona: str | None = None, parse_recipients: bool = True):
         EventMixin.__init__(
             self,
             allowed_events=[
@@ -32,6 +32,7 @@ class UserProxy(EventMixin, ConversationMember):
             persona=persona,
         )
         self._status = AgentStatus.IDLE
+        self._parse_recipients = parse_recipients
 
     def send_message(self, 
                     message: str | ConversationMessage, 
@@ -79,7 +80,11 @@ class UserProxy(EventMixin, ConversationMember):
                 user_exited = user_response.strip().lower() == 'exit'
 
                 if not user_exited:
-                    next_recipient_name, next_message = parse_response_content_message(user_response)
+                    if self._parse_recipients:
+                        next_recipient_name, next_message = parse_response_content_message(user_response)
+                    else:
+                        next_recipient_name = agent_message.sender_name
+                        next_message = user_response
                     
                     next_recipient_name = next_recipient_name if next_recipient_name else agent_message.sender_name
                     next_message = next_message if next_message else user_response

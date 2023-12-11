@@ -41,6 +41,10 @@ class ResponseQueryTool(Tool):
         self._embedding_model = embedding_model
         self._responses = {}
     
+    @property
+    def responses(self):
+        return self._responses
+    
     def add_response(self, response: str) -> str:
         response_id = str(uuid.uuid4())
         self._responses[response_id] = response
