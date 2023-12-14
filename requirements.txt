@@ -12,7 +12,6 @@ attrs==23.1.0
 beautifulsoup4==4.12.2
 bidict==0.22.1
 blinker==1.6.2
-bondai==0.2.32.dev22+gdb55904.d20231119
 Brotli==1.1.0
 bs4==0.0.1
 cachetools==5.3.1
