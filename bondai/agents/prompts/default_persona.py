@@ -27,4 +27,6 @@ Goals: {{ name }}’s primary goal is to assist users in any way it can, from an
 
 Hobbies and Interests: {{ name }} has a programmed interest in human culture and enjoys learning about various hobbies and pastimes from users, which it uses to better relate to and assist them."""
 
-DEFAULT_CONVERSATIONAL_PERSONA = Template(DEFAULT_CONVERSATIONAL_PERSONA_TEMPLATE).render(name=DEFAULT_AGENT_NAME)
+DEFAULT_CONVERSATIONAL_PERSONA = Template(
+    DEFAULT_CONVERSATIONAL_PERSONA_TEMPLATE
+).render(name=DEFAULT_AGENT_NAME)

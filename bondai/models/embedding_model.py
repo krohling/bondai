@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-class EmbeddingModel(ABC):
 
+class EmbeddingModel(ABC):
     @property
     @abstractmethod
     def max_tokens() -> int:

@@ -17,5 +17,5 @@ __all__ = [
     "InputParameters",
     "LangChainTool",
     "ResponseQueryTool",
-    "TaskCompletedTool"
+    "TaskCompletedTool",
 ]

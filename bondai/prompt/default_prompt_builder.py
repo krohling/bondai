@@ -1,7 +1,7 @@
 from bondai.prompt import PromptBuilder
 
-class DefaultPromptBuilder(PromptBuilder):
 
+class DefaultPromptBuilder(PromptBuilder):
     def __init__(self, prompt_template: str):
         self._prompt_template: str = prompt_template
 

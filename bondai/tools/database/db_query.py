@@ -4,11 +4,13 @@ from pydantic import BaseModel
 from bondai.tools import Tool
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
+
 class Parameters(BaseModel):
     question: str
     thought: str
 
-TOOL_NAME = 'database_query_tool'
+
+TOOL_NAME = "database_query_tool"
 QUERY_SYSTEM_PROMPT = "You are a helpful question and answer assistant designed to answer questions about a database. Use the provided information to answer the user's QUESTION at the very end."
 TOOL_DESCRIPTION = (
     "This tool allows you to ask a question and retrieve data from the user's database."
@@ -18,13 +20,13 @@ TOOL_DESCRIPTION = (
     "Your question will automatically be turned into SQL and the response will contain the resulting data."
 )
 
-PG_URI_ENV_VAR = 'PG_URI'
+PG_URI_ENV_VAR = "PG_URI"
 
-PG_HOST = os.environ.get('PG_HOST')
-PG_PORT = int(os.environ.get('PG_HOST', '5432'))
-PG_USERNAME = os.environ.get('PG_USERNAME')
-PG_PASSWORD = os.environ.get('PG_PASSWORD')
-PG_DBNAME = os.environ.get('PG_DBNAME')
+PG_HOST = os.environ.get("PG_HOST")
+PG_PORT = int(os.environ.get("PG_HOST", "5432"))
+PG_USERNAME = os.environ.get("PG_USERNAME")
+PG_PASSWORD = os.environ.get("PG_PASSWORD")
+PG_DBNAME = os.environ.get("PG_DBNAME")
 
 MAX_QUERY_RETRIES = 3
 
@@ -54,16 +56,18 @@ The following information was returned from the database:
 Please respond with a friendly text response to the user's question.
 """
 
+
 class DatabaseQueryTool(Tool):
-    def __init__(self, 
-                 pg_uri=os.environ.get(PG_URI_ENV_VAR), 
-                 pg_host=PG_HOST, 
-                 pg_port=PG_PORT, 
-                 pg_username=PG_USERNAME, 
-                 pg_password=PG_PASSWORD, 
-                 pg_dbname=PG_DBNAME,
-                 llm=OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
-            ):
+    def __init__(
+        self,
+        pg_uri=os.environ.get(PG_URI_ENV_VAR),
+        pg_host=PG_HOST,
+        pg_port=PG_PORT,
+        pg_username=PG_USERNAME,
+        pg_password=PG_PASSWORD,
+        pg_dbname=PG_DBNAME,
+        llm=OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K),
+    ):
         super(DatabaseQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.pg_uri = pg_uri
         self.pg_host = pg_host
@@ -72,12 +76,12 @@ class DatabaseQueryTool(Tool):
         self.pg_password = pg_password
         self.pg_dbname = pg_dbname
         self.llm = llm
-    
+
     def run(self, arguments):
-        question = arguments['question']
+        question = arguments["question"]
 
         if question is None:
-            raise Exception('question is required')
+            raise Exception("question is required")
 
         schema_str = self.__get_database_schema()
         query_prompt = QUERY_PROMPT_TEMPLATE.replace("###DBSCHEMA###", schema_str)
@@ -93,20 +97,20 @@ class DatabaseQueryTool(Tool):
                 attempts += 1
                 if attempts > MAX_QUERY_RETRIES:
                     raise e
-    
+
     def __format_response(self, rows, colnames):
         markdown_output = "| " + " | ".join(colnames) + " |\n"
         markdown_output += "| " + " | ".join(["---"] * len(colnames)) + " |\n"
 
         for row in rows:
             markdown_output += "| " + " | ".join(map(str, row)) + " |\n"
-        
+
         return markdown_output
 
     def __get_database_connection(self):
         if self.pg_uri:
             # Establish the connection
-            return psycopg2.connect(self.pg_uri, sslmode='require')
+            return psycopg2.connect(self.pg_uri, sslmode="require")
         else:
             # Establish the connection
             return psycopg2.connect(
@@ -114,9 +118,9 @@ class DatabaseQueryTool(Tool):
                 port=self.pg_port,
                 user=self.pg_username,
                 password=self.pg_password,
-                dbname=self.pg_dbname
+                dbname=self.pg_dbname,
             )
-    
+
     def __query_database(self, query):
         connection = None
         cursor = None
@@ -139,15 +143,17 @@ class DatabaseQueryTool(Tool):
                 cursor.close()
             if connection:
                 connection.close()
-    
+
     def __get_database_schema(self):
         # Query the schema from information_schema
-        rows, _ = self.__query_database((
-            "SELECT table_name, column_name, data_type, is_nullable, column_default\n"
-            "FROM information_schema.columns\n"
-            "WHERE table_schema = 'public'\n"
-            "ORDER BY table_name, ordinal_position;"
-        ))
+        rows, _ = self.__query_database(
+            (
+                "SELECT table_name, column_name, data_type, is_nullable, column_default\n"
+                "FROM information_schema.columns\n"
+                "WHERE table_schema = 'public'\n"
+                "ORDER BY table_name, ordinal_position;"
+            )
+        )
 
         # Process the rows to create a formatted string
         schema_str = ""

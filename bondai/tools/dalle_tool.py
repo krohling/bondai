@@ -15,43 +15,37 @@ TOOL_DESCRIPTION = (
     "- filename (required): The name of the file where the generated image will be saved."
 )
 
+
 class Parameters(BaseModel):
     description: str
     filename: str
     thought: str
 
-class DalleTool(Tool):
 
+class DalleTool(Tool):
     def __init__(self):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
 
     def run(self, arguments: Dict) -> str:
-        description = arguments.get('description')
-        filename = arguments.get('filename')
+        description = arguments.get("description")
+        filename = arguments.get("filename")
 
         if description is None:
             raise Exception("description is required.")
         if filename is None:
             raise Exception("filename is required.")
-        
-        params = {
-            'prompt': description,
-            'n': 1,
-            'size': IMAGE_SIZE
-        }
+
+        params = {"prompt": description, "n": 1, "size": IMAGE_SIZE}
 
         # Use the OpenAI API to generate an image based on the description
-        response = openai.Image.create(
-            **params,
-            **DALLE_CONNECTION_PARAMS
-        )
+        response = openai.Image.create(**params, **DALLE_CONNECTION_PARAMS)
 
         # Get the image URL from the response
-        image_url = response['data'][0]['url']
+        image_url = response["data"][0]["url"]
 
         # Download the image from the URL and save it to the specified filename
         image_content = requests.get(image_url).content
-        with open(filename, 'wb') as file:
+        with open(filename, "wb") as file:
             file.write(image_content)
 
         return f"Image generated and saved to {filename} successfully."

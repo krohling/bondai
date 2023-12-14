@@ -3,8 +3,8 @@ from datetime import datetime
 from jinja2 import Template
 from bondai.prompt import PromptBuilder
 
-class JinjaPromptBuilder(PromptBuilder):
 
+class JinjaPromptBuilder(PromptBuilder):
     def __init__(self, prompt_template: str):
         self._prompt_template: str = prompt_template
 
@@ -14,7 +14,9 @@ class JinjaPromptBuilder(PromptBuilder):
 
     def build_prompt(self, **kwargs) -> str:
         default_vars = {
-            'platform': platform.system(),
-            'datetime': str(datetime.now()),
+            "platform": platform.system(),
+            "datetime": str(datetime.now()),
         }
-        return self._apply_prompt_template(self._prompt_template, **default_vars, **kwargs)
+        return self._apply_prompt_template(
+            self._prompt_template, **default_vars, **kwargs
+        )

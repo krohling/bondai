@@ -16,13 +16,13 @@ setup(
     packages=find_packages(),  # This will include all packages under the bondai directory
     # scripts=['scripts/bondai'],
     entry_points={
-        'console_scripts': [
-            'bondai=bondai.main:main',
+        "console_scripts": [
+            "bondai=bondai.main:main",
         ],
     },
     install_requires=requirements,
     include_package_data=True,
-    setup_requires=['setuptools_scm'],  # Add this line
+    setup_requires=["setuptools_scm"],  # Add this line
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

@@ -8,5 +8,5 @@ __all__ = [
     "WebsiteExtractHyperlinksTool",
     "WebsiteHtmlQueryTool",
     "WebsiteQueryTool",
-    "DownloadFileTool"
+    "DownloadFileTool",
 ]

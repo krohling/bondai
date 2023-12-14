@@ -11,8 +11,8 @@ agent = ConversationalAgent(
 
 message = "Start the conversation by sending the first message. You can exit any time by typing 'exit'."
 while True:
-    user_input = input(message+ '\n')
-    if user_input.lower() == 'exit':
+    user_input = input(message + "\n")
+    if user_input.lower() == "exit":
         break
     response = agent.send_message(user_input)
     if response:
@@ -21,4 +21,4 @@ while True:
         print("The agent has exited the conversation.")
         break
 
-print (f"Total Cost: {get_total_cost()}")
+print(f"Total Cost: {get_total_cost()}")

@@ -24,6 +24,4 @@ INSTRUCTIONS = (
     "**Custom BondAI Tools**: If the user asks to build a custom tool you must share this requirement with Cortex."
 )
 
-TOOLS = [
-
-]
+TOOLS = []

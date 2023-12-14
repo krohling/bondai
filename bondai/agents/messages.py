@@ -4,11 +4,12 @@ from typing import List, Dict, Set
 from datetime import datetime
 from dataclasses import dataclass, field, is_dataclass
 
-USER_MEMBER_NAME = 'user'
+USER_MEMBER_NAME = "user"
 DEFAULT_MEMORY_WARNING_MESSAGE = (
     "Warning: the conversation history will soon reach its maximum length and be trimmed. "
     "Make sure to save any important information from the conversation to your memory before it is removed."
 )
+
 
 @dataclass
 class AgentMessage(ABC):
@@ -16,20 +17,23 @@ class AgentMessage(ABC):
     role: str | None = field(default=None)
     timestamp: datetime = field(default_factory=lambda: datetime.now())
 
+
 @dataclass
 class SystemMessage(AgentMessage):
-    role: str = field(default='system')
+    role: str = field(default="system")
     message: str | None = field(default=None)
+
 
 @dataclass
 class SummaryMessage(AgentMessage):
-    role: str = field(default='user')
+    role: str = field(default="user")
     message: str | None = field(default=None)
     children: List[AgentMessage] = field(default=None)
 
+
 @dataclass
 class ConversationMessage(AgentMessage):
-    role: str = field(default='user')
+    role: str = field(default="user")
     sender_name: str | None = field(default=None)
     recipient_name: str | None = field(default=None)
     message: str | None = field(default=None)
@@ -41,9 +45,10 @@ class ConversationMessage(AgentMessage):
     cost: float | None = field(default=None)
     completed_at: datetime | None = field(default=None)
 
+
 @dataclass
 class ToolUsageMessage(AgentMessage):
-    role: str = field(default='function')
+    role: str = field(default="function")
     tool_name: str | None = field(default=None)
     tool_arguments: Dict | None = field(default=None)
     tool_output: str | None = field(default=None)
@@ -53,6 +58,7 @@ class ToolUsageMessage(AgentMessage):
     agent_halted: bool = field(default=False)
     cost: float | None = field(default=None)
     completed_at: datetime | None = field(default=None)
+
 
 def custom_serialization(value):
     """
@@ -66,20 +72,27 @@ def custom_serialization(value):
         return message_to_dict(value)
     return value
 
+
 def message_to_dict(message: AgentMessage) -> Dict:
     """
     Convert an AgentMessage object to a dictionary with custom serialization.
     """
 
-    message_dict = {k: custom_serialization(v) for k, v in message.__dict__.items() if k != 'children'}
-    message_dict['type'] = type(message).__name__  # Add the type for deserialization
-    if 'children' in message.__dict__:
-        message_dict['children'] = [message_to_dict(child) for child in message.children]
+    message_dict = {
+        k: custom_serialization(v)
+        for k, v in message.__dict__.items()
+        if k != "children"
+    }
+    message_dict["type"] = type(message).__name__  # Add the type for deserialization
+    if "children" in message.__dict__:
+        message_dict["children"] = [
+            message_to_dict(child) for child in message.children
+        ]
 
     return message_dict
 
+
 class AgentMessageList:
-    
     def __init__(self, messages: List[AgentMessage] | None = None):
         self._items: List[AgentMessage] = []
         self._ids: Set[str] = set()
@@ -92,13 +105,13 @@ class AgentMessageList:
             self._ids.add(item.id)
             self._items.append(item)
             self._items = list(sorted(self._items, key=lambda x: x.timestamp))
-    
+
     def remove(self, item: AgentMessage):
         if item.id in self._ids:
             self._ids.remove(item.id)
             self._items.remove(item)
-    
-    def remove_after(self, timestamp: datetime, inclusive: bool=True):
+
+    def remove_after(self, timestamp: datetime, inclusive: bool = True):
         if inclusive:
             self._items = [item for item in self._items if item.timestamp <= timestamp]
         else:
@@ -112,7 +125,7 @@ class AgentMessageList:
     def __getitem__(self, index: int):
         return self._items[index]
 
-    def __add__(self, other: List[AgentMessage] | 'AgentMessageList'):
+    def __add__(self, other: List[AgentMessage] | "AgentMessageList"):
         if isinstance(other, AgentMessageList):
             # If the other object is also an AgentMessageList, extend with its items
             return self._items + other._items
@@ -121,7 +134,9 @@ class AgentMessageList:
             return self._items + other
         else:
             # If the other object is neither, raise an exception
-            raise TypeError(f"Unsupported operand type(s) for +: 'AgentMessageList' and '{type(other).__name__}'")
+            raise TypeError(
+                f"Unsupported operand type(s) for +: 'AgentMessageList' and '{type(other).__name__}'"
+            )
 
     def __iter__(self):
         return iter(self._items)
@@ -139,31 +154,31 @@ class AgentMessageList:
         return [message_to_dict(message) for message in self._items]
 
     @classmethod
-    def from_dict(cls, data: List[Dict]) -> 'AgentMessageList':
+    def from_dict(cls, data: List[Dict]) -> "AgentMessageList":
         """
         Create an AgentMessageList from a list of dictionaries.
         """
         list_instance = cls()
         for item in data:
-            item_type = item['type']
-            del item['type']
-            if item_type == 'ConversationMessage':
+            item_type = item["type"]
+            del item["type"]
+            if item_type == "ConversationMessage":
                 message = ConversationMessage(**item)
-            elif item_type == 'ToolUsageMessage':
+            elif item_type == "ToolUsageMessage":
                 message = ToolUsageMessage(**item)
-            elif item_type == 'SystemMessage':
+            elif item_type == "SystemMessage":
                 message = SystemMessage(**item)
-            elif item_type == 'SummaryMessage':
+            elif item_type == "SummaryMessage":
                 message = SummaryMessage(**item)
             # elif item_type == 'MemoryWarningMessage':
             #     message = MemoryWarningMessage(**item)
             else:
                 raise ValueError(f"Unknown message type: {item_type}")
-            
-            if 'timestamp' in item:
-                message.timestamp = datetime.fromisoformat(item['timestamp'])
-            if 'completed_at' in item and item['completed_at']:
-                message.completed_at = datetime.fromisoformat(item['completed_at'])
+
+            if "timestamp" in item:
+                message.timestamp = datetime.fromisoformat(item["timestamp"])
+            if "completed_at" in item and item["completed_at"]:
+                message.completed_at = datetime.fromisoformat(item["completed_at"])
             list_instance.add(message)
-        
+
         return list_instance

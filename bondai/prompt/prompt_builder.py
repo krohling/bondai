@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
-class PromptBuilder(ABC):
 
+class PromptBuilder(ABC):
     def __call__(self, **kwargs: Dict[str, Any]) -> str:
         return self.build_prompt(**kwargs)
 
