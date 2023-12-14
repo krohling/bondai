@@ -28,7 +28,7 @@ jobs:
         python setup.py sdist bdist_wheel
         twine upload dist/* -u __token__ -p ${{ secrets.PYPI_TOKEN }}
 
-    - name: Set up Docker
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
     - name: Login to DockerHub
@@ -37,12 +37,21 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: Determine if pre-release
+      id: prerelease_check
+      run: |
+        if [[ ${{ github.ref_name }} =~ [a-zA-Z] ]]; then
+          echo "This is a pre-release version."
+          echo "::set-output name=tag_list::krohling/bondai:${{ github.ref_name }}"
+        else
+          echo "This is a stable release version."
+          echo "::set-output name=tag_list::krohling/bondai:${{ github.ref_name }},krohling/bondai:latest"
+        fi
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
         context: ./docker
         push: true
-        tags: |
-          krohling/bondai:${{ github.ref_name }}
-          krohling/bondai:latest
-
+        tags: ${{ steps.prerelease_check.outputs.tag_list }}
+        platforms: linux/amd64,linux/arm64
