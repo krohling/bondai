@@ -39,8 +39,6 @@ class APIUserProxy(EventMixin, ConversationMember):
         group_messages: List[AgentMessage] | None = None,
         max_attempts: int = None,
         require_response: bool = True,
-        content_stream_callback: Callable[[str], None] | None = None,
-        function_stream_callback: Callable[[str], None] | None = None,
     ):
         if not message:
             raise AgentException("'message' cannot be empty.")

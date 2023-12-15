@@ -20,11 +20,24 @@ from .openai_models import (
 
 
 class OpenAILLM(LLM):
-    def __init__(self, model: OpenAIModelNames, cache: LLMCache = None):
-        self._model = model.value
+    def __init__(
+        self,
+        model: OpenAIModelNames | str,
+        connection_params: Dict = None,
+        cache: LLMCache = None,
+    ):
         self._cache = cache
+
+        self._model = model.value if isinstance(model, OpenAIModelNames) else model
         if ModelConfig[self._model]["model_type"] != OpenAIModelType.LLM:
             raise Exception(f"Model {self._model} is not an LLM model.")
+
+        if connection_params:
+            self._connection_params = connection_params
+        elif ModelConfig[self._model]["family"] == OpenAIModelFamilyType.GPT4:
+            self._connection_params = GPT_4_CONNECTION_PARAMS
+        else:
+            self._connection_params = GPT_35_CONNECTION_PARAMS
 
     @property
     def max_tokens(self) -> int:
@@ -48,11 +61,6 @@ class OpenAILLM(LLM):
         if functions is None:
             functions = []
 
-        if ModelConfig[self._model]["family"] == OpenAIModelFamilyType.GPT4:
-            connection_params = GPT_4_CONNECTION_PARAMS
-        else:
-            connection_params = GPT_35_CONNECTION_PARAMS
-
         if self._cache:
             input_parameters = {"messages": messages, "functions": functions, **kwargs}
             cache_item = self._cache.get_cache_item(input_parameters=input_parameters)
@@ -64,7 +72,7 @@ class OpenAILLM(LLM):
             messages,
             functions,
             self._model,
-            connection_params=connection_params,
+            connection_params=self._connection_params,
             **kwargs,
         )
 
@@ -88,11 +96,6 @@ class OpenAILLM(LLM):
         if functions is None:
             functions = []
 
-        if ModelConfig[self._model]["family"] == OpenAIModelFamilyType.GPT4:
-            connection_params = GPT_4_CONNECTION_PARAMS
-        else:
-            connection_params = GPT_35_CONNECTION_PARAMS
-
         if self._cache:
             input_parameters = {"messages": messages, "functions": functions, **kwargs}
             cache_item = self._cache.get_cache_item(input_parameters=input_parameters)
@@ -103,7 +106,7 @@ class OpenAILLM(LLM):
             messages,
             functions,
             self._model,
-            connection_params=connection_params,
+            connection_params=self._connection_params,
             content_stream_callback=content_stream_callback,
             function_stream_callback=function_stream_callback,
             **kwargs,

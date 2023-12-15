@@ -1,9 +1,8 @@
 from termcolor import cprint
 from datetime import datetime
-from typing import List, Callable
+from typing import List
 from bondai.util import EventMixin
 from bondai.agents import (
-    Agent,
     AgentStatus,
     AgentException,
     AgentMessage,
@@ -42,8 +41,6 @@ class UserProxy(EventMixin, ConversationMember):
         group_messages: List[AgentMessage] | None = None,
         max_attempts: int = None,
         require_response: bool = True,
-        content_stream_callback: Callable[[str], None] | None = None,
-        function_stream_callback: Callable[[str], None] | None = None,
     ):
         if not message:
             raise AgentException("'message' cannot be empty.")
@@ -149,29 +146,3 @@ class UserProxy(EventMixin, ConversationMember):
             except Exception as e:
                 print("The following error occurred while parsing your response:")
                 print(str(e))
-
-    def send_message_async(
-        self,
-        message: str,
-        sender_name: str = USER_MEMBER_NAME,
-        group_members: List[Agent] | None = None,
-        group_messages: List[AgentMessage] | None = None,
-        max_send_attempts: int = None,
-        content_stream_callback: Callable[[str], None] | None = None,
-    ):
-        if self._status == AgentStatus.RUNNING:
-            raise Exception("Cannot send message while agent is in a running state.")
-
-        if group_members is None:
-            group_members = []
-        if group_messages is None:
-            group_messages = []
-
-        return super().send_message_async(
-            message,
-            sender_name=sender_name,
-            group_members=group_members,
-            group_messages=group_messages,
-            max_send_attempts=max_send_attempts,
-            content_stream_callback=content_stream_callback,
-        )

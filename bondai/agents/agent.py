@@ -1,5 +1,4 @@
 import os
-import json
 import uuid
 import traceback
 from pydantic import BaseModel
@@ -60,6 +59,7 @@ class Agent(EventMixin, Runnable):
         tools: List[Tool] | None = None,
         quiet: bool = True,
         allowed_events: List[str] | None = None,
+        messages: List[AgentMessage] | None = None,
         system_prompt_sections: List[Callable[[], str]] | None = None,
         system_prompt_builder: Callable[..., str] = None,
         message_prompt_builder: Callable[..., str] = None,
@@ -89,10 +89,12 @@ class Agent(EventMixin, Runnable):
             tools = []
         if system_prompt_sections is None:
             system_prompt_sections = []
+        if messages is None:
+            messages = []
 
         self._id: str = str(uuid.uuid4())
         self._status: AgentStatus = AgentStatus.IDLE
-        self._messages = AgentMessageList()
+        self._messages = AgentMessageList(messages=messages)
         self._llm: LLM = llm
         self._tools: List[Tool] = tools
         self._quiet: bool = quiet

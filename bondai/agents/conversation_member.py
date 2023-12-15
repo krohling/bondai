@@ -61,8 +61,6 @@ class ConversationMember(ABC):
         group_messages: List[AgentMessage] | None = None,
         max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS,
         require_response: bool = True,
-        content_stream_callback: Callable[[str], None] | None = None,
-        function_stream_callback: Callable[[str], None] | None = None,
     ) -> (str, str, bool):
         pass
 
@@ -74,8 +72,6 @@ class ConversationMember(ABC):
         group_messages: List[AgentMessage] | None = None,
         max_attempts: int = DEFAULT_MAX_SEND_ATTEMPTS,
         require_response: bool = True,
-        content_stream_callback: Callable[[str], None] | None = None,
-        function_stream_callback: Callable[[str], None] | None = None,
     ):
         pass
 
