@@ -15,7 +15,7 @@ blinker==1.6.2
 Brotli==1.1.0
 bs4==0.0.1
 cachetools==5.3.1
-certifi==2023.7.22
+certifi==2023.11.17
 charset-normalizer==3.2.0
 click==8.1.7
 cssselect==1.2.0
@@ -23,7 +23,7 @@ distro==1.8.0
 duckduckgo-search==3.9.8
 faiss-cpu==1.7.4
 fake-useragent==1.2.1
-Flask==2.3.3
+Flask==3.0.0
 Flask-Cors==4.0.0
 Flask-RESTful==0.3.10
 Flask-SocketIO==5.3.6
