@@ -62,7 +62,6 @@ pydantic==1.9.0
 pyee==8.2.2
 pyparsing==3.1.1
 PyPDF2==3.0.1
-pyppeteer==1.0.2
 pyquery==2.0.0
 python-dateutil==2.8.2
 python-docx==1.1.0
