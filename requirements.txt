@@ -58,7 +58,8 @@ protobuf==4.24.1
 psycopg2-binary==2.9.7
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
-pydantic_core==2.6.1
+pydantic==2.5.2
+pydantic_core==2.14.5
 pyee==8.2.2
 pyparsing==3.1.1
 PyPDF2==3.0.1
