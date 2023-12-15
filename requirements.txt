@@ -30,7 +30,7 @@ Flask-SocketIO==5.3.6
 frozenlist==1.4.0
 google-api-core==2.11.1
 google-api-python-client==2.97.0
-google-auth==2.22.0
+google-auth==2.25.2
 google-auth-httplib2==0.1.0
 googleapis-common-protos==1.60.0
 h11==0.14.0
