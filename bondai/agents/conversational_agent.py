@@ -48,6 +48,7 @@ class ConversationalAgent(Agent, ConversationMember):
         self,
         llm: LLM | None = None,
         tools: List[Tool] | None = None,
+        messages: List[AgentMessage] | None = None,
         name: str = DEFAULT_AGENT_NAME,
         persona: str | None = None,
         persona_summary: str | None = None,
@@ -82,6 +83,7 @@ class ConversationalAgent(Agent, ConversationMember):
             llm=llm,
             quiet=quiet,
             tools=tools,
+            messages=messages,
             system_prompt_sections=system_prompt_sections,
             system_prompt_builder=system_prompt_builder
             or JinjaPromptBuilder(DEFAULT_SYSTEM_PROMPT_TEMPLATE),
