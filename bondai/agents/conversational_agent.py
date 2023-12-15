@@ -61,7 +61,8 @@ class ConversationalAgent(Agent, ConversationMember):
         max_context_length: int = None,
         max_context_pressure_ratio: float = 0.8,
         enable_context_compression: bool = False,
-        enable_conversation: bool = True,
+        enable_conversation_tools: bool = True,
+        enable_conversational_content_responses: bool = True,
         enable_exit_conversation: bool = True,
         quiet: bool = True,
     ):
@@ -109,8 +110,11 @@ class ConversationalAgent(Agent, ConversationMember):
         )
         self._instructions: str = instructions
         self._enable_exit_conversation: bool = enable_exit_conversation
-        self._enable_conversation = enable_conversation
-        if self._enable_conversation:
+        self._enable_conversational_content_responses = (
+            enable_conversational_content_responses
+        )
+        self._enable_conversation_tools = enable_conversation_tools
+        if self._enable_conversation_tools:
             self.add_tool(SendMessageTool())
         if self._enable_exit_conversation:
             self.add_tool(ExitConversationTool())
@@ -244,7 +248,8 @@ class ConversationalAgent(Agent, ConversationMember):
                     "name": self.name,
                     "persona": self.persona,
                     "instructions": self.instructions,
-                    "conversation_enabled": self._enable_conversation,
+                    "conversation_enabled": self._enable_conversation_tools
+                    or self._enable_conversational_content_responses,
                     "allow_exit": self._enable_exit_conversation,
                 }
 
@@ -268,7 +273,10 @@ class ConversationalAgent(Agent, ConversationMember):
                     elif tool_result.tool_name == SEND_MESSAGE_TOOL_NAME:
                         response_message = tool_result.tool_output
 
-                if isinstance(tool_result, str) and self._enable_conversation:
+                if (
+                    isinstance(tool_result, str)
+                    and self._enable_conversational_content_responses
+                ):
                     recipient_name, message = parse_response_content_message(
                         tool_result
                     )
@@ -313,7 +321,10 @@ class ConversationalAgent(Agent, ConversationMember):
         data["instructions"] = self.instructions
         data["allow_exit"] = self._enable_exit_conversation
         data["quiet"] = self._quiet
-        data["enable_conversation"] = self._enable_conversation
+        data["enable_conversation_tools"] = self._enable_conversation_tools
+        data[
+            "enable_conversational_content_responses"
+        ] = self._enable_conversational_content_responses
         data["max_context_length"] = self._max_context_length
         data["max_context_pressure_ratio"] = self._max_context_pressure_ratio
         data["messages"] = self.messages.to_dict()
@@ -345,7 +356,10 @@ class ConversationalAgent(Agent, ConversationMember):
             instructions=data["instructions"],
             allow_exit=data["allow_exit"],
             quiet=data["quiet"],
-            enable_conversation=data["enable_conversation"],
+            enable_conversation_tools=data["enable_conversation_tools"],
+            enable_conversational_content_responses=data[
+                "enable_conversational_content_responses"
+            ],
             max_context_length=data["max_context_length"],
             max_context_pressure_ratio=data["max_context_pressure_ratio"],
         )
