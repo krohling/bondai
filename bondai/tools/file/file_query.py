@@ -1,9 +1,8 @@
-import pypdf
 from pydantic import BaseModel
 from typing import Dict
 from bondai.tools import Tool
 from bondai.models import LLM, EmbeddingModel
-from bondai.util import semantic_search, is_html, get_html_text
+from bondai.util import semantic_search, is_html, get_html_text, extract_file_text
 from bondai.models.openai import OpenAILLM, OpenAIEmbeddingModel, OpenAIModelNames
 
 TOOL_NAME = "file_query"
@@ -15,16 +14,6 @@ def is_pdf(filename: str) -> bool:
     with open(filename, "rb") as file:
         header = file.read(4)
     return header == b"%PDF"
-
-
-def extract_text_from_pdf(file_path: str) -> str:
-    with open(file_path, "rb") as file:
-        pdf = pypdf.PdfReader(file)
-        text = ""
-        for page_number in range(len(pdf.pages)):
-            page = pdf.pages[page_number]
-            text += page.extract_text()
-        return text
 
 
 def build_prompt(question: str, context: str) -> str:
@@ -67,7 +56,7 @@ class FileQueryTool(Tool):
             raise Exception("question is required")
 
         if is_pdf(filename):
-            text = extract_text_from_pdf(filename)
+            text = extract_file_text(filename)
         else:
             with open(filename, "r") as f:
                 text = f.read()

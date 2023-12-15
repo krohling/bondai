@@ -6,7 +6,6 @@ from duckduckgo_search import DDGS
 MAX_RESULT_COUNT = 20
 DEFAULT_RESULT_COUNT = 5
 TOOL_NAME = "duck_duck_go_search"
-TOOL_DESCRIPTION = "This tool allows you to search DuckDuckGo. Specify your search string in the 'query' parameter and it will return a list that includes the title and url of matched websites."
 TOOL_DESCRIPTION = f"This tool allows you to retrieve a paginated list of search results. You must specify your search string in the 'query' parameter. You can specify the number of search results to return by setting the 'count' parameter. The maximum count is {MAX_RESULT_COUNT} and the default is {DEFAULT_RESULT_COUNT}. To paginate through the full list of all search results just increment the 'page' parameter. By default 'page' is set to 1."
 
 

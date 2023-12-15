@@ -38,7 +38,6 @@ h2==3.2.0
 hpack==3.0.0
 httpcore==1.0.2
 httplib2==0.22.0
-httpx==0.25.1
 hyperframe==5.2.0
 idna==3.4
 importlib-metadata==6.8.0
@@ -59,7 +58,6 @@ protobuf==4.24.1
 psycopg2-binary==2.9.7
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
-pydantic==1.10.12
 pydantic_core==2.6.1
 pyee==8.2.2
 pyparsing==3.1.1
@@ -92,7 +90,6 @@ urllib3==1.26.17
 w3lib==2.1.2
 websocket-client==1.6.3
 websockets==10.4
-Werkzeug==2.3.7
 wsproto==1.2.0
 yarl==1.9.2
 zipp==3.16.2
