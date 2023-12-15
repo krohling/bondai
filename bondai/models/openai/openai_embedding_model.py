@@ -11,7 +11,7 @@ class OpenAIEmbeddingModel(EmbeddingModel):
         model: OpenAIModelNames = OpenAIModelNames.TEXT_EMBEDDING_ADA_002,
         connection_params: Dict = None,
     ):
-        self._model = model.value
+        self._model = model.value if isinstance(model, OpenAIModelNames) else model
         self._connection_params = connection_params
         if ModelConfig[self._model]["model_type"] != OpenAIModelType.EMBEDDING:
             raise Exception(f"Model {model} is not an embedding model.")
