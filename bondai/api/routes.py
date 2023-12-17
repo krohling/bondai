@@ -27,7 +27,6 @@ def setup_routes(server, tool_options: List[Tool] = []):
 
         data = request.get_json()
         message = data.get("message", None)
-        require_response = data.get("require_response", None)
         if not message:
             return "message is required.", 400
 
@@ -51,12 +50,8 @@ def setup_routes(server, tool_options: List[Tool] = []):
             abort(404)
         return jsonify(agent.to_dict())
 
-    @server.app.route("/agents/<agent_id>/tool_options", methods=["GET"])
-    def get_agent_tool_options(agent_id):
-        agent = server.get_agent_by_id(agent_id)
-        if not agent:
-            abort(404)
-
+    @server.app.route("/tools", methods=["GET"])
+    def get_tool_options():
         data = [t.get_tool_function() for t in tool_options]
         return jsonify(data)
 
@@ -92,7 +87,7 @@ def setup_routes(server, tool_options: List[Tool] = []):
         return jsonify({"status": "success"})
 
     @server.app.route("/agents/<agent_id>/tools/<tool_name>", methods=["DELETE"])
-    def remove_agent_tools(agent_id, tool_name):
+    def remove_agent_tool(agent_id, tool_name):
         agent = server.get_agent_by_id(agent_id)
         if not agent:
             abort(404)

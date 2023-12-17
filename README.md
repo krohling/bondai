@@ -9,7 +9,7 @@
     <a href="https://pypi.org/project/bondai/"><img src="https://img.shields.io/pypi/v/bondai" alt="PyPI"></a>
     <a href="https://hub.docker.com/r/krohling/bondai"><img src="https://img.shields.io/docker/v/krohling/bondai?logo=docker" alt="Docker"></a>
 </p>
-<p align="center"><em>Meet BondAI, an open source, AI-powered assistant with a lightweight, versatile API for seamless integration into your own applications.</em></p>
+<p align="center"><em>Build highly capable Single and Multi-Agent Systems.</em></p>
 
 # <a href="https://bondai.dev">BondAI Homepage</a>
 
@@ -45,11 +45,18 @@ export OPENAI_API_KEY=sk-XXXXXXXXXX
 Once the environment variable has been set you can run `bondai` to start the CLI.
 
 ```bash
-% bondai                   
 Loading BondAI...
-Skipping Gmail tools because gmail-token.pickle file is not present.
+******************ENTERING CHAT******************
+You are entering a chat with BondAI...
+You can exit any time by typing 'exit'.
 
-Hello! How can I assist you today?
+Hello! I'm BondAI, your friendly and helpful assistant. I'm here to assist you with any tasks or questions you might have. How can I assist you today?
+
+I want you to write a story about unicorns and save it to a file named unicorns.md.
+Using tool file_write: Writing a story about unicorns and saving it to a file named unicorns.md
+Using tool final_answer...
+
+A story about unicorns has been successfully written and saved to a file named unicorns.md. The story is set in an enchanted forest and describes the magical and majestic nature of unicorns, their daily routines, and their harmonious relationship with other creatures in the forest.
 ```
 
 
@@ -74,7 +81,7 @@ docker run -it --rm \
 BondAI has a straightforward API for creating powerful AI Agents. Check out our [examples](https://bondai.dev/docs/category/examples) for ideas on how to get started.  Remember to set your *OPENAI_API_KEY* environment variable before running your BondAI Agent.
 
 ```python
-from bondai import Agent
+from bondai.agents import Agent
 from bondai.tools.search import DuckDuckGoSearchTool
 from bondai.tools.website import WebsiteQueryTool
 from bondai.tools.file import FileWriteTool
@@ -107,4 +114,3 @@ BondAI comes out of the box with a powerful set of integrations.
 | <img src="assets/logos/postgres-logo.jpeg" alt="postgres logo" width="75"/>    | **PostgreSQL**    | BondAI can automatically extract the schema from a Postgres DB and process natural language queries. |
 | <img src="assets/logos/blandai-logo.jpeg" alt="bland.ai logo" width="50"/> | **Bland AI**     | Allows BondAI to make phone calls and process/retrieve call transcripts. [Requires a Bland.ai account.](https://www.bland.ai/)  |
 | <img src="assets/logos/gmail-logo.png" alt="gmail logo" width="50"/> | **Gmail**     | Allows BondAI to search and read emails.  |
-| <img src="assets/logos/langchain-logo.jpeg" alt="langchain logo" width="50"/> | **LangChain**     | Use BondAI's LangChainTool class to import any tool from LangChain into BondAI.  |

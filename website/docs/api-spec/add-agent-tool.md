@@ -1,10 +1,10 @@
 ---
-sidebar_position: 4
+sidebar_position: 8
 ---
 
 # Add Agent Tool
 
-`POST /agent/tools`
+`POST /agents/<agent_id>/tools`
 
 This API adds a tool to the Agent so it can be used for future tasks. To see a list of available tools check [Get Tools](./get-tools).
 
@@ -13,5 +13,13 @@ This API adds a tool to the Agent so it can be used for future tasks. To see a l
 ```json
 {
     "tool_name": "file_query_tool"
+}
+```
+
+**Response Body:**
+
+```json
+{
+    "status": "success"
 }
 ```

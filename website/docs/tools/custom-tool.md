@@ -28,12 +28,11 @@ TOOL_DESCRIPTION = (
 
 class Parameters(BaseModel):
     country_name: str
-    thought: str
 ```
 
 ### Step 2: Implement your Tool class
 
-All custom BondAI tools must extend from the Tool class and implement the `run` method. In our example tool we will call the RestCountries API to search for countries by name. **Note:** It is very important to validate that any required parameters have been provided. Note the check for `country_name` where an exception is thrown if it has not been provided. This exception message will automatically be provided to the BondAI agent so that it can correct it's mistake.
+All custom BondAI tools must extend from the Tool class and implement the `run` method. In our example tool we will call the RestCountries API to search for countries by name.
 
 ```python
 from bondai.tools import Tool
@@ -43,10 +42,8 @@ class QueryCountriesTool(Tool):
     def __init__(self):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
 
-    def run(self, arguments):
-        country_name = arguments.get('country_name')
-
-        if country_name is None:
+    def run(self, country_name: str):
+        if not country_name:
             raise Exception("country_name is required.")
         
         response = requests.get(f"https://restcountries.com/v3.1/name/{country_name}")
@@ -55,7 +52,7 @@ class QueryCountriesTool(Tool):
 
 ### Step 3: Format your response
 
-We will define a function named `parse_countries_info` that takes the JSON object returned from the RestCountries API and turns it into a well formatted string that can be easily understood by the LLM. Note that while the LLM could likely undestand the JSON formatted response, this approach has the advantage of removing unnecessary information which reduces token usage and cost. This also reduces the amount of Agent memory required to store the result which is limited by the LLM's context window. It is highly recommended that tool responses are well formatted (ie markdown) to improve understanding and return only information that is required.
+We will define a function named `parse_countries_info` that takes the JSON object returned from the RestCountries API and turns it into a well formatted string that can be easily understood by the LLM. Note that while the LLM could likely undestand the JSON formatted response, this approach has the advantage of removing unnecessary information which reduces token usage and cost. This also reduces the amount of Agent memory required to store the result which is limited by the LLM's context window. It is highly recommended that tool responses are well formatted (ie markdown) to improve understanding and limited to only required information.
 
 
 ```python
@@ -104,7 +101,6 @@ TOOL_DESCRIPTION = (
 
 class Parameters(BaseModel):
     country_name: str
-    thought: str
 
 def parse_countries_info(data):
     responses = []
@@ -135,10 +131,8 @@ class QueryCountriesTool(Tool):
     def __init__(self):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
 
-    def run(self, arguments):
-        country_name = arguments.get('country_name')
-
-        if country_name is None:
+    def run(self, country_name: str):
+        if not country_name:
             raise Exception("country_name is required.")
         
         response = requests.get(f"https://restcountries.com/v3.1/name/{country_name}")

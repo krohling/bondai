@@ -21,9 +21,6 @@ Tools are what give AI Agents the power to interact with their environment. Comb
 
 |     |  |
 | -------- | ------- |
-| **AgentTool**     | This tool allows Agent's to delegate complex tasks to other Agents creating a heirarchical Agent architecture.  |
-| **HumanTool**     | This tool uses allows BondAI to communicate with users via the CLI interface.  |
-| **LangChainTool**     | This tool wraps tools implemented in LangChain and makes it possible for them to be used by BondAI Agents.  |
 | **PythonREPLTool**     | This tool allows BondAI to write and execute Python code. Note that it is highly recommended that this tool be used from within a Docker environment as it may damage the host machine.  |
 | **ResponseQueryTool**     | BondAI will automatically detect if a tool returns a large response (>2000 tokens). To prevent this response from overwhelming the Agent's memory the output will be passed to the ResponseQueryTool which the Agent can then query to get information about the response.  |
 | **ShellTool**     | This tool allows BondAI to interact with the users Shell and run arbitrary commands. Note that it is highly recommended that this tool be used from within a Docker environment as it may damage the host machine.  |
@@ -33,6 +30,7 @@ Tools are what give AI Agents the power to interact with their environment. Comb
 | **DownloadFileTool**     | This tool allows BondAI to download files from the internet and save them locally to a specified filename.  |
 | **ExtractHyperlinksTool**     | This tool allows BondAI retrieve the hyperlinks from the HTML of a specified website.  |
 | **WebsiteQueryTool**     | This tool allows BondAI to query the content of a website. This tool uses integrated Semantic search. If the content of the website is too large for the LLM's context window the content will automatically be converted to embeddings and filtered to fit within the context window.  |
+| **AgentTool**     | This tool allows Agent's to delegate complex tasks to other Agents creating a heirarchical Agent architecture.  |
 
 # Partner Tools
 
@@ -46,5 +44,4 @@ Tools are what give AI Agents the power to interact with their environment. Comb
 | <img src={postgresLogo} alt="postgres logo" width="75"/>    | **PostgreSQL**    | BondAI can automatically extract the schema from a Postgres DB and process natural language queries. |
 | <img src={blandaiLogo} alt="bland.ai logo" width="50"/> | **Bland AI**     | Allows BondAI to make phone calls and process/retrieve call transcripts. [Requires a Bland.ai account.](https://www.bland.ai/)  |
 | <img src={gmailLogo} alt="gmail logo" width="50"/> | **Gmail**     | Allows BondAI to search and read emails.  |
-| <img src={langchainLogo} alt="langchain logo" width="50"/> | **LangChain**     | Use BondAI's LangChainTool class to import any tool from LangChain into BondAI.  |
 

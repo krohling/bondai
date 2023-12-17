@@ -1,12 +1,12 @@
 ---
-sidebar_position: 2
+sidebar_position: 7
 ---
 
 # Get Tools
 
 `GET /tools`
 
-This API returns the list of all of tools that BondAI has loaded. These tools can be given to the Agent so that it can use them when working on a task. To see what tools the Agent is using see [Get Agent](./get-agent).
+This API returns the list of all of tools that BondAI has loaded. These tools can be given to an Agent so that it can use them when working on a task. To see what tools a specific Agent is using see [Get Agent](./get-agent).
 
 **Response Body:**
 

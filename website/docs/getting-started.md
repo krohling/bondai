@@ -34,9 +34,12 @@ Once the environment variable has been set you can run `bondai` to start the CLI
 ```bash
 % bondai                   
 Loading BondAI...
-Skipping Gmail tools because gmail-token.pickle file is not present.
 
-Hello! How can I assist you today?
+******************ENTERING CHAT******************
+You are entering a chat with BondAI...
+You can exit any time by typing 'exit'.
+
+Hello! I'm BondAI, your friendly assistant. I'm here to help you with any tasks or questions you might have. How can I assist you today?
 ```
 
 
@@ -61,10 +64,13 @@ docker run -it --rm \
 BondAI has a straightforward API for creating powerful AI Agents. Check out our [examples](./category/examples/) for ideas on how to get started.  Remember to set your *OPENAI_API_KEY* environment variable before running your BondAI Agent.
 
 ```python
-from bondai import Agent
+from bondai.agents import Agent
+from bondai.models.openai import DefaultOpenAIConnectionParams
 from bondai.tools.search import DuckDuckGoSearchTool
 from bondai.tools.website import WebsiteQueryTool
 from bondai.tools.file import FileWriteTool
+
+DefaultOpenAIConnectionParams.configure_openai_connection(api_key="<OPENAI-API-KEY>")
 
 task = """I want you to research the usage of Metformin as a drug to treat aging and aging related illness. 
 You should only use reputable information sources, ideally peer reviewed scientific studies. 
@@ -78,4 +84,5 @@ Agent(tools=[
   WebsiteQueryTool(),
   FileWriteTool()
 ]).run(task)
+
 ```

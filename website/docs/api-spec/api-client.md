@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 11
 ---
 
 # Python API Client
@@ -7,42 +7,81 @@ sidebar_position: 7
 BondAI comes with a Python API client that can be used to communicate with the BondAI APIs.
 
 ```python
+from termcolor import cprint
 from bondai.api import BondAIAPIClient
-
-task = "I want you to write a story about unicorns and save it to a file named unicorns.md."
 
 # Create the client
 client = BondAIAPIClient()
-
-# Connect to the WebSocket
 client.connect_ws()
+agent = client.create_agent()
+user_exited = False
+
 
 # Listen to WebSocket events
+@client.on("streaming_content_updated")
+def handle_streaming_content_updated(agent_id, content_buffer):
+    if agent_id != agent["id"]:
+        return
+    print(content_buffer)
+
+
+@client.on("streaming_function_updated")
+def handle_streaming_function_updated(agent_id, function_name, arguments_buffer):
+    if agent_id != agent["id"]:
+        return
+    print(function_name)
+    print(arguments_buffer)
+
+
 @client.on("agent_message")
-def handle_agent_message(message):
-    print(message)
-    print("Enter your response:")
-    response=input()
-    client.send_user_message(response)
+def handle_agent_message(agent_id, message):
+    global user_exited
+    if agent_id != agent["id"]:
+        return
 
-@client.on("agent_started")
-def handle_agent_started():
-    print('Agent has started.')
+    cprint("\n" + message["message"] + "\n", "white")
+    response = input()
+    if response.lower().strip() == "exit":
+        client.disconnect_ws()
+        user_exited = True
+    else:
+        client.send_message(agent_id, response)
 
-@client.on("agent_step_completed")
-def handle_agent_step_completed(message):
-    print("Agent step completed.")
-    print(message)
 
-@client.on("agent_completed")
-def handle_agent_completed():
-    print('Agent has completed.')
+@client.on("tool_selected")
+def handle_tool_selected_message(agent_id, message):
+    if agent_id != agent["id"]:
+        return
 
-# Start the Agent
-response = client.start_agent()
+    tool_name = message["tool_name"]
+    tool_arguments = message.get("tool_arguments", {})
+
+    if "thought" in tool_arguments:
+        cprint(f"Using tool {tool_name}: {tool_arguments['thought']}", "green")
+    else:
+        cprint(f"Using tool {tool_name}...", "green")
+
+
+@client.on("tool_error")
+def handle_tool_error_message(agent_id, message):
+    if agent_id != agent["id"]:
+        return
+
+    cprint(message, "red")
+
+
+cprint("******************ENTERING CHAT******************", "white")
+cprint(
+    "You are entering a chat with BondAI...\nYou can exit any time by typing 'exit'.",
+    "white",
+)
+intro_message = (
+    "The user has just logged in. Please introduce yourself in a friendly manner."
+)
+client.send_message(agent["id"], intro_message)
 
 try:
-    while True:
+    while not user_exited:
         pass
 except KeyboardInterrupt:
     print("Exiting...")

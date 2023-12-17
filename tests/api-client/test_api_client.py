@@ -13,15 +13,15 @@ user_exited = False
 def handle_streaming_content_updated(agent_id, content_buffer):
     if agent_id != agent["id"]:
         return
-    print(content_buffer)
+    # print(content_buffer)
 
 
 @client.on("streaming_function_updated")
 def handle_streaming_function_updated(agent_id, function_name, arguments_buffer):
     if agent_id != agent["id"]:
         return
-    print(function_name)
-    print(arguments_buffer)
+    # print(function_name)
+    # print(arguments_buffer)
 
 
 @client.on("agent_message")

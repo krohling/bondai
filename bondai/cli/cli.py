@@ -88,7 +88,9 @@ def build_agents(llm: LLM) -> GroupConversation:
         max_tool_retries=5,
         memory_manager=MemoryManager(
             core_memory_datasource=InMemoryCoreMemoryDataSource(
-                sections={"task": "No information is stored about the current task."},
+                sections={
+                    "task": "No information has been stored about the current task."
+                },
                 max_section_size=10000,
             )
         ),
@@ -101,10 +103,13 @@ def build_agents(llm: LLM) -> GroupConversation:
         persona_summary=user_liaison_profile.PERSONA_SUMMARY,
         instructions=user_liaison_profile.INSTRUCTIONS,
         tools=[AgentTool(task_execution_agent)],
+        enable_conversation_tools=False,
+        enable_conversational_content_responses=True,
+        allow_exit=False,
         memory_manager=MemoryManager(
             core_memory_datasource=PersistentCoreMemoryDataSource(
                 file_path="./.memory/user_liason_core_memory.json",
-                sections={"user": "No information is stored about the user."},
+                sections={"user": "No information has been stored about the user."},
             )
         ),
     )

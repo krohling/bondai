@@ -21,7 +21,7 @@ Next we will create an Agent with 2 tools. Note that these tools are considered 
 - **ShellTool** - Allows the Agent access to the shell. This is useful for installing libraries.
 
 ```python
-from bondai import Agent
+from bondai.agents import Agent
 from bondai.tools import PythonREPLTool, ShellTool
 
 task = (

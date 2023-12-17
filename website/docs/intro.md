@@ -20,18 +20,16 @@ import langchainLogo from './img/langchain-logo.jpeg'
 </p>
 
 <p align="center">
-    <a href="https://discord.gg/WZEdaZUn" target="_blank">
-			<img src="https://img.shields.io/static/v1?label=Join&message=%20discord!&color=mediumslateblue"/>
-		</a>
     <a href="https://opensource.org/licenses/MIT" style={{marginLeft: '10px'}}><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/>
     <img src="https://img.shields.io/pypi/v/bondai" style={{marginLeft: '10px'}} alt="PyPI"/>
     </a>
 </p>
-<p align="center"><em>Meet BondAI, an open source, AI-powered assistant with a lightweight, versatile API for seamless integration into your own applications.</em></p>
+<p align="center"><em>Build highly capable Single and Multi-Agent Systems without the headache.</em></p>
 
 ## What is BondAI?
 
-BondAI is an open-source framework tailored for integrating and customizing Conversational AI Agents. Built on *OpenAI's function calling support, BondAI handles the implementation complexities involved in creating Autonomous AI Agents, including memory management, error handling, integrated vector/semantic search, a powerful set of out of the box tools, as well as the ability to easily create new, custom tools. Additionally, BondAI includes a CLI interface, enabling anyone with an OpenAI API Key to run a powerful command line agent with a pre-configured set of tools.
+BondAI is an open-source tool for developing AI Agent Systems. BondAI handles the implementation complexities including memory/context management, error handling, vector/semantic search and includes a powerful set of out of the box tools and integrations. BondAI's implementation is based on the latest research including support for **[ReAct](https://arxiv.org/abs/2210.03629)**, Multi-Agent and Conversable Agent systems based on the **[AutoGen paper](https://arxiv.org/abs/2308.08155)**, and a Tiered Memory System based on the **[MemGPT paper](https://arxiv.org/abs/2310.08560)**. Additionally, BondAI comes with a CLI interface and a REST/WebSocket Agent Server.
+
 
 ## BondAI Integrations
 
@@ -39,7 +37,7 @@ BondAI comes out of the box with a powerful set of integrations.
 
 |     |  |  |
 | -------- | ------- |------- |
-| <img src={openaiLogo} alt="openai logo" width="50"/> | **OpenAI**     | BondAI supports any combination of OpenAI models and services including GPT-4, GPT-3.5, Dalle-E 3, and Embeddings.  |
+| <img src={openaiLogo} alt="openai logo" width="50"/> | **OpenAI**     | BondAI supports any combination of OpenAI models and services including all GPT-N, GPT-4 Vision, Dalle-E 3, and Embeddings.  |
 | <img src={azureLogo} alt="azure logo" width="50"/> | **Microsoft Azure**     | BondAI fully supports connectivity to GPT-N, Dalle-E and Embedding APIs through [Microsoft's Azure OpenAI services](https://azure.microsoft.com/en-us/products/ai-services/openai-service).  |
 | <img src={googleLogo} alt="google logo" width="50"/>  | **Google Search**    | Allows BondAI to search the internet. [Requires a Google Search API Key and CSE ID](https://developers.google.com/custom-search/v1/introduction) |
 | <img src={duckduckgoLogo} alt="duckduckgo logo" width="50"/> | **DuckDuckGo**     | Allows BondAI to search the internet. No API keys required. |

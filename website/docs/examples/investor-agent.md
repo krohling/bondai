@@ -19,7 +19,7 @@ Next we will create an Agent with 2 tools:
 - **ListPositionsTool** allows the Agent to pull a list of the user's current positions.
 
 ```python
-from bondai.agent import Agent
+from bondai.agents import Agent
 from bondai.tools.alpaca_markets import CreateOrderTool, GetAccountTool, ListPositionsTool
 
 task = "Sell off all my current positions and buy 10 shares of Nvidia."

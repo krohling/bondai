@@ -22,7 +22,7 @@ Next we will create an Agent with 3 tools:
 - **PythonREPLTool** allows the Agent run Python scripts.
 
 ```python
-from bondai import Agent
+from bondai.agents import Agent
 from bondai.tools import PythonREPLTool
 from bondai.tools.search import GoogleSearchTool
 from bondai.tools.website import WebsiteQueryTool

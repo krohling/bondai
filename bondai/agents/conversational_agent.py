@@ -114,6 +114,7 @@ class ConversationalAgent(Agent, ConversationMember):
             enable_conversational_content_responses
         )
         self._enable_conversation_tools = enable_conversation_tools
+        print("***", self._enable_conversation_tools)
         if self._enable_conversation_tools:
             self.add_tool(SendMessageTool())
         if self._enable_exit_conversation:
