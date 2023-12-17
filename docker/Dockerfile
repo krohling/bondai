@@ -6,6 +6,6 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip
 
-RUN pip3 install --no-cache bondai
+RUN pip3 install --no-cache bondai==0.3.0b17
 
-CMD ["bondai", "--enable-dangerous"]
+CMD ["bondai"]

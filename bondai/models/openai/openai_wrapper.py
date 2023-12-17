@@ -2,6 +2,7 @@ import json
 import tiktoken
 from typing import Dict, List, Callable
 from openai import OpenAI, AzureOpenAI
+from .openai_connection_params import OpenAIConnectionParams
 from .openai_models import ModelConfig, OpenAIModelType, OpenAIConnectionType
 from bondai.util import ModelLogger
 
@@ -83,23 +84,25 @@ def count_tokens(prompt: str, model: Dict) -> int:
 
 def create_embedding(
     text: str,
+    connection_params: OpenAIConnectionParams,
     model: str = "text-embedding-ada-002",
-    connection_params: Dict = {},
     **kwargs,
 ) -> [float]:
     params = {
         "input": text if isinstance(text, list) else [text],
     }
 
-    if connection_params.get("api_type", "") == OpenAIConnectionType.AZURE.value:
+    if connection_params.connection_type == OpenAIConnectionType.AZURE:
         client = AzureOpenAI(
-            api_key=connection_params["api_key"],
-            api_version=connection_params["api_version"],
-            azure_endpoint=connection_params["azure_endpoint"],
+            api_key=connection_params.api_key,
+            api_version=connection_params.api_version,
+            azure_endpoint=connection_params.azure_endpoint,
         )
-        params["model"] = connection_params["azure_deployment"]
+        params["model"] = connection_params.azure_deployment
     else:
-        client = OpenAI(**connection_params)
+        client = OpenAI(
+            api_key=connection_params.api_key,
+        )
         params["model"] = model
 
     response = client.embeddings.create(**params, **kwargs)
@@ -123,24 +126,22 @@ def create_embedding(
 
 
 def get_completion(
+    connection_params: OpenAIConnectionParams,
     messages: List[Dict] | None = None,
     functions: List[Dict] | None = None,
     model: str = "gpt-4",
-    connection_params: Dict | None = None,
     **kwargs,
 ) -> (str, Dict | None):
     if messages is None:
         messages = []
     if functions is None:
         functions = []
-    if connection_params is None:
-        connection_params = {}
 
     response = _get_completion(
+        connection_params=connection_params,
         messages=messages,
         functions=functions,
         model=model,
-        connection_params=connection_params,
         **kwargs,
     )
 
@@ -174,10 +175,10 @@ def get_completion(
 
 
 def get_streaming_completion(
+    connection_params: OpenAIConnectionParams,
     messages: List[Dict] | None = None,
     functions: List[Dict] | None = None,
     model: str = "gpt-4",
-    connection_params: Dict | None = None,
     content_stream_callback: Callable[[str], None] | None = None,
     function_stream_callback: Callable[[str], None] | None = None,
     **kwargs,
@@ -186,14 +187,12 @@ def get_streaming_completion(
         messages = []
     if functions is None:
         functions = []
-    if connection_params is None:
-        connection_params = {}
 
     response = _get_completion(
-        messages,
+        connection_params=connection_params,
+        messages=messages,
         functions=functions,
         model=model,
-        connection_params=connection_params,
         stream=True,
         **kwargs,
     )
@@ -288,34 +287,34 @@ def _log_completion(
 
 
 def _get_completion(
+    connection_params: OpenAIConnectionParams,
     messages: List[Dict] | None = None,
     functions: List[Dict] | None = None,
     model: str = "gpt-4",
-    connection_params: Dict | None = None,
     **kwargs,
 ) -> (str, Dict | None):
     if messages is None:
         messages = []
     if functions is None:
         functions = []
-    if connection_params is None:
-        connection_params = {}
 
     params = {
         "messages": messages,
         "temperature": DEFAULT_TEMPERATURE,
     }
 
-    if connection_params.get("api_type", "") == OpenAIConnectionType.AZURE.value:
+    if connection_params.connection_type == OpenAIConnectionType.AZURE:
         client = AzureOpenAI(
-            api_key=connection_params["api_key"],
-            api_version=connection_params["api_version"],
-            azure_endpoint=connection_params["azure_endpoint"],
-            azure_deployment=connection_params["azure_deployment"],
+            api_key=connection_params.api_key,
+            api_version=connection_params.api_version,
+            azure_endpoint=connection_params.azure_endpoint,
+            azure_deployment=connection_params.azure_deployment,
         )
-        params["model"] = connection_params["azure_deployment"]
+        params["model"] = connection_params.azure_deployment
     else:
-        client = OpenAI(**connection_params)
+        client = OpenAI(
+            api_key=connection_params.api_key,
+        )
         params["model"] = model
 
     if len(functions) > 0:

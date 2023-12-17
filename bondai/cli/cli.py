@@ -16,9 +16,8 @@ from bondai.agents.group_chat import GroupConversation, UserProxy
 from bondai.models.openai import (
     OpenAILLM,
     OpenAIModelNames,
-    OpenAIConnectionType,
+    DefaultOpenAIConnectionParams,
     enable_logging,
-    OPENAI_CONNECTION_TYPE,
 )
 from bondai.memory import (
     MemoryManager,
@@ -30,9 +29,7 @@ from .personas import (
     user_liaison_agent as user_liaison_profile,
 )
 
-if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get(
-    "OPENAI_API_KEY"
-):
+if not DefaultOpenAIConnectionParams.gpt_4_connection_params:
     cprint(
         f"The OPENAI_API_KEY environment variable has not been set. Please input your OpenAI API Key now or type 'exit'.",
         "yellow",
@@ -41,9 +38,7 @@ if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI and not os.environ.get(
     if user_input == "exit":
         exit(1)
     else:
-        import openai
-
-        openai.api_key = user_input
+        DefaultOpenAIConnectionParams.configure_openai_connection(user_input)
 
 
 parser = argparse.ArgumentParser(description="BondAI CLI tool options")

@@ -1,5 +1,5 @@
 from openai import OpenAI
-from bondai.models.openai.openai_connection_params import GPT_4_CONNECTION_PARAMS
+from bondai.models.openai import DefaultOpenAIConnectionParams
 
 params = {
     "temperature": 0.1,
@@ -40,7 +40,7 @@ params = {
 }
 
 
-client = OpenAI(**GPT_4_CONNECTION_PARAMS, max_retries=1)
+client = OpenAI(**DefaultOpenAIConnectionParams.gpt_4_connection_params, max_retries=1)
 result = client.chat.completions.create(
     **params,
 )

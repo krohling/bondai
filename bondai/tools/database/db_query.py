@@ -2,6 +2,7 @@ import os
 import psycopg2
 from pydantic import BaseModel
 from bondai.tools import Tool
+from bondai.models import LLM
 from bondai.models.openai import OpenAILLM, OpenAIModelNames
 
 
@@ -60,13 +61,13 @@ Please respond with a friendly text response to the user's question.
 class DatabaseQueryTool(Tool):
     def __init__(
         self,
-        pg_uri=os.environ.get(PG_URI_ENV_VAR),
-        pg_host=PG_HOST,
-        pg_port=PG_PORT,
-        pg_username=PG_USERNAME,
-        pg_password=PG_PASSWORD,
-        pg_dbname=PG_DBNAME,
-        llm=OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K),
+        pg_uri: str = os.environ.get(PG_URI_ENV_VAR),
+        pg_host: str = PG_HOST,
+        pg_port: int = PG_PORT,
+        pg_username: str = PG_USERNAME,
+        pg_password: str = PG_PASSWORD,
+        pg_dbname: str = PG_DBNAME,
+        llm: LLM | None = None,
     ):
         super(DatabaseQueryTool, self).__init__(TOOL_NAME, TOOL_DESCRIPTION, Parameters)
         self.pg_uri = pg_uri
@@ -75,6 +76,8 @@ class DatabaseQueryTool(Tool):
         self.pg_username = pg_username
         self.pg_password = pg_password
         self.pg_dbname = pg_dbname
+        if llm is None:
+            llm = OpenAILLM(OpenAIModelNames.GPT35_TURBO_16K)
         self.llm = llm
 
     def run(self, arguments):

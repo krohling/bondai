@@ -1,117 +1,92 @@
-import os
-from .env_vars import *
 from .openai_models import OpenAIConnectionType
 
-OPENAI_CONNECTION_TYPE = (
-    OpenAIConnectionType.AZURE
-    if os.environ.get(OPENAI_CONNECTION_TYPE_ENV_VAR) == "azure"
-    else OpenAIConnectionType.OPENAI
-)
 
-# Standard OpenAI Configuration
-OPENAI_API_KEY = os.environ.get(OPENAI_API_KEY_ENV_VAR)
-EMBEDDINGS_CONNECTION_PARAMS = {"api_key": OPENAI_API_KEY}
-GPT_35_CONNECTION_PARAMS = {"api_key": OPENAI_API_KEY}
-GPT_4_CONNECTION_PARAMS = {"api_key": OPENAI_API_KEY}
-DALLE_CONNECTION_PARAMS = {"api_key": OPENAI_API_KEY}
+class OpenAIConnectionParams:
+    def __init__(
+        self,
+        connection_type: OpenAIConnectionType,
+        api_key: str,
+        api_version: str | None = None,
+        azure_endpoint: str | None = None,
+        azure_deployment: str | None = None,
+    ):
+        if connection_type not in OpenAIConnectionType:
+            raise ValueError(f"Invalid api_type: {connection_type}")
+        if not api_key:
+            raise ValueError(
+                f"api_key is required for '{connection_type.value}' connection type."
+            )
+        if connection_type == OpenAIConnectionType.AZURE:
+            if not api_version:
+                raise ValueError("api_version is required for 'azure' connection type.")
+            if not azure_endpoint:
+                raise ValueError(
+                    "azure_endpoint is required for 'azure' connection type."
+                )
+            if not azure_deployment:
+                raise ValueError(
+                    "azure_deployment is required for 'azure' connection type."
+                )
 
-# Azure Embeddings Configuration
-AZURE_OPENAI_EMBEDDINGS_API_KEY = os.environ.get(
-    AZURE_OPENAI_EMBEDDINGS_API_KEY_ENV_VAR
-)
-AZURE_OPENAI_EMBEDDINGS_API_BASE = os.environ.get(
-    AZURE_OPENAI_EMBEDDINGS_API_BASE_ENV_VAR
-)
-AZURE_OPENAI_EMBEDDINGS_API_VERSION = os.environ.get(
-    AZURE_OPENAI_EMBEDDINGS_API_VERSION_ENV_VAR
-)
-AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT = os.environ.get(
-    AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_ENV_VAR
-)
+        self._connection_type = connection_type
+        self._api_key = api_key
+        self._api_version = api_version
+        self._azure_endpoint = azure_endpoint
+        self._azure_deployment = azure_deployment
 
-# GPT-3.5 Azure Configuration
-AZURE_OPENAI_GPT35_API_KEY = os.environ.get(AZURE_OPENAI_GPT35_API_KEY_ENV_VAR)
-AZURE_OPENAI_GPT35_API_BASE = os.environ.get(AZURE_OPENAI_GPT35_API_BASE_ENV_VAR)
-AZURE_OPENAI_GPT35_API_VERSION = os.environ.get(
-    AZURE_OPENAI_GPT35_API_VERSION_ENV_VAR, "2023-07-01-preview"
-)
-AZURE_OPENAI_GPT35_DEPLOYMENT = os.environ.get(AZURE_OPENAI_GPT35_DEPLOYMENT_ENV_VAR)
+    @property
+    def connection_type(self):
+        return self._connection_type
 
-# GPT-4 Azure Configuration
-AZURE_OPENAI_GPT4_API_KEY = os.environ.get(AZURE_OPENAI_GPT4_API_KEY_ENV_VAR)
-AZURE_OPENAI_GPT4_API_BASE = os.environ.get(AZURE_OPENAI_GPT4_API_BASE_ENV_VAR)
-AZURE_OPENAI_GPT4_API_VERSION = os.environ.get(
-    AZURE_OPENAI_GPT4_API_VERSION_ENV_VAR, "2023-07-01-preview"
-)
-AZURE_OPENAI_GPT4_DEPLOYMENT = os.environ.get(AZURE_OPENAI_GPT4_DEPLOYMENT_ENV_VAR)
+    @property
+    def api_key(self):
+        return self._api_key
 
-AZURE_OPENAI_DALLE_API_KEY = os.environ.get(AZURE_OPENAI_DALLE_API_KEY_ENV_VAR)
-AZURE_OPENAI_DALLE_API_BASE = os.environ.get(AZURE_OPENAI_DALLE_API_BASE_ENV_VAR)
-AZURE_OPENAI_DALLE_API_VERSION = os.environ.get(AZURE_OPENAI_DALLE_API_VERSION_ENV_VAR)
-AZURE_OPENAI_DALLE_DEPLOYMENT = os.environ.get(AZURE_OPENAI_DALLE_DEPLOYMENT_ENV_VAR)
+    @property
+    def api_version(self):
+        return self._api_version
 
-if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.AZURE:
-    if not AZURE_OPENAI_GPT35_API_KEY:
-        raise Exception(
-            "AZURE_OPENAI_GPT35_API_KEY is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT35_API_BASE:
-        raise Exception(
-            "AZURE_OPENAI_GPT35_API_BASE is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT35_API_VERSION:
-        raise Exception(
-            "AZURE_OPENAI_GPT35_API_VERSION is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT35_DEPLOYMENT:
-        raise Exception(
-            "AZURE_OPENAI_GPT35_DEPLOYMENT is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT4_API_KEY:
-        raise Exception(
-            "AZURE_OPENAI_GPT4_API_KEY is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT4_API_BASE:
-        raise Exception(
-            "AZURE_OPENAI_GPT4_API_BASE is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT4_API_VERSION:
-        raise Exception(
-            "AZURE_OPENAI_GPT4_API_VERSION is required for 'azure' connection type."
-        )
-    if not AZURE_OPENAI_GPT4_DEPLOYMENT:
-        raise Exception(
-            "AZURE_OPENAI_GPT4_DEPLOYMENT is required for 'azure' connection type."
-        )
+    @property
+    def azure_endpoint(self):
+        return self._azure_endpoint
 
-    EMBEDDINGS_CONNECTION_PARAMS = {
-        "api_type": "azure",
-        "api_key": AZURE_OPENAI_EMBEDDINGS_API_KEY,
-        "api_version": AZURE_OPENAI_EMBEDDINGS_API_VERSION,
-        "azure_endpoint": AZURE_OPENAI_EMBEDDINGS_API_BASE,
-        "azure_deployment": AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT,
-    }
+    @property
+    def azure_deployment(self):
+        return self._azure_deployment
 
-    GPT_35_CONNECTION_PARAMS = {
-        "api_type": "azure",
-        "api_key": AZURE_OPENAI_GPT35_API_KEY,
-        "api_version": AZURE_OPENAI_GPT35_API_VERSION,
-        "azure_endpoint": AZURE_OPENAI_GPT35_API_BASE,
-        "azure_deployment": AZURE_OPENAI_GPT35_DEPLOYMENT,
-    }
+    def configure_openai_connection(self, api_key: str):
+        if not api_key:
+            raise ValueError("api_key is required for 'openai' connection type.")
+        self._connection_type = OpenAIConnectionType.OPENAI
+        self._api_key = api_key
+        self._api_version = None
+        self._azure_endpoint = None
+        self._azure_deployment = None
 
-    GPT_4_CONNECTION_PARAMS = {
-        "api_type": "azure",
-        "api_key": AZURE_OPENAI_GPT4_API_KEY,
-        "api_version": AZURE_OPENAI_GPT4_API_VERSION,
-        "azure_endpoint": AZURE_OPENAI_GPT4_API_BASE,
-        "azure_deployment": AZURE_OPENAI_GPT4_DEPLOYMENT,
-    }
+    def configure_azure_connection(
+        self, api_key: str, api_version: str, azure_endpoint: str, azure_deployment: str
+    ):
+        if not api_key:
+            raise ValueError("api_key is required for 'azure' connection type.")
+        if not api_version:
+            raise ValueError("api_version is required for 'azure' connection type.")
+        if not azure_endpoint:
+            raise ValueError("azure_endpoint is required for 'azure' connection type.")
+        if not azure_deployment:
+            raise ValueError(
+                "azure_deployment is required for 'azure' connection type."
+            )
 
-    DALLE_CONNECTION_PARAMS = {
-        "api_type": "azure",
-        "api_key": AZURE_OPENAI_DALLE_API_KEY,
-        "api_version": AZURE_OPENAI_DALLE_API_VERSION,
-        "azure_endpoint": AZURE_OPENAI_DALLE_API_BASE,
-        "azure_deployment": AZURE_OPENAI_DALLE_DEPLOYMENT,
-    }
+        self._connection_type = OpenAIConnectionType.AZURE
+        self._api_key = api_key
+        self._api_version = api_version
+        self._azure_endpoint = azure_endpoint
+        self._azure_deployment = azure_deployment
+
+    def to_dict(self):
+        return {
+            "api_key": self._api_key,
+            "api_version": self._api_version,
+            "azure_endpoint": self._azure_endpoint,
+            "azure_deployment": self._azure_deployment,
+        }

@@ -3,7 +3,7 @@ import openai
 from pydantic import BaseModel
 from typing import Dict
 from bondai.tools import Tool
-from bondai.models.openai.openai_connection_params import DALLE_CONNECTION_PARAMS
+from bondai.models.openai import OpenAIConnectionParams, DefaultOpenAIConnectionParams
 
 IMAGE_SIZE = "1024x1024"
 TOOL_NAME = "text_to_image_tool"
@@ -23,8 +23,15 @@ class Parameters(BaseModel):
 
 
 class DalleTool(Tool):
-    def __init__(self):
+    def __init__(self, connection_params: OpenAIConnectionParams | None = None):
         super().__init__(TOOL_NAME, TOOL_DESCRIPTION, parameters=Parameters)
+        self._connection_params = (
+            connection_params
+            if connection_params
+            else DefaultOpenAIConnectionParams.dalle_connection_params
+        )
+        if not self._connection_params:
+            raise Exception("Connection parameters not set for DalleTool.")
 
     def run(self, arguments: Dict) -> str:
         description = arguments.get("description")
@@ -38,7 +45,7 @@ class DalleTool(Tool):
         params = {"prompt": description, "n": 1, "size": IMAGE_SIZE}
 
         # Use the OpenAI API to generate an image based on the description
-        response = openai.Image.create(**params, **DALLE_CONNECTION_PARAMS)
+        response = openai.Image.create(**params, **self._connection_params.to_dict())
 
         # Get the image URL from the response
         image_url = response["data"][0]["url"]

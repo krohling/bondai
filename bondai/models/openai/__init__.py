@@ -12,7 +12,10 @@ from .openai_models import (
     OpenAIModelFamilyType,
     OpenAIModelType,
 )
-from .openai_connection_params import OPENAI_CONNECTION_TYPE
+from . import default_openai_connection_params as DefaultOpenAIConnectionParams
+from .openai_connection_params import (
+    OpenAIConnectionParams,
+)
 
 __all__ = [
     "OpenAILLM",
@@ -25,5 +28,6 @@ __all__ = [
     "OpenAIModelNames",
     "OpenAIModelFamilyType",
     "OpenAIModelType",
-    "OPENAI_CONNECTION_TYPE",
+    "OpenAIConnectionParams",
+    "DefaultOpenAIConnectionParams",
 ]

@@ -8,9 +8,9 @@ from .openai_wrapper import (
     get_max_tokens,
 )
 from .openai_connection_params import (
-    GPT_35_CONNECTION_PARAMS,
-    GPT_4_CONNECTION_PARAMS,
+    OpenAIConnectionParams,
 )
+from . import default_openai_connection_params as DefaultOpenAIConnectionParams
 from .openai_models import (
     ModelConfig,
     OpenAIModelNames,
@@ -23,7 +23,7 @@ class OpenAILLM(LLM):
     def __init__(
         self,
         model: OpenAIModelNames | str,
-        connection_params: Dict = None,
+        connection_params: OpenAIConnectionParams = None,
         cache: LLMCache = None,
     ):
         self._cache = cache
@@ -35,9 +35,16 @@ class OpenAILLM(LLM):
         if connection_params:
             self._connection_params = connection_params
         elif ModelConfig[self._model]["family"] == OpenAIModelFamilyType.GPT4:
-            self._connection_params = GPT_4_CONNECTION_PARAMS
+            self._connection_params = (
+                DefaultOpenAIConnectionParams.gpt_4_connection_params
+            )
         else:
-            self._connection_params = GPT_35_CONNECTION_PARAMS
+            self._connection_params = (
+                DefaultOpenAIConnectionParams.gpt_35_connection_params
+            )
+
+        if not self._connection_params:
+            raise Exception(f"Connection parameters not set for model {self._model}.")
 
     @property
     def max_tokens(self) -> int:
@@ -65,14 +72,13 @@ class OpenAILLM(LLM):
             input_parameters = {"messages": messages, "functions": functions, **kwargs}
             cache_item = self._cache.get_cache_item(input_parameters=input_parameters)
             if cache_item:
-                print("Cache hit")
                 return cache_item
 
         result = get_completion(
-            messages,
-            functions,
-            self._model,
             connection_params=self._connection_params,
+            messages=messages,
+            functions=functions,
+            model=self._model,
             **kwargs,
         )
 
@@ -103,17 +109,16 @@ class OpenAILLM(LLM):
                 return cache_item
 
         result = get_streaming_completion(
-            messages,
-            functions,
-            self._model,
             connection_params=self._connection_params,
+            messages=messages,
+            functions=functions,
+            model=self._model,
             content_stream_callback=content_stream_callback,
             function_stream_callback=function_stream_callback,
             **kwargs,
         )
 
         if self._cache:
-            print("Cache hit")
             self._cache.save_cache_item(
                 input_parameters=input_parameters, response=result
             )

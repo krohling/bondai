@@ -16,10 +16,9 @@ from bondai.tools.website import (
     DownloadFileTool,
     WebsiteQueryTool,
 )
-from bondai.models.openai.openai_connection_params import (
+from bondai.models.openai import (
     OpenAIConnectionType,
-    OPENAI_CONNECTION_TYPE,
-    DALLE_CONNECTION_PARAMS,
+    DefaultOpenAIConnectionParams,
 )
 
 
@@ -34,7 +33,11 @@ def load_all_tools():
         ShellTool(),
     ]
 
-    if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI:
+    if (
+        DefaultOpenAIConnectionParams.gpt_4_connection_params
+        and DefaultOpenAIConnectionParams.gpt_4_connection_params.connection_type
+        == OpenAIConnectionType.OPENAI
+    ):
         tool_options.append(ImageAnalysisTool())
     else:
         cprint(
@@ -42,9 +45,10 @@ def load_all_tools():
             "yellow",
         )
 
-    if OPENAI_CONNECTION_TYPE == OpenAIConnectionType.OPENAI or (
-        "api_type" in DALLE_CONNECTION_PARAMS
-        and DALLE_CONNECTION_PARAMS["api_type"] == "azure"
+    if (
+        DefaultOpenAIConnectionParams.dalle_connection_params
+        and DefaultOpenAIConnectionParams.dalle_connection_params.connection_type
+        == OpenAIConnectionType.OPENAI
     ):
         tool_options.append(DalleTool())
     else:
