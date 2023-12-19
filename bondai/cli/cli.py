@@ -105,7 +105,7 @@ def build_agents(llm: LLM) -> GroupConversation:
         tools=[AgentTool(task_execution_agent)],
         enable_conversation_tools=False,
         enable_conversational_content_responses=True,
-        allow_exit=False,
+        enable_exit_conversation=False,
         memory_manager=MemoryManager(
             core_memory_datasource=PersistentCoreMemoryDataSource(
                 file_path="./.memory/user_liason_core_memory.json",

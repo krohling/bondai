@@ -13,7 +13,7 @@ This API returns a list of all active Agents.
 ```json
 [
     {
-        "allow_exit":true,
+        "enable_exit_conversation":true,
         "enable_conversation_tools":false,
         "enable_conversational_content_responses":true,
         "id":"34c2262b-1a9b-4ace-9b74-54e892ea59a2",

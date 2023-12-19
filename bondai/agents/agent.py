@@ -6,10 +6,15 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Callable
 from bondai.util import EventMixin, Runnable, load_local_resource
 from bondai.tools import Tool, ResponseQueryTool
-from bondai.models import LLM
+from bondai.models import LLM, EmbeddingModel
 from bondai.memory import MemoryManager
 from bondai.prompt import JinjaPromptBuilder
-from bondai.models.openai import OpenAILLM, OpenAIModelNames, get_total_cost
+from bondai.models.openai import (
+    OpenAILLM,
+    OpenAIEmbeddingModel,
+    OpenAIModelNames,
+    get_total_cost,
+)
 from .conversation_member import ConversationMember
 from .messages import AgentMessage, AgentMessageList, SystemMessage, ToolUsageMessage
 from .compression import summarize_conversation, summarize_messages
@@ -56,6 +61,7 @@ class Agent(EventMixin, Runnable):
     def __init__(
         self,
         llm: LLM | None = None,
+        embedding_model: EmbeddingModel | None = None,
         tools: List[Tool] | None = None,
         quiet: bool = True,
         allowed_events: List[str] | None = None,
@@ -85,6 +91,10 @@ class Agent(EventMixin, Runnable):
 
         if llm is None:
             llm = OpenAILLM(OpenAIModelNames.GPT4_0613)
+        if embedding_model is None:
+            embedding_model = OpenAIEmbeddingModel(
+                OpenAIModelNames.TEXT_EMBEDDING_ADA_002
+            )
         if tools is None:
             tools = []
         if system_prompt_sections is None:
@@ -96,6 +106,7 @@ class Agent(EventMixin, Runnable):
         self._status: AgentStatus = AgentStatus.IDLE
         self._messages = AgentMessageList(messages=messages)
         self._llm: LLM = llm
+        self._embedding_model: EmbeddingModel = embedding_model
         self._tools: List[Tool] = tools
         self._quiet: bool = quiet
         self._system_prompt_sections: List[Callable[[], str]] = system_prompt_sections
@@ -317,7 +328,9 @@ class Agent(EventMixin, Runnable):
         last_error_message = None
         local_messages = []
         self._force_stop = False
-        response_query_tool = ResponseQueryTool()
+        response_query_tool = ResponseQueryTool(
+            llm=self._llm, embedding_model=self._embedding_model
+        )
 
         def append_message(message):
             if isinstance(message, SystemMessage):

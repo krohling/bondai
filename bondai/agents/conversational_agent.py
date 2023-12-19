@@ -13,7 +13,7 @@ from bondai.tools.conversational import (
     ExitConversationTool,
 )
 from bondai.prompt import JinjaPromptBuilder
-from bondai.models.llm import LLM
+from bondai.models import LLM, EmbeddingModel
 from bondai.models.openai import OpenAILLM, OpenAIModelNames, get_total_cost
 from .agent import (
     Agent,
@@ -47,6 +47,7 @@ class ConversationalAgent(Agent, ConversationMember):
     def __init__(
         self,
         llm: LLM | None = None,
+        embedding_model: EmbeddingModel | None = None,
         tools: List[Tool] | None = None,
         messages: List[AgentMessage] | None = None,
         name: str = DEFAULT_AGENT_NAME,
@@ -82,6 +83,7 @@ class ConversationalAgent(Agent, ConversationMember):
         Agent.__init__(
             self,
             llm=llm,
+            embedding_model=embedding_model,
             quiet=quiet,
             tools=tools,
             messages=messages,
@@ -251,7 +253,7 @@ class ConversationalAgent(Agent, ConversationMember):
                     "instructions": self.instructions,
                     "conversation_enabled": self._enable_conversation_tools
                     or self._enable_conversational_content_responses,
-                    "allow_exit": self._enable_exit_conversation,
+                    "enable_exit_conversation": self._enable_exit_conversation,
                 }
 
                 tool_result = self._run_tool_loop(
@@ -320,9 +322,9 @@ class ConversationalAgent(Agent, ConversationMember):
         data["persona"] = self._persona
         data["persona_summary"] = self._persona_summary
         data["instructions"] = self.instructions
-        data["allow_exit"] = self._enable_exit_conversation
         data["quiet"] = self._quiet
         data["enable_conversation_tools"] = self._enable_conversation_tools
+        data["enable_exit_conversation"] = self._enable_exit_conversation
         data[
             "enable_conversational_content_responses"
         ] = self._enable_conversational_content_responses
@@ -355,7 +357,7 @@ class ConversationalAgent(Agent, ConversationMember):
             persona=data["persona"],
             persona_summary=data["persona_summary"],
             instructions=data["instructions"],
-            allow_exit=data["allow_exit"],
+            enable_exit_conversation=data["enable_exit_conversation"],
             quiet=data["quiet"],
             enable_conversation_tools=data["enable_conversation_tools"],
             enable_conversational_content_responses=data[
