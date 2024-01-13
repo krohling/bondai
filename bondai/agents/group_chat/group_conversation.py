@@ -250,7 +250,7 @@ class GroupConversation(EventMixin, Runnable):
                         next_message = previous_message
                 except AgentException as e:
                     print("Error occurred, rewinding conversation...")
-                    print(e)
+                    # print(e)
                     # The recipient agent has errored out. We will rewind the conversation and try again.
                     previous_message = (
                         self._messages[-2]
@@ -269,19 +269,6 @@ class GroupConversation(EventMixin, Runnable):
             )
         finally:
             self._status = AgentStatus.IDLE
-
-    def send_message_async(
-        self,
-        recipient_name: str,
-        message: str,
-        sender_name: str = USER_MEMBER_NAME,
-    ):
-        async def send_message_coroutine():
-            return self.send_message(
-                recipient_name=recipient_name, message=message, sender_name=sender_name
-            )
-
-        return asyncio.run(send_message_coroutine())
 
     def reset_memory(self):
         self._messages.clear()

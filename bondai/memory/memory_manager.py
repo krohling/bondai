@@ -4,7 +4,6 @@ from bondai.prompt import JinjaPromptBuilder
 from bondai.util import load_local_resource
 from .archival.datasources import (
     ArchivalMemoryDataSource,
-    InMemoryArchivalMemoryDataSource,
     PersistentArchivalMemoryDataSource,
 )
 from .archival.tools import ArchivalMemoryInsertTool, ArchivalMemorySearchTool
@@ -19,7 +18,6 @@ from .conversation.tools import (
 )
 from .core.datasources import (
     CoreMemoryDataSource,
-    InMemoryCoreMemoryDataSource,
     PersistentCoreMemoryDataSource,
 )
 from .core.tools import CoreMemoryAppendTool, CoreMemoryReplaceTool
@@ -35,10 +33,10 @@ class MemoryManager:
         core_memory_datasource: CoreMemoryDataSource | None = None,
         conversation_memory_datasource: ConversationMemoryDataSource | None = None,
         archival_memory_datasource: ArchivalMemoryDataSource | None = None,
-        prompt_builder: Callable[..., str] = JinjaPromptBuilder(
-            DEFAULT_PROMPT_TEMPLATE
-        ),
+        prompt_builder: Callable[..., str] | None = None,
     ):
+        if prompt_builder is None:
+            prompt_builder = JinjaPromptBuilder(DEFAULT_PROMPT_TEMPLATE)
         self._core_memory_datasource = core_memory_datasource
         self._conversation_memory_datasource = conversation_memory_datasource
         self._archival_memory_datasource = archival_memory_datasource

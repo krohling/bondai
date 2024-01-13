@@ -1,8 +1,8 @@
 ---
-sidebar_position: 7
+sidebar_position: 10
 ---
 
-# BondAI With Docker
+# Using Docker
 
 ## BondAI Docker Image
 

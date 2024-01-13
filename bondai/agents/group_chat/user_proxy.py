@@ -15,7 +15,12 @@ from bondai.agents import (
 
 
 class UserProxy(EventMixin, ConversationMember):
-    def __init__(self, persona: str | None = None, parse_recipients: bool = True):
+    def __init__(
+        self,
+        persona: str | None = None,
+        parse_recipients: bool = True,
+        auto_exit: bool = False,
+    ):
         EventMixin.__init__(
             self,
             allowed_events=[
@@ -32,6 +37,7 @@ class UserProxy(EventMixin, ConversationMember):
         )
         self._status = AgentStatus.IDLE
         self._parse_recipients = parse_recipients
+        self._auto_exit = auto_exit
 
     def send_message(
         self,
@@ -67,7 +73,7 @@ class UserProxy(EventMixin, ConversationMember):
 
         cprint("\n" + agent_message.message + "\n", "white")
 
-        if not agent_message.require_response:
+        if not agent_message.require_response or self._auto_exit:
             agent_message.success = True
             agent_message.cost = 0.0
             agent_message.completed_at = datetime.now()
