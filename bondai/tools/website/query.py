@@ -47,12 +47,12 @@ class WebsiteQueryTool(Tool):
         self._embedding_model = embedding_model
 
     def run(self, arguments: Dict) -> str:
-        url = arguments["url"]
-        question = arguments["question"]
+        url = arguments.get("url")
+        question = arguments.get("question")
 
-        if url is None:
+        if not url:
             raise Exception("url is required")
-        if question is None:
+        if not question:
             raise Exception("question is required")
 
         try:

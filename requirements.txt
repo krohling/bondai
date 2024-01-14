@@ -20,7 +20,7 @@ charset-normalizer==3.2.0
 click==8.1.7
 cssselect==1.2.0
 distro==1.8.0
-duckduckgo-search==3.9.8
+duckduckgo-search==4.2.0
 faiss-cpu==1.7.4
 fake-useragent==1.2.1
 Flask==3.0.0

@@ -10,12 +10,13 @@ DEFAULT_EXECUTION_TIMEOUT = 60
 TOOL_NAME = "python_repl"
 TOOL_DESCRIPTION = (
     "This tool allows you to execute Python code. "
-    "Specify your Python code in the 'code' parameter and it will return the result."
+    "Specify your Python code in the 'script' parameter and it will return the result."
+    "Note that you MUST provide the 'script' parameter to use this tool."
 )
 
 
 class Parameters(BaseModel):
-    code: str
+    script: str
     thought: str
 
 
@@ -49,12 +50,14 @@ class PythonREPLTool(Tool):
         self._execution_timeout = execution_timeout
 
     def run(self, arguments: Dict) -> str:
-        code = arguments.get("code")
+        script = arguments.get("script")
 
-        if code is None:
-            raise Exception("'code' parameter is required")
+        if script is None:
+            raise Exception(
+                "To use the 'python_repl' tool you must provide the 'script' parameter."
+            )
 
-        result, stdout, stderr = self.execute_code(code)
+        result, stdout, stderr = self.execute_code(script)
 
         response = ""
 

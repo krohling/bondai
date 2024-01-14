@@ -31,7 +31,7 @@ from .util import (
 )
 
 
-DEFAULT_MAX_TOOL_RETRIES = 3
+DEFAULT_MAX_TOOL_RETRIES = 5
 DEFAULT_MAX_TOOL_RESPONSE_TOKENS = 2000
 DEFAULT_SYSTEM_PROMPT_TEMPLATE = load_local_resource(
     __file__, os.path.join("prompts", "react_agent_system_prompt_template.md")
