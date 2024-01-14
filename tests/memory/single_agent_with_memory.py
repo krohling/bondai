@@ -1,35 +1,61 @@
-from datetime import datetime
-from bondai.models.openai import get_total_cost
-from bondai.tools.file import FileWriteTool
-from bondai.agents import ConversationalAgent
-from bondai.memory import MemoryManager
-from util import extract_text_from_directory
+from bondai.agents import ConversationalAgent, AgentEventNames
+from bondai.models.openai import OpenAIEmbeddingModel
+from bondai.memory import (
+    MemoryManager,
+    InMemoryCoreMemoryDataSource,
+    InMemoryArchivalMemoryDataSource,
+)
 
-memory_manager = MemoryManager()
+import io
+import requests
+from PyPDF2 import PdfReader
+from bondai.util import split_text
+
+
+def retrieve_and_parse_pdf(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        pdf = PdfReader(io.BytesIO(response.content))
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text() + "\n"
+
+        return split_text(OpenAIEmbeddingModel(), text)
+    else:
+        return f"Error retrieving PDF: {response.status_code}"
+
+
+memory_manager = MemoryManager(
+    core_memory_datasource=InMemoryCoreMemoryDataSource(),
+    archival_memory_datasource=InMemoryArchivalMemoryDataSource(),
+)
+
 memory_manager.core_memory.set(
     "user", "Name is George. Lives in New York. Has a dog named Max."
 )
 memory_manager.archival_memory.insert_bulk(
-    extract_text_from_directory("./tests/memory/documents")
+    retrieve_and_parse_pdf("https://arxiv.org/pdf/2310.10501.pdf")
 )
 
-agent = ConversationalAgent(tools=[FileWriteTool()], memory_manager=memory_manager)
+agent = ConversationalAgent(memory_manager=memory_manager)
+agent.on(
+    AgentEventNames.TOOL_COMPLETED,
+    lambda _, m: print(
+        f"*************\nTool: {m.tool_name}({str(m.tool_arguments)})\nOutput: {m.tool_output}\n\n"
+    ),
+)
 
-message = "Start the conversation by sending the first message. You can exit any time by typing 'exit'."
-while True:
-    user_input = input(message + "\n")
-    if user_input.lower() == "exit":
-        break
-    response = agent.send_message(user_input)
-    response.success = True
-    response.completed_at = datetime.now()
+response = agent.send_message("Do you know my name?")
+print(response.message)
 
-    if response:
-        message = response.message
-        if message.lower() == "exit":
-            break
-    else:
-        print("The agent has exited the conversation.")
-        break
+response = agent.send_message("Actually my name is Kevin.")
+print(response.message)
 
-print(f"Total Cost: {get_total_cost()}")
+response = agent.send_message(
+    (
+        "Can you check your archival memory to see what information you have about Nemo Guardrails? "
+        "I'd like a full summary of the information you have about the project including an example "
+        "that demonstrates how to use Colang."
+    )
+)
+print(response.message)

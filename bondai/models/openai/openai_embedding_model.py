@@ -35,7 +35,7 @@ class OpenAIEmbeddingModel(EmbeddingModel):
 
     def create_embedding(self, prompt: str) -> List[float] | List[List[float]]:
         return create_embedding(
-            prompt, self._model, connection_params=self._connection_params
+            prompt, connection_params=self._connection_params, model=self._model
         )
 
     def count_tokens(self, prompt: str) -> int:

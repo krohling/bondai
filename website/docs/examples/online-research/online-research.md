@@ -22,7 +22,7 @@ Next we will create an Agent with 3 tools:
 - **FileWriteTool** Allows the Agent to save the results to a file.
 
 ```python
-from bondai import Agent
+from bondai.agents import Agent
 from bondai.tools.search import GoogleSearchTool
 from bondai.tools.website import WebsiteQueryTool
 from bondai.tools.file import FileWriteTool

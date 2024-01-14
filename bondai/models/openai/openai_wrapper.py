@@ -69,8 +69,8 @@ def calculate_cost(model_name: str, usage: Dict):
         else:
             embedding_tokens += token_count
             embedding_costs += token_count * model["price_per_token"]
-    else:
-        print(f"Unknown model: {model_name}")
+    # else:
+    #     print(f"Unknown model: {model_name}")
 
 
 def get_max_tokens(model: str) -> int:
