@@ -8,6 +8,9 @@
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
     <a href="https://pypi.org/project/bondai/"><img src="https://img.shields.io/pypi/v/bondai" alt="PyPI"></a>
     <a href="https://hub.docker.com/r/krohling/bondai"><img src="https://img.shields.io/docker/v/krohling/bondai?logo=docker" alt="Docker"></a>
+    <a href="https://colab.research.google.com/drive/1Rmzosq6LD_ZR3MkqQO1M1Af27VAaYNRE?usp=sharing" style={{marginLeft: '10px'}}>
+        <img src="https://colab.research.google.com/assets/colab-badge.svg" style={{marginLeft: '10px'}} alt="PyPI"/>
+    </a>
 </p>
 <p align="center"><em>Build highly capable Single and Multi-Agent Systems.</em></p>
 
